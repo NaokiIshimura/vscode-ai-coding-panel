@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as fsp from 'fs/promises';
 import * as path from 'path';
 import { IFileOperationService } from '../interfaces/IFileOperationService';
 import {
@@ -8,6 +9,7 @@ import {
     OperationProgress,
     FileOperationError
 } from '../types';
+import { FileInfo } from '../utils/fileUtils';
 
 /**
  * ファイル操作サービスの実装
@@ -32,12 +34,12 @@ export class FileOperationService implements IFileOperationService {
 
             // ディレクトリを作成（存在しない場合）
             const dir = path.dirname(filePath);
-            if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, { recursive: true });
+            if (!(await this.exists(dir))) {
+                await fsp.mkdir(dir, { recursive: true });
             }
 
             // ファイルを作成
-            fs.writeFileSync(filePath, content, 'utf8');
+            await fsp.writeFile(filePath, content, 'utf8');
 
             return {
                 success: true,
@@ -68,7 +70,7 @@ export class FileOperationService implements IFileOperationService {
             }
 
             // ディレクトリを作成
-            fs.mkdirSync(dirPath, { recursive: true });
+            await fsp.mkdir(dirPath, { recursive: true });
 
             return {
                 success: true,
@@ -91,7 +93,7 @@ export class FileOperationService implements IFileOperationService {
             if (!await this.exists(filePath)) {
                 throw FileOperationError.notFound(filePath);
             }
-            return fs.readFileSync(filePath, 'utf8');
+            return await fsp.readFile(filePath, 'utf8');
         } catch (error) {
             throw error;
         }
@@ -106,7 +108,7 @@ export class FileOperationService implements IFileOperationService {
                 throw FileOperationError.invalidPath(filePath);
             }
 
-            fs.writeFileSync(filePath, content, 'utf8');
+            await fsp.writeFile(filePath, content, 'utf8');
 
             return {
                 success: true,
@@ -130,7 +132,7 @@ export class FileOperationService implements IFileOperationService {
                 throw FileOperationError.notFound(filePath);
             }
 
-            fs.unlinkSync(filePath);
+            await fsp.unlink(filePath);
 
             return {
                 success: true,
@@ -154,7 +156,7 @@ export class FileOperationService implements IFileOperationService {
                 throw FileOperationError.notFound(dirPath);
             }
 
-            fs.rmSync(dirPath, { recursive, force: true });
+            await fsp.rm(dirPath, { recursive, force: true });
 
             return {
                 success: true,
@@ -182,7 +184,7 @@ export class FileOperationService implements IFileOperationService {
                 throw FileOperationError.alreadyExists(newPath);
             }
 
-            fs.renameSync(oldPath, newPath);
+            await fsp.rename(oldPath, newPath);
 
             return {
                 success: true,
@@ -213,11 +215,11 @@ export class FileOperationService implements IFileOperationService {
             } else {
                 // ディレクトリを作成（存在しない場合）
                 const dir = path.dirname(destPath);
-                if (!fs.existsSync(dir)) {
-                    fs.mkdirSync(dir, { recursive: true });
+                if (!(await this.exists(dir))) {
+                    await fsp.mkdir(dir, { recursive: true });
                 }
 
-                fs.copyFileSync(sourcePath, destPath);
+                await fsp.copyFile(sourcePath, destPath);
             }
 
             return {
@@ -239,9 +241,9 @@ export class FileOperationService implements IFileOperationService {
     private async copyDirectory(sourcePath: string, destPath: string): Promise<FileOperationResult> {
         try {
             // コピー先ディレクトリを作成
-            fs.mkdirSync(destPath, { recursive: true });
+            await fsp.mkdir(destPath, { recursive: true });
 
-            const entries = fs.readdirSync(sourcePath, { withFileTypes: true });
+            const entries = await fsp.readdir(sourcePath, { withFileTypes: true });
 
             for (const entry of entries) {
                 const srcPath = path.join(sourcePath, entry.name);
@@ -250,7 +252,7 @@ export class FileOperationService implements IFileOperationService {
                 if (entry.isDirectory()) {
                     await this.copyDirectory(srcPath, dstPath);
                 } else {
-                    fs.copyFileSync(srcPath, dstPath);
+                    await fsp.copyFile(srcPath, dstPath);
                 }
             }
 
@@ -278,11 +280,11 @@ export class FileOperationService implements IFileOperationService {
 
             // ディレクトリを作成（存在しない場合）
             const dir = path.dirname(destPath);
-            if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, { recursive: true });
+            if (!(await this.exists(dir))) {
+                await fsp.mkdir(dir, { recursive: true });
             }
 
-            fs.renameSync(sourcePath, destPath);
+            await fsp.rename(sourcePath, destPath);
 
             return {
                 success: true,
@@ -415,8 +417,8 @@ export class FileOperationService implements IFileOperationService {
      */
     async getStats(filePath: string): Promise<FileStats> {
         try {
-            const stats = fs.statSync(filePath);
-            const permissions = this.getPermissions(filePath);
+            const stats = await fsp.stat(filePath);
+            const permissions = await this.getPermissions(filePath);
 
             return {
                 size: stats.size,
@@ -435,20 +437,20 @@ export class FileOperationService implements IFileOperationService {
     /**
      * ファイル権限を取得
      */
-    private getPermissions(filePath: string): FilePermissions {
+    private async getPermissions(filePath: string): Promise<FilePermissions> {
         try {
-            fs.accessSync(filePath, fs.constants.R_OK);
+            await fsp.access(filePath, fs.constants.R_OK);
             const readable = true;
 
             let writable = false;
             try {
-                fs.accessSync(filePath, fs.constants.W_OK);
+                await fsp.access(filePath, fs.constants.W_OK);
                 writable = true;
             } catch {}
 
             let executable = false;
             try {
-                fs.accessSync(filePath, fs.constants.X_OK);
+                await fsp.access(filePath, fs.constants.X_OK);
                 executable = true;
             } catch {}
 
@@ -462,7 +464,12 @@ export class FileOperationService implements IFileOperationService {
      * ファイル/フォルダが存在するかチェック
      */
     async exists(filePath: string): Promise<boolean> {
-        return fs.existsSync(filePath);
+        try {
+            await fsp.access(filePath);
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     /**
@@ -506,5 +513,42 @@ export class FileOperationService implements IFileOperationService {
         }
 
         return true;
+    }
+
+    /**
+     * ファイル一覧を取得
+     */
+    async getFileList(dirPath: string): Promise<FileInfo[]> {
+        const files: FileInfo[] = [];
+
+        try {
+            const entries = await fsp.readdir(dirPath, { withFileTypes: true });
+
+            for (const entry of entries) {
+                const fullPath = path.join(dirPath, entry.name);
+                const stat = await fsp.stat(fullPath);
+
+                files.push({
+                    name: entry.name,
+                    path: fullPath,
+                    isDirectory: entry.isDirectory(),
+                    size: entry.isFile() ? stat.size : 0,
+                    modified: stat.mtime,
+                    created: stat.birthtime
+                });
+            }
+
+            // ディレクトリを先に、その後ファイルを名前順でソート
+            files.sort((a, b) => {
+                if (a.isDirectory && !b.isDirectory) { return -1; }
+                if (!a.isDirectory && b.isDirectory) { return 1; }
+                return a.name.localeCompare(b.name);
+            });
+
+        } catch (error) {
+            throw new Error(`Failed to read directory: ${error}`);
+        }
+
+        return files;
     }
 }

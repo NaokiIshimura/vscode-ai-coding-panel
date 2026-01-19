@@ -2,6 +2,7 @@
 out/
 *.js
 !media/xterm/*.js
+!resources/webview/**/*.js
 *.js.map
 
 # Node.js dependencies

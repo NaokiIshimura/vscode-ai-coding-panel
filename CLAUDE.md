@@ -28,26 +28,45 @@ npm run package     # VSIXパッケージ作成
 
 ```
 src/
-├── extension.ts          # activate関数、コマンド登録（~1,377行）
+├── extension.ts          # activate関数（~217行、v0.9.1で87%削減）
+├── commands/             # コマンド登録モジュール（v0.9.1で新設）
+│   ├── types.ts          # CommandDependencies型定義
+│   ├── settings.ts       # 設定関連コマンド（8コマンド）
+│   ├── documentation.ts  # ドキュメント関連コマンド（6コマンド）
+│   ├── terminal.ts       # ターミナル関連コマンド（6コマンド）
+│   ├── plans.ts          # Plans View関連コマンド（13コマンド）
+│   ├── files.ts          # ファイル操作関連コマンド（12コマンド）
+│   └── index.ts          # 統合コマンドレジストリ
 ├── providers/            # UIコンポーネント
 │   ├── PlansProvider.ts  # Plansビュー（フラットリスト、Drag&Drop）
-│   ├── EditorProvider.ts # Markdown EditorのWebView
+│   ├── EditorProvider.ts # Markdown EditorのWebView（v0.9.1で外部HTML/CSS/JS化）
 │   ├── TerminalProvider.ts # xterm.jsターミナルのWebView（スクロール位置自動追従、Claude Code自動検知、セッション再接続機能付き）
 │   ├── MenuProvider.ts   # 設定メニュー
 │   └── items/            # TreeItem定義
 │       ├── FileItem.ts   # ファイル/ディレクトリ項目
 │       └── MenuItem.ts   # メニュー項目
 ├── utils/                # ユーティリティ
-│   ├── fileUtils.ts      # FileInfo, formatFileSize, getFileList, copyDirectory
+│   ├── fileUtils.ts      # FileInfo, formatFileSize, copyDirectory（getFileListは非推奨）
 │   ├── templateUtils.ts  # loadTemplate
 │   └── workspaceSetup.ts # setupSettingsJson, setupTemplate, setupClaudeFolder
 ├── services/             # ビジネスロジック
-│   ├── TerminalService.ts    # PTYセッション管理（node-pty、セッション終了検知、リサイズ最適化、環境変数の安全化）
-│   ├── FileWatcherService.ts # ファイル変更監視
-│   └── ...               # その他サービス
+│   ├── TerminalService.ts      # PTYセッション管理（node-pty、セッション終了検知、リサイズ最適化、環境変数の安全化）
+│   ├── FileOperationService.ts # ファイル操作（v0.9.1で完全非同期化）
+│   ├── TemplateService.ts      # タイムスタンプ・テンプレート生成（v0.9.1で新設）
+│   ├── FileWatcherService.ts   # ファイル変更監視
+│   └── ConfigurationProvider.ts # 設定値取得
 ├── interfaces/           # サービスインターフェース定義
-│   └── ITerminalService.ts   # ターミナルサービスのインターフェース（onSessionExit、getUnavailableReason等）
-└── types/                # 共通型定義
+│   ├── ITerminalService.ts   # ターミナルサービスのインターフェース
+│   ├── IEditorProvider.ts    # Editorプロバイダーのインターフェース
+│   └── ITerminalProvider.ts  # Terminalプロバイダーのインターフェース
+├── types/                # 共通型定義
+│   └── index.ts          # FileOperationResult, FileStats, FilePermissions, DisplayOptions等
+└── resources/            # 外部リソース（v0.9.1で新設）
+    └── webview/
+        └── editor/       # EditorProvider用外部ファイル
+            ├── index.html  # HTMLテンプレート
+            ├── style.css   # スタイルシート
+            └── main.js     # JavaScript
 ```
 
 ### Provider間の依存関係
@@ -56,6 +75,33 @@ src/
 
 - `IEditorProvider`: EditorProviderが実装、PlansProviderが参照
 - `ITerminalProvider`: TerminalProviderが実装、EditorProviderが参照
+
+### v0.9.1リファクタリング
+
+コードベースの保守性と拡張性を向上させるため、大規模なリファクタリングを実施：
+
+**コマンド登録の分割（Phase 1）**
+- extension.tsを1674行から217行に削減（87%削減）
+- コマンドを機能別に6つのモジュールに分割（settings, documentation, terminal, plans, files）
+- 依存性注入パターン（CommandDependencies）を導入
+
+**ファイル操作の非同期化（Phase 2）**
+- FileOperationServiceの全メソッドを非同期化（fs.Sync → fs.promises）
+- UIブロッキングを防止し、パフォーマンスを改善
+
+**テンプレート・タイムスタンプ生成の共通化（Phase 3）**
+- TemplateServiceを新設し、タイムスタンプ生成ロジックを一元化
+- テンプレート変数生成とファイル名生成を共通化
+
+**未使用クラスの整理（Phase 4）**
+- 7つの未使用サービスクラスを削除（ExplorerManager、KeyboardShortcutHandler等）
+- 3つの未使用インターフェースを削除
+- types/index.tsから未使用の型定義を削除
+
+**Webview外部化（Phase 5）**
+- EditorProviderのHTML/CSS/JavaScriptを外部ファイル化
+- resources/webview/editor/配下に分離し、保守性を向上
+- CSP（Content Security Policy）対応
 
 ### Terminal Viewのアーキテクチャ（v0.9.0で改善）
 

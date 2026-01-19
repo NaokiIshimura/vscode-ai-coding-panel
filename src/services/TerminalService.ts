@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import { ITerminalService, TerminalOutputListener } from '../interfaces/ITerminalService';
+import { ITerminalService, TerminalOutputListener, TerminalExitListener } from '../interfaces/ITerminalService';
 
 /**
  * ターミナルセッション情報
@@ -21,6 +21,8 @@ export class TerminalService implements ITerminalService {
     private nodePty: any;
     private _isAvailable: boolean = false;
     private sessionCounter: number = 0;
+    private exitCallbacks: Set<TerminalExitListener> = new Set();
+    private lastResizeParams: Map<string, { cols: number, rows: number }> = new Map();
 
     constructor() {
         this.initNodePty();
@@ -101,12 +103,18 @@ export class TerminalService implements ITerminalService {
         }
 
         try {
-            // 環境変数を設定（UTF-8ロケールを明示的に設定）
-            const env = {
-                ...process.env,
-                LANG: process.env.LANG || 'ja_JP.UTF-8',
-                LC_ALL: process.env.LC_ALL || 'ja_JP.UTF-8'
-            };
+            // 環境変数を設定
+            const env = { ...process.env };
+
+            // LANGは未設定の場合のみデフォルト値を設定
+            if (!env.LANG) {
+                env.LANG = 'en_US.UTF-8';
+            }
+            // LC_ALLは設定しない（ユーザー環境を尊重）
+
+            // TERMとCOLORTERMを明示的に設定
+            env.TERM = 'xterm-256color';
+            env.COLORTERM = 'truecolor';
 
             // PTYプロセスを作成
             const pty = this.nodePty.spawn(shellPath, shellArgs, {
@@ -137,8 +145,21 @@ export class TerminalService implements ITerminalService {
             });
 
             // PTY終了を監視
-            pty.onExit(() => {
+            pty.onExit(({ exitCode, signal }: { exitCode: number, signal?: number }) => {
+                console.log(`Terminal session ${sessionId} exited with code ${exitCode}, signal ${signal}`);
+
+                // 終了コールバックを呼び出す
+                this.exitCallbacks.forEach(callback => {
+                    try {
+                        callback(sessionId, exitCode, signal);
+                    } catch (error) {
+                        console.error('Error in terminal exit callback:', error);
+                    }
+                });
+
+                // セッションを削除
                 this.sessions.delete(sessionId);
+                this.lastResizeParams.delete(sessionId);
             });
 
             return sessionId;
@@ -161,6 +182,7 @@ export class TerminalService implements ITerminalService {
             }
             session.outputCallbacks.clear();
             this.sessions.delete(sessionId);
+            this.lastResizeParams.delete(sessionId);
         }
     }
 
@@ -198,10 +220,17 @@ export class TerminalService implements ITerminalService {
      * ターミナルをリサイズ
      */
     resize(sessionId: string, cols: number, rows: number): void {
+        // 同じサイズの場合はスキップ
+        const last = this.lastResizeParams.get(sessionId);
+        if (last && last.cols === cols && last.rows === rows) {
+            return;
+        }
+
         const session = this.sessions.get(sessionId);
         if (session) {
             try {
                 session.pty.resize(cols, rows);
+                this.lastResizeParams.set(sessionId, { cols, rows });
             } catch (error) {
                 console.error('Error resizing terminal:', error);
             }
@@ -213,6 +242,26 @@ export class TerminalService implements ITerminalService {
      */
     isAvailable(): boolean {
         return this._isAvailable;
+    }
+
+    /**
+     * node-ptyが利用不可の場合の理由を取得
+     */
+    getUnavailableReason(): string {
+        if (this._isAvailable) {
+            return '';
+        }
+        return 'node-pty could not be loaded. Please check your VSCode installation or try restarting VSCode.';
+    }
+
+    /**
+     * セッション終了イベントのリスナーを登録
+     */
+    onSessionExit(callback: TerminalExitListener): vscode.Disposable {
+        this.exitCallbacks.add(callback);
+        return new vscode.Disposable(() => {
+            this.exitCallbacks.delete(callback);
+        });
     }
 
     /**
@@ -229,5 +278,7 @@ export class TerminalService implements ITerminalService {
             session.outputCallbacks.clear();
         });
         this.sessions.clear();
+        this.exitCallbacks.clear();
+        this.lastResizeParams.clear();
     }
 }

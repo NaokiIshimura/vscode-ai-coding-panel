@@ -8,6 +8,7 @@ export interface TerminalTab {
     sessionId: string;
     shellName: string;
     isClaudeCodeRunning: boolean;
+    isClosed?: boolean;
 }
 
 export class TerminalProvider implements vscode.WebviewViewProvider {
@@ -23,6 +24,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         private readonly _extensionUri: vscode.Uri,
     ) {
         this._terminalService = new TerminalService();
+        this._setupSessionExitHandler();
     }
 
     public resolveWebviewView(
@@ -31,6 +33,11 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         _token: vscode.CancellationToken,
     ) {
         this._view = webviewView;
+
+        // Webview再生成時は全セッションを終了してリセット
+        if (this._tabs.length > 0) {
+            this._cleanupAllSessions();
+        }
 
         webviewView.webview.options = {
             enableScripts: true,
@@ -173,6 +180,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                         }
                     }
                     break;
+                case 'reconnect':
+                    await this._reconnectTab(data.tabId);
+                    break;
             }
         });
 
@@ -188,7 +198,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         if (!this._terminalService.isAvailable()) {
             this._view?.webview.postMessage({
                 type: 'error',
-                message: 'Terminal is not available. node-pty could not be loaded.'
+                message: this._terminalService.getUnavailableReason()
             });
             return;
         }
@@ -221,74 +231,8 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
             };
             this._tabs.push(tab);
 
-            // 出力リスナーを登録
-            const disposable = this._terminalService.onOutput(sessionId, (data) => {
-                this._view?.webview.postMessage({
-                    type: 'output',
-                    tabId: tabId,
-                    data: data
-                });
-
-                // エスケープシーケンスを除去してクリーンなテキストを取得
-                const cleanData = data.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
-
-                // Claude Code起動検知
-                if (!tab.isClaudeCodeRunning) {
-                    // Claude Codeの起動パターンを検出
-                    // - "claude>" プロンプト
-                    // - "╭─" や ">" などのClaude Code特有のUI要素
-                    const claudeStartPatterns = [
-                        /claude>\s*$/,           // claude>プロンプト
-                        /╭─/,                    // Claude CodeのUI要素
-                        /Entering interactive mode/i,  // 起動メッセージ
-                        /Type \/help/i           // ヘルプ案内
-                    ];
-                    for (const pattern of claudeStartPatterns) {
-                        if (pattern.test(cleanData)) {
-                            console.log(`[DEBUG] Claude Code Start Detected - Pattern: ${pattern}, Data: "${cleanData.substring(0, 100)}"`);
-                            tab.isClaudeCodeRunning = true;
-                            console.log(`[DEBUG] Sending claudeCodeStateChanged message - tabId: ${tab.id}, isRunning: true`);
-                            this._view?.webview.postMessage({
-                                type: 'claudeCodeStateChanged',
-                                tabId: tab.id,
-                                isRunning: true
-                            });
-                            break;
-                        }
-                    }
-                }
-
-                // Claude Code終了検知
-                if (tab.isClaudeCodeRunning) {
-                    // シェルプロンプトパターンを検出（行末に$や%がある場合）
-                    const shellPromptPattern = /[$%#]\s*$/;
-                    // Claude Code内のプロンプトや要素を除外
-                    const claudeCodePatterns = [
-                        'claude',      // claude文字列を含む
-                        '❯',           // Claude Codeのプロンプト
-                        '╭',           // Claude CodeのUI要素
-                        '╰',           // Claude CodeのUI要素
-                        '─',           // 区切り線
-                        '│'            // Claude CodeのUI要素
-                    ];
-
-                    // これらのパターンのいずれかを含む場合は終了と判定しない
-                    const containsClaudePattern = claudeCodePatterns.some(pattern => cleanData.includes(pattern));
-
-                    // シェルプロンプトパターンにマッチし、かつClaude Codeのパターンを含まない場合のみ終了と判定
-                    if (shellPromptPattern.test(cleanData) && !containsClaudePattern) {
-                        console.log(`[DEBUG] Claude Code Exit Detected - Data: "${cleanData.substring(0, 100)}"`);
-                        tab.isClaudeCodeRunning = false;
-                        console.log(`[DEBUG] Sending claudeCodeStateChanged message - tabId: ${tab.id}, isRunning: false`);
-                        this._view?.webview.postMessage({
-                            type: 'claudeCodeStateChanged',
-                            tabId: tab.id,
-                            isRunning: false
-                        });
-                    }
-                }
-            });
-            this._outputDisposables.set(tabId, disposable);
+            // 出力リスナーを設定
+            this._setupSessionOutput(tab);
 
             // タブ作成を通知
             this._view?.webview.postMessage({
@@ -763,6 +707,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
             const tabs = new Map(); // tabId -> { tabEl, wrapperEl, term, fitAddon }
             let activeTabId = null;
 
+            // リサイズデバウンス用タイマー
+            const resizeTimers = new Map(); // tabId -> timeout
+
             // Claude Code起動状態の管理
             const claudeCodeState = new Map(); // tabId -> boolean
 
@@ -972,35 +919,48 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                 // スクロール位置の初期状態を設定（最下部にいる状態）
                 isAtBottomState.set(tabId, true);
 
-                // リサイズを監視
+                // リサイズを監視（デバウンス付き）
                 const resizeObserver = new ResizeObserver(() => {
                     if (wrapperEl.classList.contains('active')) {
-                        // リサイズ前に最下部にいたかどうかを確認
-                        const wasAtBottom = isAtBottomState.get(tabId);
-
-                        try {
-                            fitAddon.fit();
-                            vscode.postMessage({
-                                type: 'resize',
-                                tabId: tabId,
-                                cols: term.cols,
-                                rows: term.rows
-                            });
-
-                            // 最下部にいた場合は自動的に追従
-                            // fitの処理が完了してからスクロールするため、2回のrequestAnimationFrameを使用
-                            if (wasAtBottom) {
-                                requestAnimationFrame(() => {
-                                    requestAnimationFrame(() => {
-                                        term.scrollToBottom();
-                                        // 確実に最下部にいることを記録
-                                        isAtBottomState.set(tabId, true);
-                                    });
-                                });
-                            }
-                        } catch (e) {
-                            console.error('Resize error:', e);
+                        // 既存のタイマーをクリア
+                        const existingTimer = resizeTimers.get(tabId);
+                        if (existingTimer) {
+                            clearTimeout(existingTimer);
                         }
+
+                        // デバウンス: 200ms後に実行
+                        const timer = setTimeout(() => {
+                            // リサイズ前に最下部にいたかどうかを確認
+                            const wasAtBottom = isAtBottomState.get(tabId);
+
+                            try {
+                                fitAddon.fit();
+                                vscode.postMessage({
+                                    type: 'resize',
+                                    tabId: tabId,
+                                    cols: term.cols,
+                                    rows: term.rows
+                                });
+
+                                // 最下部にいた場合は自動的に追従
+                                // fitの処理が完了してからスクロールするため、2回のrequestAnimationFrameを使用
+                                if (wasAtBottom) {
+                                    requestAnimationFrame(() => {
+                                        requestAnimationFrame(() => {
+                                            term.scrollToBottom();
+                                            // 確実に最下部にいることを記録
+                                            isAtBottomState.set(tabId, true);
+                                        });
+                                    });
+                                }
+                            } catch (e) {
+                                console.error('Resize error:', e);
+                            }
+
+                            resizeTimers.delete(tabId);
+                        }, 200);
+
+                        resizeTimers.set(tabId, timer);
                     }
                 });
                 resizeObserver.observe(wrapperEl);
@@ -1151,6 +1111,38 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                             }
                         }
                         break;
+                    case 'sessionClosed':
+                        {
+                            const tabInfo = tabs.get(message.tabId);
+                            if (tabInfo) {
+                                // ターミナルに終了メッセージを表示
+                                tabInfo.term.write('\\r\\n\\x1b[31m[Session closed - Exit code: ' + message.exitCode + ']\\x1b[0m\\r\\n');
+
+                                // 再接続ボタンを表示
+                                const tabElement = document.querySelector('[data-tab-id="' + message.tabId + '"]');
+                                if (tabElement) {
+                                    const reconnectBtn = document.createElement('button');
+                                    reconnectBtn.className = 'reconnect-button';
+                                    reconnectBtn.textContent = 'Reconnect';
+                                    reconnectBtn.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 10px 20px; background: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer; z-index: 1000;';
+                                    reconnectBtn.onclick = () => {
+                                        vscode.postMessage({ type: 'reconnect', tabId: message.tabId });
+                                        reconnectBtn.remove();
+                                    };
+                                    tabElement.appendChild(reconnectBtn);
+                                }
+                            }
+                        }
+                        break;
+                    case 'sessionReconnected':
+                        {
+                            const tabInfo = tabs.get(message.tabId);
+                            if (tabInfo) {
+                                // ターミナルに再接続メッセージを表示
+                                tabInfo.term.write('\\r\\n\\x1b[32m[Session reconnected]\\x1b[0m\\r\\n');
+                            }
+                        }
+                        break;
                 }
             });
 
@@ -1230,6 +1222,138 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     </script>
 </body>
 </html>`;
+    }
+
+    /**
+     * すべてのセッションをクリーンアップ
+     */
+    private _cleanupAllSessions(): void {
+        for (const tab of this._tabs) {
+            this._terminalService.killSession(tab.sessionId);
+            const disposable = this._outputDisposables.get(tab.sessionId);
+            if (disposable) {
+                disposable.dispose();
+            }
+        }
+        this._outputDisposables.clear();
+        this._tabs = [];
+        this._activeTabId = undefined;
+    }
+
+    /**
+     * セッションの出力リスナーを設定
+     */
+    private _setupSessionOutput(tab: TerminalTab): void {
+        const disposable = this._terminalService.onOutput(tab.sessionId, (data) => {
+            this._view?.webview.postMessage({
+                type: 'output',
+                tabId: tab.id,
+                data: data
+            });
+
+            // エスケープシーケンスを除去してクリーンなテキストを取得
+            const cleanData = data.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+
+            // Claude Code起動検知
+            if (!tab.isClaudeCodeRunning) {
+                const claudeStartPatterns = [
+                    /claude>\s*$/,
+                    /╭─/,
+                    /Entering interactive mode/i,
+                    /Type \/help/i
+                ];
+                for (const pattern of claudeStartPatterns) {
+                    if (pattern.test(cleanData)) {
+                        tab.isClaudeCodeRunning = true;
+                        this._view?.webview.postMessage({
+                            type: 'claudeCodeStateChanged',
+                            tabId: tab.id,
+                            isRunning: true
+                        });
+                        break;
+                    }
+                }
+            }
+
+            // Claude Code終了検知
+            if (tab.isClaudeCodeRunning) {
+                const shellPromptPattern = /[$%#]\s*$/;
+                const claudeCodePatterns = ['claude', '❯', '╭', '╰', '─', '│'];
+                const containsClaudePattern = claudeCodePatterns.some(pattern => cleanData.includes(pattern));
+
+                if (shellPromptPattern.test(cleanData) && !containsClaudePattern) {
+                    tab.isClaudeCodeRunning = false;
+                    this._view?.webview.postMessage({
+                        type: 'claudeCodeStateChanged',
+                        tabId: tab.id,
+                        isRunning: false
+                    });
+                }
+            }
+        });
+
+        this._outputDisposables.set(tab.sessionId, disposable);
+    }
+
+    /**
+     * タブのセッションを再接続
+     */
+    private async _reconnectTab(tabId: string): Promise<void> {
+        const tab = this._tabs.find(t => t.id === tabId);
+        if (!tab) {
+            return;
+        }
+
+        try {
+            // 古い出力リスナーを削除
+            const oldDisposable = this._outputDisposables.get(tab.sessionId);
+            if (oldDisposable) {
+                oldDisposable.dispose();
+                this._outputDisposables.delete(tab.sessionId);
+            }
+
+            // 新しいセッションを作成
+            const newSessionId = await this._terminalService.createSession();
+            tab.sessionId = newSessionId;
+            tab.isClosed = false;
+
+            // 出力リスナーを設定
+            this._setupSessionOutput(tab);
+
+            // Webviewに再接続完了を通知
+            this._view?.webview.postMessage({
+                type: 'sessionReconnected',
+                tabId: tab.id
+            });
+        } catch (error) {
+            console.error('Failed to reconnect terminal session:', error);
+            this._view?.webview.postMessage({
+                type: 'error',
+                message: 'Failed to reconnect terminal session'
+            });
+        }
+    }
+
+    /**
+     * セッション終了ハンドラを設定
+     */
+    private _setupSessionExitHandler(): void {
+        this._terminalService.onSessionExit((sessionId, exitCode, signal) => {
+            const tab = this._tabs.find(t => t.sessionId === sessionId);
+            if (tab) {
+                console.log(`Session ${sessionId} for tab ${tab.id} exited with code ${exitCode}`);
+                tab.isClosed = true;
+                tab.isClaudeCodeRunning = false;
+
+                // Webviewに終了を通知
+                this._view?.webview.postMessage({
+                    type: 'sessionClosed',
+                    tabId: tab.id,
+                    exitCode,
+                    signal
+                });
+            }
+        });
     }
 
     dispose(): void {

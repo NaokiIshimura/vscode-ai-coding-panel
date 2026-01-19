@@ -5,6 +5,34 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.0] - 2026-01-19
+
+### 改善
+- **Terminal Viewの安定性**: ターミナルセッション管理を大幅に改善
+  - セッション終了時に「Reconnect」ボタンを表示し、再接続機能を追加
+  - Webview再読み込み時に自動的にセッションをクリーンアップし、状態の不整合を防止
+  - セッション終了検知機能を追加（終了コードとシグナルをログ出力）
+  - リサイズ処理を200msでデバウンスし、不要な操作を削減
+  - 重複するサイズ変更をスキップして、リサイズ処理を最適化
+
+### 変更
+- **Terminal環境変数**: より安全な環境変数の処理
+  - LANGは未設定の場合のみデフォルト値（`en_US.UTF-8`）を設定
+  - LC_ALLは上書きせず、ユーザー環境設定を尊重
+  - TERMとCOLORTERMを明示的に設定し、ターミナル互換性を向上
+
+### 修正
+- **Terminalエラーメッセージ**: node-pty初期化失敗時のエラー報告を改善
+  - 詳細なエラーメッセージを取得する`getUnavailableReason()`メソッドを追加
+  - ターミナルサービスが利用不可の場合のユーザーガイダンスを改善
+
+### 技術的変更
+- セッションライフサイクル管理のための`ITerminalService.onSessionExit()`メソッドを追加
+- エラー診断のための`ITerminalService.getUnavailableReason()`を追加
+- コードの再利用性向上のため、出力リスナー設定を`_setupSessionOutput()`メソッドにリファクタリング
+- `isClosed`フラグによるターミナルセッション状態管理を改善
+- PTYセッション終了時のクリーンアップ処理を強化
+
 ## [0.8.45] - 2026-01-18
 
 ### 変更
@@ -942,3 +970,4 @@ v0.8.33以前からアップグレードする場合:
 [0.8.43]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.42...v0.8.43
 [0.8.44]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.43...v0.8.44
 [0.8.45]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.44...v0.8.45
+[0.9.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.45...v0.9.0

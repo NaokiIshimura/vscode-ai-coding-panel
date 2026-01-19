@@ -32,7 +32,7 @@ src/
 ├── providers/            # UIコンポーネント
 │   ├── PlansProvider.ts  # Plansビュー（フラットリスト、Drag&Drop）
 │   ├── EditorProvider.ts # Markdown EditorのWebView
-│   ├── TerminalProvider.ts # xterm.jsターミナルのWebView（スクロール位置自動追従、Claude Code自動検知機能付き）
+│   ├── TerminalProvider.ts # xterm.jsターミナルのWebView（スクロール位置自動追従、Claude Code自動検知、セッション再接続機能付き）
 │   ├── MenuProvider.ts   # 設定メニュー
 │   └── items/            # TreeItem定義
 │       ├── FileItem.ts   # ファイル/ディレクトリ項目
@@ -42,10 +42,11 @@ src/
 │   ├── templateUtils.ts  # loadTemplate
 │   └── workspaceSetup.ts # setupSettingsJson, setupTemplate, setupClaudeFolder
 ├── services/             # ビジネスロジック
-│   ├── TerminalService.ts    # PTYセッション管理（node-pty、UTF-8ロケール自動設定）
+│   ├── TerminalService.ts    # PTYセッション管理（node-pty、セッション終了検知、リサイズ最適化、環境変数の安全化）
 │   ├── FileWatcherService.ts # ファイル変更監視
 │   └── ...               # その他サービス
 ├── interfaces/           # サービスインターフェース定義
+│   └── ITerminalService.ts   # ターミナルサービスのインターフェース（onSessionExit、getUnavailableReason等）
 └── types/                # 共通型定義
 ```
 
@@ -55,6 +56,29 @@ src/
 
 - `IEditorProvider`: EditorProviderが実装、PlansProviderが参照
 - `ITerminalProvider`: TerminalProviderが実装、EditorProviderが参照
+
+### Terminal Viewのアーキテクチャ（v0.9.0で改善）
+
+Terminal Viewの安定性向上のため、以下の改善を実施：
+
+**セッション管理**
+- PTYセッションの異常終了を検知し、UI上で「Reconnect」ボタンを表示
+- セッション再接続時に新しいPTYセッションを作成し、状態をリセット
+- Webview再生成時に全セッションを終了してクリーンアップ
+
+**パフォーマンス最適化**
+- Resizeイベントを200msでデバウンス
+- 同じサイズへのリサイズをスキップ
+- 出力リスナーの管理を最適化
+
+**環境変数の安全化**
+- `LANG`は未設定時のみデフォルト値（`en_US.UTF-8`）を設定
+- `LC_ALL`は設定せず、ユーザー環境を尊重
+- `TERM`と`COLORTERM`を明示的に設定
+
+**エラーハンドリング**
+- node-pty利用不可時に具体的なエラーメッセージを表示
+- `getUnavailableReason()`メソッドでエラー理由を取得可能
 
 ### データフロー
 

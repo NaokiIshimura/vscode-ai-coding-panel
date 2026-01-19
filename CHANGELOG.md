@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-01-19
+
+### Improved
+- **Terminal View Stability**: Significant improvements to terminal session management
+  - Added session reconnection capability with "Reconnect" button displayed when session exits
+  - Implemented automatic session cleanup on Webview reload to prevent state inconsistencies
+  - Added session exit detection with exit code and signal logging
+  - Improved resize handling with 200ms debouncing to reduce unnecessary operations
+  - Optimized resize operations to skip duplicate size changes
+
+### Changed
+- **Terminal Environment Variables**: Safer environment variable handling
+  - LANG now only set to default (`en_US.UTF-8`) when not already configured
+  - LC_ALL no longer overridden, respecting user environment settings
+  - TERM and COLORTERM explicitly set for better terminal compatibility
+
+### Fixed
+- **Terminal Error Messages**: Improved error reporting for node-pty initialization failures
+  - Added `getUnavailableReason()` method for detailed error messages
+  - Better user guidance when terminal service is unavailable
+
+### Technical
+- Added `ITerminalService.onSessionExit()` method for session lifecycle management
+- Added `ITerminalService.getUnavailableReason()` for error diagnostics
+- Refactored output listener setup into `_setupSessionOutput()` method for code reusability
+- Improved terminal session state management with `isClosed` flag
+- Enhanced PTY session cleanup on termination
+
 ## [0.8.45] - 2026-01-18
 
 ### Changed
@@ -1470,3 +1498,4 @@ If you are upgrading from v0.8.33 or earlier:
 [0.8.43]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.42...v0.8.43
 [0.8.44]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.43...v0.8.44
 [0.8.45]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.44...v0.8.45
+[0.9.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.45...v0.9.0

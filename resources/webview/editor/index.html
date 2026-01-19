@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src {{cspSource}};">
+    <title>Markdown Editor</title>
+    <link rel="stylesheet" href="{{styleUri}}">
+</head>
+<body>
+    <div id="header">
+        <div class="file-info">
+            <span id="file-path"></span>
+        </div>
+        <div class="header-actions">
+            <button class="edit-button" id="edit-button" title="Edit in VS Code">✏️</button>
+            <button class="save-button" id="save-button" title="Save file">💾</button>
+            <button class="spec-button" id="spec-button" title="Create specification documents">Spec</button>
+            <button class="plan-button" id="plan-button" title="Create implementation plan">Plan</button>
+            <button class="run-button" id="run-button" title="Run task (Cmd+R / Ctrl+R)">Run</button>
+        </div>
+    </div>
+    <div id="editor-container">
+        <span class="readonly-indicator" id="readonly-indicator">Editing in VS Code</span>
+        <textarea id="editor" placeholder="Enter prompt here..."></textarea>
+        <div id="shortcuts-overlay">Cmd+M / Ctrl+M - Create new markdown file
+Cmd+R / Ctrl+R - Run task in terminal</div>
+    </div>
+    <script src="{{scriptUri}}"></script>
+</body>
+</html>

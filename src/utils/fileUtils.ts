@@ -22,7 +22,10 @@ export function formatFileSize(bytes: number): string {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// ファイル一覧を取得する関数
+/**
+ * ファイル一覧を取得する関数
+ * @deprecated Use FileOperationService.getFileList() instead
+ */
 export async function getFileList(dirPath: string): Promise<FileInfo[]> {
     const files: FileInfo[] = [];
 
@@ -45,8 +48,8 @@ export async function getFileList(dirPath: string): Promise<FileInfo[]> {
 
         // ディレクトリを先に、その後ファイルを名前順でソート
         files.sort((a, b) => {
-            if (a.isDirectory && !b.isDirectory) return -1;
-            if (!a.isDirectory && b.isDirectory) return 1;
+            if (a.isDirectory && !b.isDirectory) { return -1; }
+            if (!a.isDirectory && b.isDirectory) { return 1; }
             return a.name.localeCompare(b.name);
         });
 
@@ -55,25 +58,4 @@ export async function getFileList(dirPath: string): Promise<FileInfo[]> {
     }
 
     return files;
-}
-
-// ディレクトリを再帰的にコピーする関数
-export async function copyDirectory(src: string, dest: string): Promise<void> {
-    // コピー先ディレクトリを作成
-    fs.mkdirSync(dest, { recursive: true });
-
-    const entries = fs.readdirSync(src, { withFileTypes: true });
-
-    for (const entry of entries) {
-        const srcPath = path.join(src, entry.name);
-        const destPath = path.join(dest, entry.name);
-
-        if (entry.isDirectory()) {
-            // サブディレクトリを再帰的にコピー
-            await copyDirectory(srcPath, destPath);
-        } else {
-            // ファイルをコピー
-            fs.copyFileSync(srcPath, destPath);
-        }
-    }
 }

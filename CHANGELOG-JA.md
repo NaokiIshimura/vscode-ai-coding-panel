@@ -5,6 +5,49 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.1] - 2026-01-20
+
+### 改善
+- **コード保守性**: コード構成と保守性を向上させる大規模なリファクタリング
+  - extension.tsを1674行から217行に削減（87%削減）
+  - コマンド登録を機能別に6つのモジュールファイルに分割
+  - テスタビリティ向上のため依存性注入パターン（CommandDependencies）を導入
+
+### 変更
+- **ファイル操作**: すべてのファイル操作をasync/awaitパターンに変換
+  - 同期的なfs.*Syncメソッドからfs.promisesに移行
+  - ファイル操作中のUIブロッキングを防止
+  - パフォーマンスとユーザーエクスペリエンスを改善
+
+### 追加
+- **TemplateService**: タイムスタンプとテンプレート生成を一元化
+  - タイムスタンプ生成ロジックを統一（YYYY_MMDD_HHMM_SS形式）
+  - テンプレート変数生成を一元化
+  - Prompt/Task/Specファイルのファイル名生成を標準化
+- **外部Webviewリソース**: EditorProviderのHTML/CSS/JSを外部化
+  - インライン文字列からresources/webview/editor/配下の個別ファイルに移動
+  - 保守性とContent Security Policy準拠を改善
+  - UIコンポーネントの修正とデバッグが容易に
+
+### 削除
+- **未使用サービス**: 7つの未使用サービスクラスをクリーンアップ
+  - ExplorerManager、KeyboardShortcutHandler、ContextMenuManagerを削除
+  - MultiSelectionManager、ClipboardManager、DragDropHandler、SearchServiceを削除
+  - 関連するインターフェース（IExplorerManager、IClipboardManager、IMultiSelectionManager）を削除
+  - 未使用の型定義（ClipboardData、SelectionState、SearchOptions）を削除
+
+### 技術的変更
+- モジュール化されたコマンド登録を持つsrc/commands/ディレクトリを作成
+  - types.ts: CommandDependenciesインターフェース
+  - settings.ts: 8つの設定関連コマンド
+  - documentation.ts: 6つのドキュメントコマンド
+  - terminal.ts: 6つのターミナルコマンド
+  - plans.ts: 13個のPlans Viewコマンド
+  - files.ts: 12個のファイル操作コマンド
+  - index.ts: 集中化されたコマンドレジストリ
+- fileUtils.getFileList()を非推奨とし、FileOperationService.getFileList()を優先
+- resources/webview/editor/にindex.html、style.css、main.jsを作成
+
 ## [0.9.0] - 2026-01-19
 
 ### 改善

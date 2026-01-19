@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-01-20
+
+### Improved
+- **Code Maintainability**: Major refactoring to improve code organization and maintainability
+  - Reduced extension.ts from 1674 lines to 217 lines (87% reduction)
+  - Split command registration into 6 modular files organized by functionality
+  - Introduced dependency injection pattern (CommandDependencies) for better testability
+
+### Changed
+- **File Operations**: Converted all file operations to async/await pattern
+  - Migrated from synchronous fs.*Sync methods to fs.promises
+  - Prevents UI blocking during file operations
+  - Improved performance and user experience
+
+### Added
+- **TemplateService**: Centralized timestamp and template generation
+  - Unified timestamp generation logic (YYYY_MMDD_HHMM_SS format)
+  - Centralized template variable generation
+  - Standardized file name generation for Prompt/Task/Spec files
+- **External Webview Resources**: EditorProvider HTML/CSS/JS externalized
+  - Moved from inline strings to separate files in resources/webview/editor/
+  - Improved maintainability and Content Security Policy compliance
+  - Easier to modify and debug UI components
+
+### Removed
+- **Unused Services**: Cleaned up 7 unused service classes
+  - Removed ExplorerManager, KeyboardShortcutHandler, ContextMenuManager
+  - Removed MultiSelectionManager, ClipboardManager, DragDropHandler, SearchService
+  - Removed associated interfaces (IExplorerManager, IClipboardManager, IMultiSelectionManager)
+  - Removed unused type definitions (ClipboardData, SelectionState, SearchOptions)
+
+### Technical
+- Created src/commands/ directory with modular command registration
+  - types.ts: CommandDependencies interface
+  - settings.ts: 8 settings-related commands
+  - documentation.ts: 6 documentation commands
+  - terminal.ts: 6 terminal commands
+  - plans.ts: 13 Plans View commands
+  - files.ts: 12 file operation commands
+  - index.ts: Centralized command registry
+- Deprecated fileUtils.getFileList() in favor of FileOperationService.getFileList()
+- Created resources/webview/editor/ with index.html, style.css, main.js
+
 ## [0.9.0] - 2026-01-19
 
 ### Improved

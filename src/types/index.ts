@@ -27,39 +27,6 @@ export interface FilePermissions {
     executable: boolean;
 }
 
-// クリップボードデータ
-export interface ClipboardData {
-    items: ClipboardItem[];
-    operation: ClipboardOperation;
-    timestamp: number;
-}
-
-export interface ClipboardItem {
-    path: string;
-    isDirectory: boolean;
-    name: string;
-}
-
-export enum ClipboardOperation {
-    Copy = 'copy',
-    Cut = 'cut'
-}
-
-// 選択状態
-export interface SelectionState {
-    selectedPaths: string[];
-    lastSelectedPath?: string;
-    anchorPath?: string;
-}
-
-// 検索オプション
-export interface SearchOptions {
-    pattern: string;
-    caseSensitive: boolean;
-    useRegex: boolean;
-    includeHidden: boolean;
-}
-
 // 表示オプション
 export interface DisplayOptions {
     sortBy: SortField;

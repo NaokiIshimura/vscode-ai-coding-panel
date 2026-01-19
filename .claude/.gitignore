@@ -1,4 +1,5 @@
 CLAUDE.md
 settings.local.json
 plans/*
+tasks/*
 !commands/*

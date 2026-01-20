@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2026-01-20
+
+### Changed
+- **Editor Spec Command**: Updated `aiCodingSidebar.editor.specCommand` default value
+  - Changed output file from `YYYY_MMDD_HHMM_SS_plans.md` to `YYYY_MMDD_HHMM_SS_tasks.md`
+  - Better aligns with specification workflow: requirements.md, design.md, tasks.md
+
 ## [0.9.1] - 2026-01-20
 
 ### Improved

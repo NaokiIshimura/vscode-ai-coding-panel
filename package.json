@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A sidebar extension that strengthens integration with AI coding tools.Browse and manage files and folders efficiently to keep coding with AI smooth.",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -549,7 +549,7 @@
         },
         "aiCodingSidebar.editor.specCommand": {
           "type": "string",
-          "default": "claude \"Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}.\"",
+          "default": "claude \"Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}.\"",
           "description": "Command template to execute when clicking the Spec button. Use ${filePath} as placeholder for the file path."
         },
         "aiCodingSidebar.terminal.shell": {

@@ -5,6 +5,13 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.2] - 2026-01-20
+
+### 変更
+- **Editorのspecコマンド**: `aiCodingSidebar.editor.specCommand`のデフォルト値を更新
+  - 出力ファイルを`YYYY_MMDD_HHMM_SS_plans.md`から`YYYY_MMDD_HHMM_SS_tasks.md`に変更
+  - 仕様書ワークフロー（requirements.md, design.md, tasks.md）との整合性を向上
+
 ## [0.9.1] - 2026-01-20
 
 ### 改善

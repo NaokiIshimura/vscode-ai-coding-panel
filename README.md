@@ -1,6 +1,6 @@
 # AI Coding Panel
 
-[![Version](https://img.shields.io/badge/version-0.8.45-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-0.9.4-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 A panel extension that strengthens integration with AI coding tools.
 
@@ -60,6 +60,7 @@ Embedded terminal in the panel using xterm.js with full PTY support.
 | Feature | Description |
 | --- | --- |
 | Multiple tabs | Create up to 5 terminal tabs, each with its own independent session. Click the "+" button to add a new tab, click a tab to switch. Close button (× Close) is located at the right end of the shortcut area |
+| Command type icons | Tab names show command type icons (▶️ for Run, 📝 for Plan, 📑 for Spec) when commands are executed from Editor view |
 | Session persistence | Terminal session and output history are preserved when switching views or extensions |
 | Auto-scroll | Automatically maintains scroll position at the bottom when new output arrives or when view is resized (only if already at the bottom) |
 | Clickable links | URLs open in browser, file paths (e.g., `./src/file.ts:123`) open in editor with line navigation |

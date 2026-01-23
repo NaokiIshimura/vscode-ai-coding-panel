@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4] - 2026-01-24
+
+### Added
+- **Terminal Tab Command Type Icons**: Tab names now display command type icons based on the executed command
+  - Run command (▶️): Displays when running tasks from Editor view
+  - Plan command (📝): Displays when creating implementation plans
+  - Spec command (📑): Displays when generating specifications
+  - Icons appear alongside shell name (e.g., `▶️ bash`, `📝 bash`, `📑 bash`)
+
+### Changed
+- **Terminal Tab Name Display**: Removed tab numbers from terminal tab names
+  - Changed from `bash (2)`, `zsh (3)` to simple `bash`, `zsh`
+  - Tab identification now relies on internal IDs rather than display numbers
+  - Cleaner, more focused tab appearance
+
+### Technical
+- Added `commandType` property to `TerminalTab` interface
+- Extended `sendCommand` method with optional `commandType` parameter
+- Implemented WebView message handler for `updateTabCommandType`
+- Command type is passed from EditorProvider when executing Run/Plan/Spec commands
+- Tab info now stores `shellName` for icon display updates
+
 ## [0.9.3] - 2026-01-23
 
 ### Added

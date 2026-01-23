@@ -5,6 +5,30 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.3] - 2026-01-23
+
+### 追加
+- **ターミナルタブ-ファイル関連付け**: Editor viewからコマンドを実行する際、現在のファイルがアクティブなターミナルタブに関連付けられるようになりました
+  - Run/Plan/Specボタンで実行されたコマンドに、実行元ファイルのパスが記録されます
+  - ターミナルタブとファイルの関連付けをMap構造で管理（`tabId -> filePath`）
+- **タブ切り替え時の自動同期**: ターミナルタブを切り替えると、関連付けられたファイルとディレクトリが自動的に開きます
+  - 関連付けられたファイルがEditor viewで自動的に開かれます
+  - Plans viewが関連ファイルの親ディレクトリに自動的に移動します
+  - Terminal、Editor、Plans viewが連携して動作します
+
+### 変更
+- **Provider依存関係**: インターフェースベースの依存性注入を拡張し、ビュー間の連携を強化
+  - `TerminalProvider`に`IEditorProvider`インターフェースを追加（Editor viewとの連携用）
+  - `TerminalProvider`に`IPlansProvider`インターフェースを追加（Plans viewとの連携用）
+  - `ITerminalProvider.sendCommand()`メソッドに`filePath`オプションパラメータを追加
+
+### 技術的変更
+- `_tabFileMap: Map<string, string>`プロパティをTerminalProviderに追加し、タブとファイルの関連付けを管理
+- `_activateTab()`メソッドを拡張し、EditorProviderとPlansProviderの両方を呼び出すように変更
+- `setEditorProvider()`と`setPlansProvider()`メソッドを追加し、Providerインスタンスを注入
+- `_closeTab()`と`_cleanup()`メソッドに関連付けマップのクリーンアップ処理を追加
+- EditorProviderのRun/Plan/Specボタンから`sendCommand()`を呼び出す際、`filePath`パラメータを渡すように更新
+
 ## [0.9.2] - 2026-01-20
 
 ### 変更
@@ -1021,3 +1045,6 @@ v0.8.33以前からアップグレードする場合:
 [0.8.44]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.43...v0.8.44
 [0.8.45]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.44...v0.8.45
 [0.9.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.45...v0.9.0
+[0.9.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.0...v0.9.1
+[0.9.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.1...v0.9.2
+[0.9.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.2...v0.9.3

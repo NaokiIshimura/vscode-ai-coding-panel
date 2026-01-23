@@ -2,6 +2,16 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { TerminalService } from '../services/TerminalService';
 
+// Forward declaration for EditorProvider to avoid circular dependency
+export interface IEditorProvider {
+    showFile(filePath: string): Promise<void>;
+}
+
+// Forward declaration for PlansProvider to avoid circular dependency
+export interface IPlansProvider {
+    setActiveFolder(folderPath: string | undefined, force?: boolean): void;
+}
+
 // Terminal Tab interface
 export interface TerminalTab {
     id: string;
@@ -19,6 +29,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     private _activeTabId?: string;
     private _outputDisposables: Map<string, vscode.Disposable> = new Map();
     private _tabCounter: number = 0;
+    private _tabFileMap: Map<string, string> = new Map(); // tabId -> filePath
+    private _editorProvider?: IEditorProvider;
+    private _plansProvider?: IPlansProvider;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -264,6 +277,18 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                 type: 'tabActivated',
                 tabId: tabId
             });
+
+            // タブに関連するファイルがあればEditorViewで開く
+            const associatedFilePath = this._tabFileMap.get(tabId);
+            if (associatedFilePath && this._editorProvider) {
+                this._editorProvider.showFile(associatedFilePath);
+
+                // Plans Viewのディレクトリも切り替える
+                if (this._plansProvider) {
+                    const parentDir = path.dirname(associatedFilePath);
+                    this._plansProvider.setActiveFolder(parentDir, false);
+                }
+            }
         }
     }
 
@@ -291,6 +316,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
 
         // セッションを終了
         this._terminalService.killSession(tab.sessionId);
+
+        // タブに関連するファイルパスのエントリを削除
+        this._tabFileMap.delete(tabId);
 
         // タブを削除
         this._tabs.splice(tabIndex, 1);
@@ -329,6 +357,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         });
         this._tabs = [];
         this._activeTabId = undefined;
+        this._tabFileMap.clear();
     }
 
     public clearTerminal(): void {
@@ -352,8 +381,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
      * ターミナルにコマンドを送信
      * @param command 実行するコマンド
      * @param addNewline 改行を追加するかどうか（デフォルト: true、Claude Code起動中は自動的にfalse）
+     * @param filePath コマンドを送信したファイルのパス（オプション）
      */
-    public async sendCommand(command: string, addNewline: boolean = true): Promise<void> {
+    public async sendCommand(command: string, addNewline: boolean = true, filePath?: string): Promise<void> {
         // タブがない場合は作成
         if (this._tabs.length === 0) {
             await this._createTab();
@@ -367,6 +397,11 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                 const shouldAddNewline = addNewline && !tab.isClaudeCodeRunning;
                 const commandToSend = shouldAddNewline ? command + '\n' : command;
                 this._terminalService.write(tab.sessionId, commandToSend);
+
+                // ファイルパスが渡された場合、アクティブタブと関連付ける
+                if (filePath) {
+                    this._tabFileMap.set(this._activeTabId, filePath);
+                }
             }
         }
     }
@@ -1354,6 +1389,20 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                 });
             }
         });
+    }
+
+    /**
+     * EditorProviderを設定
+     */
+    public setEditorProvider(provider: IEditorProvider): void {
+        this._editorProvider = provider;
+    }
+
+    /**
+     * PlansProviderを設定
+     */
+    public setPlansProvider(provider: IPlansProvider): void {
+        this._plansProvider = provider;
     }
 
     dispose(): void {

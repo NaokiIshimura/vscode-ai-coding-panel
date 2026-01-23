@@ -67,6 +67,8 @@ Embedded terminal in the panel using xterm.js with full PTY support.
 | Claude Code shortcuts | Quick command buttons for Claude Code: `claude`, `claude -c`, `claude -r` when not running; `/compact`, `/clear` when running |
 | Auto-detect Claude Code | Automatically detects Claude Code start/exit from terminal output and switches shortcut buttons (works even when launched without using shortcut buttons) |
 | Smart Enter key | Sends Enter key with shell commands but omits it for Claude Code commands (prevents unwanted newlines) |
+| Tab-File association | When running commands from Editor view, the current file is associated with the active terminal tab |
+| Auto-sync on tab switch | Switching terminal tabs automatically opens the associated file in Editor view and navigates to its directory in Plans view |
 | Configurable | Customize shell path, font size, font family, cursor style, cursor blink, and scrollback lines |
 | WebView header | Tab bar with shell names, shortcut buttons, plus Clear and Kill buttons for the active tab |
 | Settings icon | Quick access to terminal settings in the title bar |
@@ -284,14 +286,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-0.9.0.vsix
+   code --install-extension ai-coding-sidebar-0.9.3.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-0.9.0.vsix
+code --install-extension releases/ai-coding-sidebar-0.9.3.vsix
 ```
 
 #### Build the package yourself
@@ -305,7 +307,7 @@ code --install-extension releases/ai-coding-sidebar-0.9.0.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-0.9.0.vsix
+   code --install-extension releases/ai-coding-sidebar-0.9.3.vsix
    ```
 4. Restart VS Code.
 

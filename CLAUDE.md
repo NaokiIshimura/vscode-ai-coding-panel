@@ -73,8 +73,9 @@ src/
 
 循環参照を避けるため、インターフェースベースの依存性注入を使用：
 
-- `IEditorProvider`: EditorProviderが実装、PlansProviderが参照
+- `IEditorProvider`: EditorProviderが実装、PlansProvider・TerminalProviderが参照
 - `ITerminalProvider`: TerminalProviderが実装、EditorProviderが参照
+- `IPlansProvider`: PlansProviderが実装、TerminalProviderが参照（v0.9.3で追加）
 
 ### v0.9.1リファクタリング
 
@@ -102,6 +103,26 @@ src/
 - EditorProviderのHTML/CSS/JavaScriptを外部ファイル化
 - resources/webview/editor/配下に分離し、保守性を向上
 - CSP（Content Security Policy）対応
+
+### v0.9.3新機能: Terminal Viewタブ連携
+
+Terminal Viewのタブ選択時に、Editor ViewとPlans Viewが自動的に連携する機能を実装：
+
+**タブとファイルの関連付け**
+- TerminalProviderに`_tabFileMap`でタブIDとファイルパスを管理
+- `sendCommand`メソッドにオプショナルパラメータ`filePath`を追加
+- EditorProviderからコマンド送信時にファイルパスを渡して関連付け
+
+**タブ切り替え時の自動連携**
+- タブ選択時に`_activateTab`メソッドが以下を実行：
+  1. Editor Viewで関連ファイルを開く（`IEditorProvider.showFile()`）
+  2. Plans Viewを親ディレクトリに移動（`IPlansProvider.setActiveFolder()`）
+- 3つのView（Terminal、Editor、Plans）が同期して動作
+
+**インターフェースベースの設計**
+- `IEditorProvider`: TerminalProvider・PlansProviderから参照
+- `IPlansProvider`: TerminalProviderから参照（新規追加）
+- 循環参照を回避し、疎結合なアーキテクチャを維持
 
 ### Terminal Viewのアーキテクチャ（v0.9.0で改善）
 
@@ -134,6 +155,7 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 4. タイムスタンプ形式のMarkdownファイル選択時、EditorProviderにファイルパスが渡される
 5. FileWatcherServiceがファイル変更を監視し、各Providerに通知
 6. EditorのRunボタンでTerminalProviderにコマンドを送信
+7. Terminal Viewでタブを選択すると、Editor ViewとPlans Viewが自動的に連携（v0.9.3）
 
 ### 設定項目（package.json）
 

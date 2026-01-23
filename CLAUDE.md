@@ -124,6 +124,29 @@ Terminal Viewのタブ選択時に、Editor ViewとPlans Viewが自動的に連�
 - `IPlansProvider`: TerminalProviderから参照（新規追加）
 - 循環参照を回避し、疎結合なアーキテクチャを維持
 
+### v0.9.4新機能: Terminal Viewタブ名改善
+
+Terminal Viewのタブ名表示を改善し、コマンド種別に応じたアイコンを表示する機能を実装：
+
+**タブ名から番号を削除**
+- `bash (2)`, `zsh (3)`のようなタブ番号表示を削除
+- シェル名のみのシンプルな表示に変更（例: `bash`, `zsh`）
+- タブの識別は内部IDで管理するため、番号削除による影響なし
+
+**コマンド種別アイコンの表示**
+- Editor Viewから送信されたコマンドの種別に応じてアイコンを表示：
+  - Run: ▶️（例: `▶️ bash`）
+  - Plan: 📝（例: `📝 bash`）
+  - Spec: 📑（例: `📑 bash`）
+- `TerminalTab`インターフェースに`commandType`プロパティを追加
+- `sendCommand`メソッドに`commandType`パラメータを追加
+- WebViewメッセージング（`updateTabCommandType`）でタブタイトルを動的更新
+
+**実装の特徴**
+- 絵文字アイコンは追加のCSS・フォント不要で即座に実装可能
+- commandTypeはオプショナルなため、既存コードへの影響なし
+- タブ情報にshellNameを保存し、アイコン更新時に利用
+
 ### Terminal Viewのアーキテクチャ（v0.9.0で改善）
 
 Terminal Viewの安定性向上のため、以下の改善を実施：

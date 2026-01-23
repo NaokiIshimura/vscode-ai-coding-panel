@@ -19,6 +19,7 @@ export interface TerminalTab {
     shellName: string;
     isClaudeCodeRunning: boolean;
     isClosed?: boolean;
+    commandType?: 'run' | 'plan' | 'spec';
 }
 
 export class TerminalProvider implements vscode.WebviewViewProvider {
@@ -382,8 +383,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
      * @param command 実行するコマンド
      * @param addNewline 改行を追加するかどうか（デフォルト: true、Claude Code起動中は自動的にfalse）
      * @param filePath コマンドを送信したファイルのパス（オプション）
+     * @param commandType コマンドの種類（オプション）
      */
-    public async sendCommand(command: string, addNewline: boolean = true, filePath?: string): Promise<void> {
+    public async sendCommand(command: string, addNewline: boolean = true, filePath?: string, commandType?: 'run' | 'plan' | 'spec'): Promise<void> {
         // タブがない場合は作成
         if (this._tabs.length === 0) {
             await this._createTab();
@@ -401,6 +403,16 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                 // ファイルパスが渡された場合、アクティブタブと関連付ける
                 if (filePath) {
                     this._tabFileMap.set(this._activeTabId, filePath);
+                }
+
+                // commandTypeが渡された場合、タブに保存してUIを更新
+                if (commandType) {
+                    tab.commandType = commandType;
+                    this._view?.webview.postMessage({
+                        type: 'updateTabCommandType',
+                        tabId: this._activeTabId,
+                        commandType: commandType
+                    });
                 }
             }
         }

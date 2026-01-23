@@ -6,7 +6,7 @@ import { PlansProvider } from './PlansProvider';
 // Forward declaration for TerminalProvider to avoid circular dependency
 export interface ITerminalProvider {
     focus(): void;
-    sendCommand(command: string, addNewline?: boolean, filePath?: string): Promise<void>;
+    sendCommand(command: string, addNewline?: boolean, filePath?: string, commandType?: 'run' | 'plan' | 'spec'): Promise<void>;
 }
 
 export class EditorProvider implements vscode.WebviewViewProvider, vscode.Disposable {
@@ -192,7 +192,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         // Send command to Terminal view
                         if (this._terminalProvider) {
                             this._terminalProvider.focus();
-                            await this._terminalProvider.sendCommand(command, true, this._currentFilePath);
+                            await this._terminalProvider.sendCommand(command, true, this._currentFilePath, 'plan');
                         }
                     }
                     break;
@@ -228,7 +228,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         // Send command to Terminal view
                         if (this._terminalProvider) {
                             this._terminalProvider.focus();
-                            await this._terminalProvider.sendCommand(command, true, this._currentFilePath);
+                            await this._terminalProvider.sendCommand(command, true, this._currentFilePath, 'spec');
                         }
                     }
                     break;
@@ -274,7 +274,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         // Send command to Terminal view
                         if (this._terminalProvider) {
                             this._terminalProvider.focus();
-                            await this._terminalProvider.sendCommand(command, true, this._currentFilePath);
+                            await this._terminalProvider.sendCommand(command, true, this._currentFilePath, 'run');
                         }
                     } else if (data.editorContent && data.editorContent.trim()) {
                         // No file open - use the editor content directly

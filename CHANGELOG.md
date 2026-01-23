@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.3] - 2026-01-23
+
+### Added
+- **Terminal Tab-File Association**: Terminal tabs now remember the file used to send commands
+  - When running commands from Editor view, the current file is associated with the active terminal tab
+  - Tab-file mapping is stored in `_tabFileMap` (Map<tabId, filePath>)
+  - Association is created when using Run/Plan/Spec buttons or sending commands with file context
+
+- **Auto-sync on Terminal Tab Switch**: Switching terminal tabs automatically synchronizes Editor and Plans views
+  - Selecting a terminal tab opens the associated file in Editor view
+  - Plans view automatically navigates to the file's parent directory
+  - Provides seamless context switching across Terminal, Editor, and Plans views
+
+### Changed
+- **Provider Dependencies**: Enhanced inter-provider communication with new interfaces
+  - Added `IPlansProvider` interface to TerminalProvider for Plans view control
+  - TerminalProvider now manages references to both EditorProvider and PlansProvider
+  - Maintains loose coupling through interface-based dependency injection
+
+### Technical
+- Extended `sendCommand` method signature with optional `filePath` parameter
+- Added `setPlansProvider` method to TerminalProvider for dependency injection
+- Enhanced `_activateTab` method to trigger Editor and Plans view updates
+- Implemented automatic cleanup of tab-file associations on tab close
+
 ## [0.9.2] - 2026-01-20
 
 ### Changed
@@ -1549,3 +1574,6 @@ If you are upgrading from v0.8.33 or earlier:
 [0.8.44]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.43...v0.8.44
 [0.8.45]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.44...v0.8.45
 [0.9.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.8.45...v0.9.0
+[0.9.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.0...v0.9.1
+[0.9.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.1...v0.9.2
+[0.9.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.2...v0.9.3

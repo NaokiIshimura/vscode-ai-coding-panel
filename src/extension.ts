@@ -50,6 +50,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Terminal Providerを作成（EditorProviderに設定するため先に作成）
     const terminalProvider = new TerminalProvider(context.extensionUri);
     editorProvider.setTerminalProvider(terminalProvider);
+    terminalProvider.setEditorProvider(editorProvider);
+    terminalProvider.setPlansProvider(plansProvider);
 
     // プロジェクトルートを設定
     const initializeWithWorkspaceRoot = async () => {

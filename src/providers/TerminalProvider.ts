@@ -810,7 +810,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                 tabEl.className = 'tab';
                 tabEl.dataset.tabId = tabId;
                 tabEl.innerHTML = \`
-                    <span class="tab-title">\${shellName}\${tabIndex > 1 ? ' (' + tabIndex + ')' : ''}</span>
+                    <span class="tab-title">\${shellName}</span>
                 \`;
 
                 // タブクリックでアクティブ化
@@ -1187,6 +1187,32 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                             if (tabInfo) {
                                 // ターミナルに再接続メッセージを表示
                                 tabInfo.term.write('\\r\\n\\x1b[32m[Session reconnected]\\x1b[0m\\r\\n');
+                            }
+                        }
+                        break;
+                    case 'updateTabCommandType':
+                        {
+                            const tabElement = document.querySelector('[data-tab-id="' + message.tabId + '"]');
+                            if (tabElement) {
+                                const titleSpan = tabElement.querySelector('.tab-title');
+                                if (titleSpan) {
+                                    // コマンドタイプに応じたアイコンを取得
+                                    let icon = '';
+                                    if (message.commandType === 'run') {
+                                        icon = '▶️ ';
+                                    } else if (message.commandType === 'plan') {
+                                        icon = '📝 ';
+                                    } else if (message.commandType === 'spec') {
+                                        icon = '📑 ';
+                                    }
+
+                                    // shellNameを取得（既存のテキストからアイコンを除去）
+                                    const currentText = titleSpan.textContent || '';
+                                    const shellName = currentText.replace(/^[▶️📝📑]\s+/, '');
+
+                                    // アイコン付きでタイトルを更新
+                                    titleSpan.textContent = icon + shellName;
+                                }
                             }
                         }
                         break;

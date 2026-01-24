@@ -1,6 +1,6 @@
 # AI Coding Panel
 
-[![Version](https://img.shields.io/badge/version-0.9.4-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-0.9.5-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 A panel extension that strengthens integration with AI coding tools.
 
@@ -287,14 +287,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-0.9.3.vsix
+   code --install-extension ai-coding-sidebar-0.9.5.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-0.9.3.vsix
+code --install-extension releases/ai-coding-sidebar-0.9.5.vsix
 ```
 
 #### Build the package yourself
@@ -308,7 +308,7 @@ code --install-extension releases/ai-coding-sidebar-0.9.3.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-0.9.3.vsix
+   code --install-extension releases/ai-coding-sidebar-0.9.5.vsix
    ```
 4. Restart VS Code.
 

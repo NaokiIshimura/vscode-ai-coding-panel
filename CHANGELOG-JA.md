@@ -39,12 +39,19 @@
 - **型安全性の向上**: TerminalServiceで型定義を強化
   - `any`型を`IPty`インターフェース定義に置き換え
   - 型安全性とIDE サポートが向上
+- **コード品質の改善**: Low優先度のコード品質問題に対応
+  - デバッグ用のconsole.log文を削除（extension.ts、TerminalProvider.ts）
+  - プロバイダープロパティの用途を明確化するコメントを追加（EditorProvider.ts）
+  - デバウンス時間を1500msから500msに短縮し、レスポンシブ性を向上（PlansProvider.ts）
+  - 詳細なエラーメッセージでエラーハンドリングを改善（PlansProvider.ts）
+  - formatDateTime()メソッドを使用して日時フォーマットを標準化（TemplateService.ts）
 
 ### 技術的変更
 - TerminalProviderとEditorProviderで`_getHtmlForWebview`を非同期化
 - 両プロバイダーで`resolveWebviewView`を非同期化
 - すべての呼び出し元で非同期ファイル操作を適切にawaitするように更新
 - HTML/CSS/JSの外部化によりTerminalProviderから約850行のインラインコードを削減
+- 本番環境向けにデバッグ出力をクリーンアップ
 
 ## [0.9.6] - 2026-01-24
 

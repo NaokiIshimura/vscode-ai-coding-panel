@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.8] - 2026-01-25
+
+### Fixed
+- **Terminal View Loader Display**: Fixed incorrect loader display on terminal focus changes
+  - Improved escape sequence removal to handle CSI and OSC sequences
+  - Added noise filtering for progress bars and control characters
+  - Loader now only displays during actual Claude Code processing
+
+### Removed
+- **Process Monitoring**: Removed ps-tree based process monitoring approach
+  - Reverted to pattern-based detection for better reliability
+  - Simplified state detection logic
+
 ## [0.9.7] - 2026-01-24
 
 ### Added
@@ -1699,3 +1712,4 @@ If you are upgrading from v0.8.33 or earlier:
 [0.9.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.4...v0.9.5
 [0.9.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.5...v0.9.6
 [0.9.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.6...v0.9.7
+[0.9.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.7...v0.9.8

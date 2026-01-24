@@ -258,7 +258,15 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
                 }
 
                 // ファイルが既に存在するかチェック
-                if (fs.existsSync(targetPath)) {
+                let fileExists = false;
+                try {
+                    await fs.promises.access(targetPath);
+                    fileExists = true;
+                } catch {
+                    fileExists = false;
+                }
+
+                if (fileExists) {
                     const answer = await vscode.window.showWarningMessage(
                         `${fileName} already exists. Overwrite?`,
                         'Overwrite',
@@ -270,7 +278,7 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
                 }
 
                 // ファイルをコピー
-                fs.copyFileSync(sourcePath, targetPath);
+                await fs.promises.copyFile(sourcePath, targetPath);
                 copiedFiles.push(fileName);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to copy file: ${error}`);
@@ -307,7 +315,15 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
 
             try {
                 // ファイルが既に存在するかチェック
-                if (fs.existsSync(targetPath)) {
+                let fileExists = false;
+                try {
+                    await fs.promises.access(targetPath);
+                    fileExists = true;
+                } catch {
+                    fileExists = false;
+                }
+
+                if (fileExists) {
                     const answer = await vscode.window.showWarningMessage(
                         `${fileName} already exists. Overwrite?`,
                         'Overwrite',
@@ -319,7 +335,7 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
                 }
 
                 // ファイルをコピー
-                fs.copyFileSync(sourcePath, targetPath);
+                await fs.promises.copyFile(sourcePath, targetPath);
                 copiedFiles.push(fileName);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to copy ${fileName}: ${error}`);

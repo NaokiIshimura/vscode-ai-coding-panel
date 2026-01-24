@@ -17,7 +17,7 @@ export interface TemplateVariables {
  * テンプレート生成サービス
  */
 export class TemplateService {
-    constructor(private context: vscode.ExtensionContext) {}
+    constructor(private context?: vscode.ExtensionContext) {}
 
     /**
      * 日本時間のタイムスタンプを生成（YYYY_MMDD_HHMM_SS形式）
@@ -32,6 +32,21 @@ export class TemplateService {
         const second = String(now.getSeconds()).padStart(2, '0');
 
         return `${year}_${month}${day}_${hour}${minute}_${second}`;
+    }
+
+    /**
+     * 日付時刻を文字列として生成（YYYY/MM/DD HH:MM:SS形式）
+     */
+    formatDateTime(): string {
+        const now = new Date();
+        const year = String(now.getFullYear());
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+        const minute = String(now.getMinutes()).padStart(2, '0');
+        const second = String(now.getSeconds()).padStart(2, '0');
+
+        return `${year}/${month}/${day} ${hour}:${minute}:${second}`;
     }
 
     /**
@@ -82,14 +97,16 @@ export class TemplateService {
         }
 
         // 拡張機能のテンプレートフォルダ内のテンプレートを使用
-        const extensionTemplatePath = path.join(this.context.extensionPath, 'templates', templateFileName);
+        if (this.context) {
+            const extensionTemplatePath = path.join(this.context.extensionPath, 'templates', templateFileName);
 
-        if (fs.existsSync(extensionTemplatePath)) {
-            try {
-                const templateContent = fs.readFileSync(extensionTemplatePath, 'utf8');
-                return this.replaceVariables(templateContent, variables);
-            } catch (error) {
-                console.error(`Failed to load extension template: ${error}`);
+            if (fs.existsSync(extensionTemplatePath)) {
+                try {
+                    const templateContent = fs.readFileSync(extensionTemplatePath, 'utf8');
+                    return this.replaceVariables(templateContent, variables);
+                } catch (error) {
+                    console.error(`Failed to load extension template: ${error}`);
+                }
             }
         }
 

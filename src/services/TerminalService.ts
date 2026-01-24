@@ -20,6 +20,7 @@ export class TerminalService implements ITerminalService {
     private sessions: Map<string, TerminalSession> = new Map();
     private nodePty: any;
     private _isAvailable: boolean = false;
+    private _unavailableReason: string = '';
     private sessionCounter: number = 0;
     private exitCallbacks: Set<TerminalExitListener> = new Set();
     private lastResizeParams: Map<string, { cols: number, rows: number }> = new Map();
@@ -42,6 +43,8 @@ export class TerminalService implements ITerminalService {
             path.join(vscode.env.appRoot, 'node_modules.asar.unpacked', 'node-pty'),
         ];
 
+        const errors: string[] = [];
+
         for (const ptyPath of paths) {
             try {
                 this.nodePty = require(ptyPath);
@@ -49,6 +52,8 @@ export class TerminalService implements ITerminalService {
                 console.log('node-pty loaded from:', ptyPath);
                 return;
             } catch (error) {
+                const errorMsg = error instanceof Error ? error.message : String(error);
+                errors.push(`${ptyPath}: ${errorMsg}`);
                 console.log('Failed to load node-pty from:', ptyPath);
             }
         }
@@ -59,8 +64,11 @@ export class TerminalService implements ITerminalService {
             this._isAvailable = true;
             console.log('node-pty loaded via direct require');
         } catch (fallbackError) {
+            const errorMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+            errors.push(`Direct require: ${errorMsg}`);
             console.error('Failed to load node-pty:', fallbackError);
             this._isAvailable = false;
+            this._unavailableReason = `Failed to load node-pty. Tried paths:\n${errors.join('\n')}`;
         }
     }
 
@@ -251,7 +259,7 @@ export class TerminalService implements ITerminalService {
         if (this._isAvailable) {
             return '';
         }
-        return 'node-pty could not be loaded. Please check your VSCode installation or try restarting VSCode.';
+        return this._unavailableReason || 'node-pty could not be loaded. Please check your VSCode installation or try restarting VSCode.';
     }
 
     /**

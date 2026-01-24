@@ -5,6 +5,40 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.6] - 2026-01-24
+
+### セキュリティ
+- **コマンドインジェクション脆弱性の修正**: EditorProviderで実行されるシェルコマンドのエスケープ処理を強化
+  - シングルクォートベースの安全なエスケープ関数`_escapeShellArgument()`を実装
+  - Run/Plan/Specボタンで実行されるすべてのコマンドで特殊文字を適切にエスケープ
+  - バッククォート（`）、ドル記号（$）、バックスラッシュ（\）などのシェル特殊文字をすべて安全に処理
+  - シェルインジェクション攻撃のリスクを大幅に軽減
+
+### 修正
+- **メモリリークの修正**: TerminalProviderで出力リスナーのDisposableが解放されない問題を修正
+  - `_outputDisposables`のMapキーを統一（`sessionId` → `tab.id`）
+  - `_setupSessionOutput`と`_closeTab`で同じキーを使用
+  - タブ終了時にリソースが確実に解放されるように改善
+
+### 改善
+- **エラーハンドリングの強化**: TerminalServiceでnode-ptyロード失敗時の詳細情報を記録
+  - `_unavailableReason`プロパティを追加
+  - すべての試行パスとエラーメッセージを記録
+  - `getUnavailableReason()`メソッドで詳細なエラー理由を取得可能
+  - トラブルシューティングが容易に
+- **ファイル操作の非同期化**: PlansProviderでファイルコピー処理を非同期化
+  - `fs.copyFileSync` → `fs.promises.copyFile`に変更
+  - `fs.existsSync` → `fs.promises.access`に変更
+  - 大きなファイルのコピー時にUIがブロックされる問題を解消
+- **コード重複の解消**: EditorProviderでTemplateServiceを活用
+  - タイムスタンプ生成ロジックを一元化
+  - `formatDateTime()`メソッドをTemplateServiceに追加
+  - コードの保守性が向上
+
+### 技術的変更
+- TemplateServiceのコンストラクタをオプショナル化（EditorProviderから使用可能に）
+- EditorProvider、PlansProvider、TerminalProvider、TerminalServiceの内部実装を改善
+
 ## [0.9.5] - 2026-01-24
 
 ### 修正
@@ -1086,3 +1120,4 @@ v0.8.33以前からアップグレードする場合:
 [0.9.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.2...v0.9.3
 [0.9.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.3...v0.9.4
 [0.9.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.4...v0.9.5
+[0.9.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.5...v0.9.6

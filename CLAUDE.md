@@ -160,6 +160,32 @@ v0.9.4で実装したタブ名改善機能が正しく動作していなかっ�
 - フロントエンド（WebView）とバックエンド（Extension）のメッセージング実装の不一致を解消
 - タブタイトル更新ロジックを正しく実装し、既存アイコンの削除と新規アイコンの追加を適切に処理
 
+### v0.9.6セキュリティ・品質改善
+
+コードレビューで発見された重要な問題と警告項目をすべて修正：
+
+**セキュリティ修正**
+- コマンドインジェクション脆弱性を修正（EditorProvider.ts）
+  - シングルクォートベースの安全なエスケープ関数を実装
+  - Run/Plan/Specコマンドすべてで特殊文字を適切にエスケープ
+  - シェルインジェクション攻撃のリスクを大幅に軽減
+
+**バグ修正**
+- メモリリーク問題を修正（TerminalProvider.ts）
+  - `_outputDisposables`のキー不一致を解消（`sessionId` → `tab.id`）
+  - Disposableが確実に解放されるように改善
+
+**品質改善**
+- node-ptyエラーハンドリングを強化（TerminalService.ts）
+  - ロード失敗時の詳細情報を記録
+  - `getUnavailableReason()`メソッドで詳細なエラー理由を取得可能
+- ファイル操作を非同期化（PlansProvider.ts）
+  - `fs.copyFileSync` → `fs.promises.copyFile`
+  - UIブロッキングを解消
+- TemplateServiceを活用（EditorProvider.ts）
+  - タイムスタンプ生成ロジックの重複を解消
+  - `formatDateTime()`メソッドを追加
+
 ### Terminal Viewのアーキテクチャ（v0.9.0で改善）
 
 Terminal Viewの安定性向上のため、以下の改善を実施：

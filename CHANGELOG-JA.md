@@ -5,6 +5,20 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.5] - 2026-01-24
+
+### 修正
+- **ターミナルタブのコマンド種別アイコン**: v0.9.4で実装した機能が正しく動作していなかった問題を修正
+  - タブ番号がタブ表示から削除されていなかった問題を修正（TerminalProvider.ts:813）
+  - `updateTabCommandType`のWebViewメッセージハンドラが実装されていなかった問題を修正
+  - コマンド種別アイコン（▶️、📝、📑）がターミナルタブに表示されなかった問題を修正
+  - WebViewとExtension間のメッセージング不整合を解消
+
+### 技術的変更
+- WebViewメッセージハンドラに`updateTabCommandType`ケースを実装
+- 既存アイコンの削除と新規アイコンの追加を適切に処理するロジックを実装
+- タブ作成コードを修正し、タブ番号を削除してシェル名のみを表示するように変更
+
 ## [0.9.4] - 2026-01-24
 
 ### 追加
@@ -1070,3 +1084,5 @@ v0.8.33以前からアップグレードする場合:
 [0.9.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.0...v0.9.1
 [0.9.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.1...v0.9.2
 [0.9.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.2...v0.9.3
+[0.9.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.3...v0.9.4
+[0.9.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.4...v0.9.5

@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.5] - 2026-01-24
+
+### Fixed
+- **Terminal Tab Command Type Icons**: Fixed v0.9.4 feature that was not working properly
+  - Tab numbers were not removed from tab display (TerminalProvider.ts:813)
+  - WebView message handler for `updateTabCommandType` was missing
+  - Command type icons (▶️, 📝, 📑) were not appearing on terminal tabs
+  - Resolved frontend-backend messaging inconsistency between WebView and Extension
+
+### Technical
+- Implemented `updateTabCommandType` case in WebView message handler
+- Added proper icon display logic with existing icon removal and new icon addition
+- Fixed tab creation code to remove tab numbers and display only shell name
+
 ## [0.9.4] - 2026-01-24
 
 ### Added
@@ -1599,3 +1613,5 @@ If you are upgrading from v0.8.33 or earlier:
 [0.9.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.0...v0.9.1
 [0.9.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.1...v0.9.2
 [0.9.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.2...v0.9.3
+[0.9.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.3...v0.9.4
+[0.9.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.4...v0.9.5

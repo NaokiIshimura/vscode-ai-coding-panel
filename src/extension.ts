@@ -18,8 +18,6 @@ import { setupSettingsJson, setupTemplate, setupClaudeFolder } from './utils/wor
 import { loadTemplate } from './utils/templateUtils';
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('AI Coding Panel activated');
-
     // サービスクラスの初期化
     const fileOperationService = new FileOperationService();
     const templateService = new TemplateService(context);

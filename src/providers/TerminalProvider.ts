@@ -489,9 +489,6 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         const cursorBlink = config.get<boolean>('terminal.cursorBlink', true);
         const scrollback = config.get<number>('terminal.scrollback', 1000);
 
-        // デバッグ: 設定値をログ出力
-        console.log('[TerminalProvider] Terminal config:', { fontSize, fontFamily, cursorStyle, cursorBlink, scrollback });
-
         // ターミナル設定をJSON文字列として生成し、HTMLエスケープ
         // data属性に埋め込むため、HTMLエスケープが必要
         const configObj = {
@@ -523,12 +520,6 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
             .replace(/\{\{xtermUnicode11Uri\}\}/g, xtermUnicode11Uri.toString())
             .replace(/\{\{terminalConfig\}\}/g, terminalConfig)
             .replace(/\{\{scriptUri\}\}/g, scriptUri.toString());
-
-        // デバッグ: terminalConfig部分を抽出してログ出力
-        const configMatch = result.match(/data-terminal-config="([^"]*)"/);
-        if (configMatch) {
-            console.log('[TerminalProvider] Generated terminalConfig in HTML data attribute:', configMatch[1]);
-        }
 
         return result;
     }

@@ -18,7 +18,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     private _currentContent?: string;
     private _pendingContent?: string;
     private _isDirty: boolean = false;
+    // PlansProvider reference for file details display (legacy name, same as _plansProvider)
     private _detailsProvider?: PlansProvider;
+    // PlansProvider reference for directory navigation and file operations
     private _plansProvider?: PlansProvider;
     private _terminalProvider?: ITerminalProvider;
     private _pendingFileToRestore?: string;

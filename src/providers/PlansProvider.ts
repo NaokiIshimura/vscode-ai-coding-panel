@@ -390,9 +390,10 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         if (this.refreshDebounceTimer) {
             clearTimeout(this.refreshDebounceTimer);
         }
+        // Debounce time set to 500ms to balance responsiveness and performance
         this.refreshDebounceTimer = setTimeout(() => {
             this.refresh(targetPath);
-        }, 1500);
+        }, 500);
     }
 
     getTreeItem(element: FileItem): vscode.TreeItem {
@@ -678,7 +679,9 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
                 stat.birthtime
             );
         } catch (error) {
-            console.error('Failed to get parent folder:', error);
+            // Log error and return undefined to gracefully handle missing directories
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            console.error(`Failed to get parent folder stats for ${parentPath}:`, errorMsg);
             return undefined;
         }
     }

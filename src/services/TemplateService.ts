@@ -58,14 +58,13 @@ export class TemplateService {
         fileName: string,
         timestamp: string
     ): TemplateVariables {
-        const now = new Date();
         const filePath = path.join(targetPath, fileName);
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
         const relativeFilePath = workspaceRoot ? path.relative(workspaceRoot, filePath) : filePath;
         const relativeDirPath = workspaceRoot ? path.relative(workspaceRoot, targetPath) : targetPath;
 
         return {
-            datetime: now.toLocaleString(),
+            datetime: this.formatDateTime(),
             filename: fileName,
             timestamp: timestamp,
             filepath: relativeFilePath,

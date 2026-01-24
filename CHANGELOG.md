@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.6] - 2026-01-24
+
+### Security
+- **Command Injection Vulnerability Fix**: Enhanced shell command escaping in EditorProvider
+  - Implemented safe escaping function `_escapeShellArgument()` using single-quote wrapping
+  - All commands executed from Run/Plan/Spec buttons now properly escape special characters
+  - Handles shell special characters including backticks (`), dollar signs ($), backslashes (\), etc.
+  - Significantly reduced shell injection attack risk
+
+### Fixed
+- **Memory Leak Fix**: Fixed issue where output listener Disposables were not being released in TerminalProvider
+  - Unified `_outputDisposables` Map key usage (changed from `sessionId` to `tab.id`)
+  - Consistent key usage between `_setupSessionOutput` and `_closeTab` methods
+  - Resources are now reliably released when tabs are closed
+
+### Improved
+- **Enhanced Error Handling**: TerminalService now records detailed information when node-pty loading fails
+  - Added `_unavailableReason` property
+  - Records all attempted paths and error messages
+  - `getUnavailableReason()` method provides detailed error reasons
+  - Easier troubleshooting for node-pty issues
+- **Asynchronous File Operations**: PlansProvider file copying is now asynchronous
+  - Changed from `fs.copyFileSync` to `fs.promises.copyFile`
+  - Changed from `fs.existsSync` to `fs.promises.access`
+  - Eliminates UI blocking when copying large files
+- **Code Deduplication**: EditorProvider now utilizes TemplateService
+  - Centralized timestamp generation logic
+  - Added `formatDateTime()` method to TemplateService
+  - Improved code maintainability
+
+### Technical
+- Made TemplateService constructor optional (usable from EditorProvider)
+- Improved internal implementation of EditorProvider, PlansProvider, TerminalProvider, and TerminalService
+
 ## [0.9.5] - 2026-01-24
 
 ### Fixed
@@ -1615,3 +1649,4 @@ If you are upgrading from v0.8.33 or earlier:
 [0.9.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.2...v0.9.3
 [0.9.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.3...v0.9.4
 [0.9.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.4...v0.9.5
+[0.9.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.5...v0.9.6

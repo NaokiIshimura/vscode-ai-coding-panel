@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PlansProvider } from './PlansProvider';
+import { TemplateService } from '../services/TemplateService';
 
 // Forward declaration for TerminalProvider to avoid circular dependency
 export interface ITerminalProvider {
@@ -21,10 +22,12 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     private _terminalProvider?: ITerminalProvider;
     private _pendingFileToRestore?: string;
     private _disposables: vscode.Disposable[] = [];
+    private templateService: TemplateService;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
     ) {
+        this.templateService = new TemplateService();
         // アクティブエディタの変更を監視
         this._disposables.push(
             vscode.window.onDidChangeActiveTextEditor(editor => {
@@ -90,6 +93,15 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             }
         }
         return false;
+    }
+
+    /**
+     * シェルコマンドの引数を安全にエスケープ
+     * シングルクォートで囲み、内部のシングルクォートをエスケープ
+     */
+    private _escapeShellArgument(arg: string): string {
+        // シングルクォートで囲み、内部のシングルクォートを '\'' に置換
+        return `'${arg.replace(/'/g, "'\\''")}'`;
     }
 
     private _checkAndUpdateReadOnlyState(editor: vscode.TextEditor | undefined) {
@@ -186,8 +198,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
                         const commandTemplate = config.get<string>('editor.planCommand', 'claude "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."');
 
-                        // Replace ${filePath} placeholder with actual file path
-                        const command = commandTemplate.replace(/\$\{filePath\}/g, relativeFilePath.trim());
+                        // Replace ${filePath} placeholder with safely escaped file path
+                        const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
+                        const command = commandTemplate.replace(/\$\{filePath\}/g, escapedPath);
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {
@@ -222,8 +235,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
                         const commandTemplate = config.get<string>('editor.specCommand', 'claude "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."');
 
-                        // Replace ${filePath} placeholder with actual file path
-                        const command = commandTemplate.replace(/\$\{filePath\}/g, relativeFilePath.trim());
+                        // Replace ${filePath} placeholder with safely escaped file path
+                        const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
+                        const command = commandTemplate.replace(/\$\{filePath\}/g, escapedPath);
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {
@@ -268,8 +282,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
                         const commandTemplate = config.get<string>('editor.runCommand', 'claude "${filePath}"');
 
-                        // Replace ${filePath} placeholder with actual file path
-                        const command = commandTemplate.replace(/\$\{filePath\}/g, relativeFilePath.trim());
+                        // Replace ${filePath} placeholder with safely escaped file path
+                        const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
+                        const command = commandTemplate.replace(/\$\{filePath\}/g, escapedPath);
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {
@@ -281,9 +296,8 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
                         const commandTemplate = config.get<string>('editor.runCommandWithoutFile', 'claude "${editorContent}"');
 
-                        // Replace ${editorContent} placeholder with actual editor content
-                        // Escape double quotes in editor content to prevent command injection
-                        const escapedContent = data.editorContent.trim().replace(/"/g, '\\"');
+                        // Replace ${editorContent} placeholder with safely escaped editor content
+                        const escapedContent = this._escapeShellArgument(data.editorContent.trim());
                         const command = commandTemplate.replace(/\$\{editorContent\}/g, escapedContent);
 
                         // Send command to Terminal view
@@ -599,22 +613,14 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             await fs.promises.mkdir(savePath, { recursive: true });
 
             // タイムスタンプ付きファイル名を生成 (YYYY_MMDD_HHMM_SS形式)
-            const now = new Date();
-            const year = String(now.getFullYear());
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hour = String(now.getHours()).padStart(2, '0');
-            const minute = String(now.getMinutes()).padStart(2, '0');
-            const second = String(now.getSeconds()).padStart(2, '0');
-            const timestamp = `${year}_${month}${day}_${hour}${minute}_${second}`;
-
+            const timestamp = this.templateService.generateTimestamp();
             const fileName = `${timestamp}_PROMPT.md`;
             const filePath = path.join(savePath, fileName);
 
             try {
                 // メタ情報フッターを作成
                 const relativeDirPath = workspaceRoot ? path.relative(workspaceRoot, savePath) : savePath;
-                const datetime = `${year}/${month}/${day} ${hour}:${minute}:${second}`;
+                const datetime = this.templateService.formatDateTime();
                 const footer = `\n\n---\n\nworking dir: ${relativeDirPath}\nprompt file: ${fileName}\ndatetime   : ${datetime}\n`;
 
                 // コンテンツの末尾にフッターを追加

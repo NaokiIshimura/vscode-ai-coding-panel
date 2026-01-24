@@ -1365,7 +1365,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
             }
         });
 
-        this._outputDisposables.set(tab.sessionId, disposable);
+        this._outputDisposables.set(tab.id, disposable);
     }
 
     /**
@@ -1379,10 +1379,10 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
 
         try {
             // 古い出力リスナーを削除
-            const oldDisposable = this._outputDisposables.get(tab.sessionId);
+            const oldDisposable = this._outputDisposables.get(tab.id);
             if (oldDisposable) {
                 oldDisposable.dispose();
-                this._outputDisposables.delete(tab.sessionId);
+                this._outputDisposables.delete(tab.id);
             }
 
             // 新しいセッションを作成

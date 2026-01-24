@@ -18,7 +18,8 @@ export interface TerminalTab {
     id: string;
     sessionId: string;
     shellName: string;
-    isClaudeCodeRunning: boolean;
+    isClaudeCodeRunning: boolean;  // Claude Codeセッションが起動しているか
+    isProcessing?: boolean;         // Claude Codeが処理中か
     isClosed?: boolean;
     commandType?: 'run' | 'plan' | 'spec';
 }
@@ -34,6 +35,12 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     private _tabFileMap: Map<string, string> = new Map(); // tabId -> filePath
     private _editorProvider?: IEditorProvider;
     private _plansProvider?: IPlansProvider;
+
+    // 出力監視の状態管理
+    private _outputMonitor = new Map<string, {
+        lastOutputTime: number;
+        processingTimeout?: NodeJS.Timeout;
+    }>();
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -155,11 +162,13 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                                     // 状態を更新
                                     if (startsClaudeCode) {
                                         tab.isClaudeCodeRunning = true;
+                                        tab.isProcessing = true;
                                         // WebViewに状態を通知
                                         this._view?.webview.postMessage({
                                             type: 'claudeCodeStateChanged',
                                             tabId: tab.id,
-                                            isRunning: true
+                                            isRunning: true,
+                                            isProcessing: true
                                         });
                                     }
                                 }
@@ -172,10 +181,12 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                         const tab = this._tabs.find(t => t.id === this._activeTabId);
                         if (tab) {
                             tab.isClaudeCodeRunning = false;
+                            tab.isProcessing = false;
                             this._view?.webview.postMessage({
                                 type: 'claudeCodeStateChanged',
                                 tabId: tab.id,
-                                isRunning: false
+                                isRunning: false,
+                                isProcessing: false
                             });
                         }
                     }
@@ -187,10 +198,12 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                         const tab = this._tabs.find(t => t.id === tabId);
                         if (tab) {
                             tab.isClaudeCodeRunning = isRunning;
+                            tab.isProcessing = isRunning;
                             this._view?.webview.postMessage({
                                 type: 'claudeCodeStateChanged',
                                 tabId: tab.id,
-                                isRunning: isRunning
+                                isRunning: isRunning,
+                                isProcessing: isRunning
                             });
                         }
                     }
@@ -256,12 +269,16 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                 id: tabId,
                 sessionId: sessionId,
                 shellName: shellName,
-                isClaudeCodeRunning: false
+                isClaudeCodeRunning: false,
+                isProcessing: false
             };
             this._tabs.push(tab);
 
             // 出力リスナーを設定
             this._setupSessionOutput(tab);
+
+            // 出力監視を設定
+            this._setupOutputMonitoring(tab);
 
             // タブ作成を通知
             this._view?.webview.postMessage({
@@ -415,6 +432,18 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                 const commandToSend = shouldAddNewline ? command + '\n' : command;
                 this._terminalService.write(tab.sessionId, commandToSend);
 
+                // Claude Codeコマンドの場合、即座に処理中状態にする
+                if (command.trim().startsWith('claude')) {
+                    tab.isClaudeCodeRunning = true;
+                    tab.isProcessing = true;
+                    this._view?.webview.postMessage({
+                        type: 'claudeCodeStateChanged',
+                        tabId: tab.id,
+                        isRunning: true,
+                        isProcessing: true
+                    });
+                }
+
                 // ファイルパスが渡された場合、アクティブタブと関連付ける
                 if (filePath) {
                     this._tabFileMap.set(this._activeTabId, filePath);
@@ -528,16 +557,25 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
      * すべてのセッションをクリーンアップ
      */
     private _cleanupAllSessions(): void {
+        // 各タブのクリーンアップ
         for (const tab of this._tabs) {
+            // 出力監視をクリーンアップ
+            this._cleanupOutputMonitoring(tab.id);
+
+            // セッションを終了
             this._terminalService.killSession(tab.sessionId);
+
+            // 出力リスナーを削除
             const disposable = this._outputDisposables.get(tab.id);
             if (disposable) {
                 disposable.dispose();
             }
         }
+
         this._outputDisposables.clear();
         this._tabs = [];
         this._activeTabId = undefined;
+        this._tabFileMap.clear();
     }
 
     /**
@@ -545,54 +583,155 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
      */
     private _setupSessionOutput(tab: TerminalTab): void {
         const disposable = this._terminalService.onOutput(tab.sessionId, (data) => {
+            // WebViewに出力を転送
             this._view?.webview.postMessage({
                 type: 'output',
                 tabId: tab.id,
                 data: data
             });
 
-            // エスケープシーケンスを除去してクリーンなテキストを取得
-            const cleanData = data.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+            // Claude Code状態検知
+            this._detectClaudeCodeState(tab, data);
 
-            // Claude Code起動検知
-            if (!tab.isClaudeCodeRunning) {
-                const claudeStartPatterns = [
-                    /claude>\s*$/,
-                    /╭─/,
-                    /Entering interactive mode/i,
-                    /Type \/help/i
-                ];
-                for (const pattern of claudeStartPatterns) {
-                    if (pattern.test(cleanData)) {
-                        tab.isClaudeCodeRunning = true;
-                        this._view?.webview.postMessage({
-                            type: 'claudeCodeStateChanged',
-                            tabId: tab.id,
-                            isRunning: true
-                        });
-                        break;
-                    }
-                }
-            }
-
-            // Claude Code終了検知
-            if (tab.isClaudeCodeRunning) {
-                const shellPromptPattern = /[$%#]\s*$/;
-                const claudeCodePatterns = ['claude', '❯', '╭', '╰', '─', '│'];
-                const containsClaudePattern = claudeCodePatterns.some(pattern => cleanData.includes(pattern));
-
-                if (shellPromptPattern.test(cleanData) && !containsClaudePattern) {
-                    tab.isClaudeCodeRunning = false;
-                    this._view?.webview.postMessage({
-                        type: 'claudeCodeStateChanged',
-                        tabId: tab.id,
-                        isRunning: false
-                    });
-                }
-            }
+            // 処理完了検知（タイムアウトベース）
+            this._handleProcessingTimeout(tab, data);
         });
 
         this._outputDisposables.set(tab.id, disposable);
+    }
+
+    /**
+     * 出力の処理（Codexの指摘P2に対応: 適応的タイムアウト）
+     */
+    private _handleProcessingTimeout(tab: TerminalTab, data: string): void {
+        const monitor = this._outputMonitor.get(tab.id);
+        if (!monitor) {
+            return;
+        }
+
+        // より包括的なエスケープシーケンス除去
+        let cleanData = data;
+        // CSI sequences: ESC [ ... letter
+        cleanData = cleanData.replace(/\x1b\[[\?0-9;]*[a-zA-Z]/g, '');
+        // OSC sequences: ESC ] ... BEL or ESC ] ... ESC \
+        cleanData = cleanData.replace(/\x1b\].*?(\x07|\x1b\\)/g, '');
+        // 制御文字（ただしタブ、改行、キャリッジリターンは残す）
+        cleanData = cleanData.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+
+        const trimmedData = cleanData.trim();
+
+        // 無視すべき出力パターン（フォーカス変更などのノイズ）
+        const isNoise = trimmedData.length === 0 || // 空出力
+                        /^[\r\n\s]+$/.test(trimmedData) || // 改行・空白のみ
+                        /^[T]+$/.test(trimmedData) || // "T"のみ（制御文字の残骸）
+                        /^[\u2800-\u28FF\u2500-\u257F\u25A0-\u25FF]+$/.test(trimmedData) || // ボックス描画文字やブロック要素のみ
+                        /^[░▒▓█◯◉●○◐◑◒◓]+$/.test(trimmedData) || // プログレスバーなどのグラフィック文字のみ
+                        /^\[░+\]\s*\d+%$/.test(trimmedData) || // プログレスバー形式
+                        /^❯\s*$/.test(trimmedData); // プロンプトのみ
+
+        if (isNoise) {
+            return;
+        }
+
+        // Claude Code起動中かつ処理中でない場合、処理中にする
+        if (tab.isClaudeCodeRunning && !tab.isProcessing) {
+            console.log(`[TerminalProvider] Processing started in tab ${tab.id}`);
+            tab.isProcessing = true;
+            this._view?.webview.postMessage({
+                type: 'claudeCodeStateChanged',
+                tabId: tab.id,
+                isRunning: true,
+                isProcessing: true
+            });
+        }
+
+        monitor.lastOutputTime = Date.now();
+
+        // 既存のタイムアウトをクリア
+        if (monitor.processingTimeout) {
+            clearTimeout(monitor.processingTimeout);
+        }
+
+        // 2秒間意味のある出力がなければ処理完了とみなす
+        monitor.processingTimeout = setTimeout(() => {
+            if (tab.isClaudeCodeRunning && tab.isProcessing) {
+                console.log(`[TerminalProvider] Processing completed in tab ${tab.id}`);
+                tab.isProcessing = false;
+
+                this._view?.webview.postMessage({
+                    type: 'claudeCodeStateChanged',
+                    tabId: tab.id,
+                    isRunning: true,
+                    isProcessing: false
+                });
+            }
+        }, 2000);
+    }
+
+    /**
+     * フォールバック: パターンマッチングによる検知
+     */
+    private _detectClaudeCodeState(tab: TerminalTab, data: string): void {
+        // より包括的なエスケープシーケンス除去
+        let cleanData = data;
+        // CSI sequences: ESC [ ... letter
+        cleanData = cleanData.replace(/\x1b\[[\?0-9;]*[a-zA-Z]/g, '');
+        // OSC sequences: ESC ] ... BEL or ESC ] ... ESC \
+        cleanData = cleanData.replace(/\x1b\].*?(\x07|\x1b\\)/g, '');
+        // 制御文字（ただしタブ、改行、キャリッジリターンは残す）
+        cleanData = cleanData.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+
+        // Claude Code起動検知
+        if (!tab.isClaudeCodeRunning) {
+            const claudeStartPatterns = [
+                /claude>\s*$/,
+                /╭─/,
+                /Entering interactive mode/i,
+                /Type \/help/i,
+                /Claude Code.*❯/,
+                /❯\s*$/,
+                /Claude Code/
+            ];
+
+            for (const pattern of claudeStartPatterns) {
+                if (pattern.test(cleanData)) {
+                    console.log(`[TerminalProvider] Claude Code session started`);
+                    tab.isClaudeCodeRunning = true;
+                    tab.isProcessing = true;
+
+                    this._view?.webview.postMessage({
+                        type: 'claudeCodeStateChanged',
+                        tabId: tab.id,
+                        isRunning: true,
+                        isProcessing: true
+                    });
+                    break;
+                }
+            }
+        }
+
+        // Claude Code終了検知（シェルプロンプトの検出）
+        if (tab.isClaudeCodeRunning) {
+            const lines = cleanData.split('\n').filter(line => line.trim().length > 0);
+            const recentLines = lines.slice(-10);
+            const userPromptPattern = /[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+/;
+
+            for (const line of recentLines) {
+                if (userPromptPattern.test(line)) {
+                    console.log(`[TerminalProvider] Claude Code session ended`);
+                    tab.isClaudeCodeRunning = false;
+                    tab.isProcessing = false;
+
+                    this._view?.webview.postMessage({
+                        type: 'claudeCodeStateChanged',
+                        tabId: tab.id,
+                        isRunning: false,
+                        isProcessing: false
+                    });
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -605,6 +744,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         }
 
         try {
+            // 出力監視をクリーンアップ
+            this._cleanupOutputMonitoring(tab.id);
+
             // 古い出力リスナーを削除
             const oldDisposable = this._outputDisposables.get(tab.id);
             if (oldDisposable) {
@@ -616,9 +758,14 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
             const newSessionId = await this._terminalService.createSession();
             tab.sessionId = newSessionId;
             tab.isClosed = false;
+            tab.isClaudeCodeRunning = false;
+            tab.isProcessing = false;
 
             // 出力リスナーを設定
             this._setupSessionOutput(tab);
+
+            // 出力監視を設定
+            this._setupOutputMonitoring(tab);
 
             // Webviewに再接続完了を通知
             this._view?.webview.postMessage({
@@ -654,6 +801,29 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                 });
             }
         });
+    }
+
+    /**
+     * プロセス監視の初期化チェック
+     */
+    /**
+     * 出力監視のセットアップ
+     */
+    private _setupOutputMonitoring(tab: TerminalTab): void {
+        this._outputMonitor.set(tab.id, {
+            lastOutputTime: Date.now()
+        });
+    }
+
+    /**
+     * 出力監視のクリーンアップ
+     */
+    private _cleanupOutputMonitoring(tabId: string): void {
+        const monitor = this._outputMonitor.get(tabId);
+        if (monitor?.processingTimeout) {
+            clearTimeout(monitor.processingTimeout);
+        }
+        this._outputMonitor.delete(tabId);
     }
 
     /**

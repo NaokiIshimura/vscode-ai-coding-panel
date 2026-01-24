@@ -29,17 +29,39 @@
 
     // ショートカットバーの表示切り替え
     function updateShortcutBar(isClaudeCodeRunning) {
-        console.log('[DEBUG WebView] updateShortcutBar called - isClaudeCodeRunning: ' + isClaudeCodeRunning);
         const notRunning = document.getElementById('shortcuts-not-running');
         const running = document.getElementById('shortcuts-running');
         if (isClaudeCodeRunning) {
             notRunning.classList.add('hidden');
             running.classList.remove('hidden');
-            console.log('[DEBUG WebView] Showing Claude Code shortcuts (/compact, /clear)');
         } else {
             notRunning.classList.remove('hidden');
             running.classList.add('hidden');
-            console.log('[DEBUG WebView] Showing shell shortcuts (claude, claude -c, claude -r)');
+        }
+    }
+
+    /**
+     * タブのローダー表示を更新
+     * @param {string} tabId - タブID
+     * @param {boolean} isRunning - Claude Code実行中か
+     */
+    function updateTabLoader(tabId, isRunning) {
+        const tabElement = document.querySelector('[data-tab-id="' + tabId + '"]');
+        if (!tabElement) {
+            console.warn('[updateTabLoader] Tab element not found:', tabId);
+            return;
+        }
+
+        const loader = tabElement.querySelector('.loader');
+        if (!loader) {
+            console.warn('[updateTabLoader] Loader element not found in tab:', tabId);
+            return;
+        }
+
+        if (isRunning) {
+            loader.classList.remove('hidden');
+        } else {
+            loader.classList.add('hidden');
         }
     }
 
@@ -51,12 +73,10 @@
 
     // ターミナル設定（bodyのdata属性から読み取る）
     const terminalConfigStr = document.body.dataset.terminalConfig;
-    console.log('[Terminal Config] Raw config string:', terminalConfigStr);
 
     let terminalConfig;
     try {
         terminalConfig = JSON.parse(terminalConfigStr);
-        console.log('[Terminal Config] Parsed config:', terminalConfig);
     } catch (error) {
         console.error('[Terminal Config] Failed to parse config:', error);
         // フォールバック設定
@@ -67,7 +87,6 @@
             cursorBlink: true,
             scrollback: 1000
         };
-        console.log('[Terminal Config] Using fallback config:', terminalConfig);
     }
 
     // 新しいタブを作成
@@ -77,7 +96,10 @@
         tabEl.className = 'tab';
         tabEl.dataset.tabId = tabId;
         tabEl.innerHTML = `
-            <span class="tab-title">${shellName}</span>
+            <span class="tab-title">
+                <span class="loader hidden"></span>
+                <span class="shell-name">${shellName}</span>
+            </span>
         `;
 
         // タブクリックでアクティブ化
@@ -285,7 +307,6 @@
 
     // タブをアクティブ化
     function activateTab(tabId) {
-        console.log('[DEBUG WebView] activateTab called - tabId: ' + tabId);
         const tabInfo = tabs.get(tabId);
         if (!tabInfo) return;
 
@@ -302,7 +323,6 @@
 
         // ショートカットバーの状態を更新
         const isClaudeCodeRunning = claudeCodeState.get(tabId) || false;
-        console.log('[DEBUG WebView] activateTab - tabId: ' + tabId + ', isClaudeCodeRunning: ' + isClaudeCodeRunning);
         updateShortcutBar(isClaudeCodeRunning);
 
         // スクロールボタンの表示状態を更新
@@ -404,13 +424,15 @@
                 break;
             case 'claudeCodeStateChanged':
                 {
-                    console.log('[DEBUG WebView] Received claudeCodeStateChanged - tabId: ' + message.tabId + ', isRunning: ' + message.isRunning + ', activeTabId: ' + activeTabId);
                     claudeCodeState.set(message.tabId, message.isRunning);
+
+                    // ローダー表示を更新（処理中状態に基づく）
+                    const isProcessing = message.isProcessing !== undefined ? message.isProcessing : message.isRunning;
+                    updateTabLoader(message.tabId, isProcessing);
+
+                    // アクティブタブの場合、ショートカットバーも更新
                     if (message.tabId === activeTabId) {
-                        console.log('[DEBUG WebView] This is the active tab, updating shortcut bar');
                         updateShortcutBar(message.isRunning);
-                    } else {
-                        console.log('[DEBUG WebView] This is not the active tab, state saved but not updating UI');
                     }
                 }
                 break;
@@ -461,26 +483,60 @@
             case 'updateTabCommandType':
                 {
                     const tabElement = document.querySelector('[data-tab-id="' + message.tabId + '"]');
-                    if (tabElement) {
-                        const titleSpan = tabElement.querySelector('.tab-title');
-                        if (titleSpan) {
-                            // コマンドタイプに応じたアイコンを取得
-                            let icon = '';
-                            if (message.commandType === 'run') {
-                                icon = '▶️ ';
-                            } else if (message.commandType === 'plan') {
-                                icon = '📝 ';
-                            } else if (message.commandType === 'spec') {
-                                icon = '📑 ';
-                            }
+                    if (!tabElement) break;
 
-                            // shellNameを取得（既存のテキストからアイコンを除去）
-                            const currentText = titleSpan.textContent || '';
-                            const shellName = currentText.replace(/^[▶️📝📑]\s+/, '');
+                    const titleSpan = tabElement.querySelector('.tab-title');
+                    if (!titleSpan) break;
 
-                            // アイコン付きでタイトルを更新
-                            titleSpan.textContent = icon + shellName;
+                    // 既存のローダーとシェル名要素を取得または作成
+                    let loader = titleSpan.querySelector('.loader');
+                    let shellNameSpan = titleSpan.querySelector('.shell-name');
+
+                    if (!loader) {
+                        loader = document.createElement('span');
+                        loader.className = 'loader hidden';
+                    }
+                    if (!shellNameSpan) {
+                        shellNameSpan = document.createElement('span');
+                        shellNameSpan.className = 'shell-name';
+                        // 旧形式のテキストからシェル名を抽出
+                        const currentText = titleSpan.textContent || '';
+                        shellNameSpan.textContent = currentText.replace(/^[▶️📝📑]\s*/, '').trim();
+                    }
+
+                    // ローダーの状態を保持
+                    const isLoaderVisible = !loader.classList.contains('hidden');
+
+                    // コマンドアイコンを作成/更新/削除
+                    let commandIcon = titleSpan.querySelector('.command-icon');
+                    if (message.commandType) {
+                        if (!commandIcon) {
+                            commandIcon = document.createElement('span');
+                            commandIcon.className = 'command-icon';
                         }
+
+                        const icons = {
+                            'run': '▶️',
+                            'plan': '📝',
+                            'spec': '📑'
+                        };
+                        commandIcon.textContent = icons[message.commandType] || '';
+                    } else if (commandIcon) {
+                        commandIcon.remove();
+                        commandIcon = null;
+                    }
+
+                    // タブタイトルを再構築（コマンドアイコン -> ローダー -> シェル名）
+                    titleSpan.innerHTML = '';
+                    if (commandIcon) titleSpan.appendChild(commandIcon);
+                    titleSpan.appendChild(loader);
+                    titleSpan.appendChild(shellNameSpan);
+
+                    // ローダーの状態を復元
+                    if (isLoaderVisible) {
+                        loader.classList.remove('hidden');
+                    } else {
+                        loader.classList.add('hidden');
                     }
                 }
                 break;

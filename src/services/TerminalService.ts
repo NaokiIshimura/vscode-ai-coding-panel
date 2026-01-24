@@ -27,6 +27,9 @@ interface TerminalSession {
 }
 
 /**
+ * プロセス情報
+ */
+/**
  * ターミナルサービスの実装
  * VSCode内蔵のnode-ptyを使用してPTYセッションを管理
  */
@@ -285,6 +288,7 @@ export class TerminalService implements ITerminalService {
             this.exitCallbacks.delete(callback);
         });
     }
+
 
     /**
      * リソースを破棄

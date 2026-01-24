@@ -5,6 +5,19 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.8] - 2026-01-25
+
+### 修正
+- **Terminal Viewローダー表示**: ターミナルのフォーカス変更時に誤ってローダーが表示される問題を修正
+  - エスケープシーケンス除去を改善し、CSI・OSCシーケンスに対応
+  - プログレスバーや制御文字のノイズフィルタリングを追加
+  - ローダーは実際のClaude Code処理中のみ表示されるように改善
+
+### 削除
+- **プロセス監視機能**: ps-treeベースのプロセス監視アプローチを削除
+  - より信頼性の高いパターンベース検知に戻した
+  - 状態検知ロジックを簡素化
+
 ## [0.9.7] - 2026-01-24
 
 ### 追加
@@ -1170,3 +1183,4 @@ v0.8.33以前からアップグレードする場合:
 [0.9.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.4...v0.9.5
 [0.9.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.5...v0.9.6
 [0.9.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.6...v0.9.7
+[0.9.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.7...v0.9.8

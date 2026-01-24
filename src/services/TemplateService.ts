@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
 
 /**
  * テンプレート変数
@@ -57,14 +58,13 @@ export class TemplateService {
         fileName: string,
         timestamp: string
     ): TemplateVariables {
-        const now = new Date();
         const filePath = path.join(targetPath, fileName);
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
         const relativeFilePath = workspaceRoot ? path.relative(workspaceRoot, filePath) : filePath;
         const relativeDirPath = workspaceRoot ? path.relative(workspaceRoot, targetPath) : targetPath;
 
         return {
-            datetime: now.toLocaleString(),
+            datetime: this.formatDateTime(),
             filename: fileName,
             timestamp: timestamp,
             filepath: relativeFilePath,
@@ -75,7 +75,7 @@ export class TemplateService {
     /**
      * テンプレートをロードして変数を置換
      */
-    loadTemplate(variables: TemplateVariables, templateType: 'prompt' | 'task' | 'spec'): string {
+    async loadTemplate(variables: TemplateVariables, templateType: 'prompt' | 'task' | 'spec'): Promise<string> {
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
         if (!workspaceRoot) {
@@ -87,26 +87,24 @@ export class TemplateService {
         const workspaceTemplatePath = path.join(workspaceRoot, '.vscode', 'templates', templateFileName);
 
         // ワークスペース内にテンプレートが存在する場合はそれを使用
-        if (fs.existsSync(workspaceTemplatePath)) {
-            try {
-                const templateContent = fs.readFileSync(workspaceTemplatePath, 'utf8');
-                return this.replaceVariables(templateContent, variables);
-            } catch (error) {
-                console.error(`Failed to load workspace template: ${error}`);
-            }
+        try {
+            await fsPromises.access(workspaceTemplatePath);
+            const templateContent = await fsPromises.readFile(workspaceTemplatePath, 'utf8');
+            return this.replaceVariables(templateContent, variables);
+        } catch (error) {
+            // ファイルが存在しない場合は次のステップへ
         }
 
         // 拡張機能のテンプレートフォルダ内のテンプレートを使用
         if (this.context) {
             const extensionTemplatePath = path.join(this.context.extensionPath, 'templates', templateFileName);
 
-            if (fs.existsSync(extensionTemplatePath)) {
-                try {
-                    const templateContent = fs.readFileSync(extensionTemplatePath, 'utf8');
-                    return this.replaceVariables(templateContent, variables);
-                } catch (error) {
-                    console.error(`Failed to load extension template: ${error}`);
-                }
+            try {
+                await fsPromises.access(extensionTemplatePath);
+                const templateContent = await fsPromises.readFile(extensionTemplatePath, 'utf8');
+                return this.replaceVariables(templateContent, variables);
+            } catch (error) {
+                // ファイルが存在しない場合は次のステップへ
             }
         }
 

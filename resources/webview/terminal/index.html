@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}};">
+    <title>Terminal</title>
+    <link rel="stylesheet" href="{{xtermCssUri}}">
+    <link rel="stylesheet" href="{{styleUri}}">
+</head>
+<body data-terminal-config="{{terminalConfig}}">
+    <div id="header">
+        <div class="header-row-1">
+            <div class="tab-bar" id="tab-bar">
+                <button class="new-tab-button" id="new-tab-button" title="New Terminal">+</button>
+            </div>
+            <div class="header-actions">
+                <button class="header-button" id="clear-button" title="Clear Terminal">Clear</button>
+                <button class="header-button danger" id="kill-button" title="Close Terminal">Close</button>
+            </div>
+        </div>
+        <div class="header-row-2" id="shortcut-bar">
+            <div class="shortcut-group" id="shortcuts-not-running">
+                <button class="shortcut-button" id="btn-claude">claude</button>
+                <button class="shortcut-button" id="btn-claude-c">claude -c</button>
+                <button class="shortcut-button" id="btn-claude-r">claude -r</button>
+                <button class="shortcut-button toggle-button" id="toggle-shortcuts-1" title="Switch to Claude Code commands">⇆</button>
+            </div>
+            <div class="shortcut-group hidden" id="shortcuts-running">
+                <button class="shortcut-button" id="btn-compact">/compact</button>
+                <button class="shortcut-button" id="btn-clear">/clear</button>
+                <button class="shortcut-button toggle-button" id="toggle-shortcuts-2" title="Switch to shell commands">⇆</button>
+            </div>
+        </div>
+    </div>
+    <div id="error-message"></div>
+    <div id="terminals-container"></div>
+    <div id="terminal-overlay">
+        <button class="scroll-to-bottom-button hidden" id="scroll-to-bottom-btn" title="Scroll to bottom">↓</button>
+    </div>
+    <script src="{{xtermJsUri}}"></script>
+    <script src="{{xtermFitUri}}"></script>
+    <script src="{{xtermWebLinksUri}}"></script>
+    <script src="{{xtermUnicode11Uri}}"></script>
+    <script src="{{scriptUri}}"></script>
+</body>
+</html>

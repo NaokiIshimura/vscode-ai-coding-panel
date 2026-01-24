@@ -18,8 +18,6 @@ import { setupSettingsJson, setupTemplate, setupClaudeFolder } from './utils/wor
 import { loadTemplate } from './utils/templateUtils';
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('AI Coding Panel activated');
-
     // サービスクラスの初期化
     const fileOperationService = new FileOperationService();
     const templateService = new TemplateService(context);
@@ -78,7 +76,7 @@ export function activate(context: vscode.ExtensionContext) {
             relativePath = undefined;
         }
 
-        plansProvider.setRootPath(targetPath, relativePath);
+        await plansProvider.setRootPath(targetPath, relativePath);
     };
 
     // ビューを登録
@@ -129,8 +127,10 @@ export function activate(context: vscode.ExtensionContext) {
     // 初期化を実行
     initializeWithWorkspaceRoot();
 
-
     // 初期化後にルートフォルダを選択状態にする
+    // Note: TreeViewの初期化とDOM構築が完了するまで500ms待機
+    // initializeWithWorkspaceRoot()とTreeViewのセットアップは非同期だが
+    // ツリーの初回レンダリングを待つ必要があるため遅延を設定
     setTimeout(async () => {
         const currentRootPath = plansProvider.getRootPath();
         if (currentRootPath) {

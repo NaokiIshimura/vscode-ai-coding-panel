@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { PlansProvider } from './PlansProvider';
 import { TemplateService } from '../services/TemplateService';
@@ -26,8 +27,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
+        templateService?: TemplateService,
     ) {
-        this.templateService = new TemplateService();
+        this.templateService = templateService ?? new TemplateService();
         // アクティブエディタの変更を監視
         this._disposables.push(
             vscode.window.onDidChangeActiveTextEditor(editor => {
@@ -119,7 +121,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         });
     }
 
-    public resolveWebviewView(
+    public async resolveWebviewView(
         webviewView: vscode.WebviewView,
         context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken,
@@ -131,7 +133,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             localResourceRoots: [this._extensionUri]
         };
 
-        webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+        webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
 
         // Webviewからのメッセージを受信
         webviewView.webview.onDidReceiveMessage(async (data) => {
@@ -648,6 +650,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                 this._detailsProvider?.refresh();
 
                 // 保存したディレクトリに移動してファイルを選択
+                // Note: refresh()後にツリービューのDOM更新が完了するまで待機するため、100msの遅延を設定
                 setTimeout(async () => {
                     // Tasks viewでディレクトリを表示
                     await this._plansProvider?.revealDirectory(savePath);
@@ -688,15 +691,14 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         this._disposables = [];
     }
 
-    private _getHtmlForWebview(webview: vscode.Webview): string {
+    private async _getHtmlForWebview(webview: vscode.Webview): Promise<string> {
         // 外部リソースのURIを取得
         const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'resources', 'webview', 'editor', 'style.css'));
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'resources', 'webview', 'editor', 'main.js'));
         const templatePath = vscode.Uri.joinPath(this._extensionUri, 'resources', 'webview', 'editor', 'index.html');
 
-        // HTMLテンプレートを読み込み
-        const fs = require('fs');
-        const htmlTemplate = fs.readFileSync(templatePath.fsPath, 'utf8');
+        // HTMLテンプレートを読み込み（非同期化）
+        const htmlTemplate = await fsPromises.readFile(templatePath.fsPath, 'utf8');
 
         // テンプレート変数を置換
         return htmlTemplate

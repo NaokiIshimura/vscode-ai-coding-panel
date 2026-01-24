@@ -4,11 +4,25 @@ import * as os from 'os';
 import { ITerminalService, TerminalOutputListener, TerminalExitListener } from '../interfaces/ITerminalService';
 
 /**
+ * node-ptyの最小型定義
+ * 実際にはnode-ptyパッケージのIPtyインターフェースを使用すべきですが、
+ * VSCode組み込みのnode-ptyを使用しているため、型定義を直接インポートできません
+ */
+interface IPty {
+    onData(listener: (data: string) => void): void;
+    onExit(listener: (exitCode: { exitCode: number; signal?: number }) => void): void;
+    write(data: string): void;
+    resize(cols: number, rows: number): void;
+    kill(signal?: string): void;
+    pid: number;
+}
+
+/**
  * ターミナルセッション情報
  */
 interface TerminalSession {
     id: string;
-    pty: any; // node-pty.IPty
+    pty: IPty;
     outputCallbacks: Set<TerminalOutputListener>;
 }
 

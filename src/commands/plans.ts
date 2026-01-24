@@ -49,7 +49,7 @@ export function registerPlansCommands(
                 // プロジェクトルートより上には移動しない
                 const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
                 if (workspaceRoot && parentPath.startsWith(workspaceRoot) && parentPath !== currentPath) {
-                    plansProvider.setRootPath(parentPath);
+                    await plansProvider.setRootPath(parentPath);
                 } else {
                     vscode.window.showInformationMessage('No parent folder available');
                 }
@@ -121,7 +121,7 @@ export function registerPlansCommands(
                 }
 
                 // パスを設定（存在しなくても設定）
-                plansProvider.setRootPath(targetPath);
+                await plansProvider.setRootPath(targetPath);
 
                 // 設定に保存するかユーザーに確認
                 const relativePathToSave = trimmedPath === '' || trimmedPath === '.' ? '' : trimmedPath;
@@ -499,7 +499,7 @@ export function registerPlansCommands(
                 const displayPath = relativePath || path.relative(workspaceRoot, targetPath);
                 vscode.window.showInformationMessage(`Created directory: ${displayPath}`);
 
-                plansProvider.setRootPath(targetPath, relativePath);
+                await plansProvider.setRootPath(targetPath, relativePath);
 
                 setTimeout(async () => {
                     await selectInitialFolder(treeView, targetPath);

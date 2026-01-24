@@ -63,7 +63,11 @@ src/
 │   └── index.ts          # FileOperationResult, FileStats, FilePermissions, DisplayOptions等
 └── resources/            # 外部リソース（v0.9.1で新設）
     └── webview/
-        └── editor/       # EditorProvider用外部ファイル
+        ├── editor/       # EditorProvider用外部ファイル
+        │   ├── index.html  # HTMLテンプレート
+        │   ├── style.css   # スタイルシート
+        │   └── main.js     # JavaScript
+        └── terminal/     # TerminalProvider用外部ファイル（v0.9.7で追加）
             ├── index.html  # HTMLテンプレート
             ├── style.css   # スタイルシート
             └── main.js     # JavaScript
@@ -185,6 +189,42 @@ v0.9.4で実装したタブ名改善機能が正しく動作していなかっ�
 - TemplateServiceを活用（EditorProvider.ts）
   - タイムスタンプ生成ロジックの重複を解消
   - `formatDateTime()`メソッドを追加
+
+### v0.9.7 WebView外部化・CSP改善・非同期化
+
+Terminal ViewのWebView外部化とセキュリティ改善、非同期ファイル操作への移行を実施：
+
+**Terminal WebView外部化（Phase 1）**
+- TerminalProviderのHTML/CSS/JavaScriptを外部ファイル化
+- resources/webview/terminal/配下に分離（index.html、style.css、main.js）
+- CSP（Content Security Policy）対応を強化
+- インラインスクリプトを排除し、セキュリティを向上
+
+**ターミナル設定の安全な読み込み**
+- インラインスクリプトをdata属性経由に変更
+- `<body data-terminal-config="{...}">` 形式で設定を埋め込み
+- main.jsでJSON.parseして読み取り、CSP違反を回避
+- フォント設定（fontFamily、fontSize等）が正しく適用されるように修正
+
+**CSP改善**
+- xterm.jsのインラインスタイル使用のため `style-src 'unsafe-inline'` を追加
+- Unicode11 Addon対応のため `allowProposedApi: true` を設定
+- CSP違反エラーを解消し、日本語等のCJK文字が正しく表示されるように改善
+
+**非同期ファイル操作への移行（Phase 2）**
+- PlansProviderの全ファイル操作を非同期化
+  - `setRootPath` を async に変更（fsPromises.stat使用）
+  - `getFilesInDirectory` を async に変更（fsPromises.readdir/stat使用）
+  - `findOldestTargetFile` を async に変更
+- EditorProviderの改善
+  - `_getHtmlForWebview` を async に変更（fsPromises.readFile使用）
+  - TemplateServiceのDI対応を追加
+- TemplateServiceの非同期化
+  - `loadTemplate` を async に変更（fsPromises.access/readFile使用）
+
+**型安全性の向上**
+- TerminalServiceにIPtyインターフェース定義を追加
+- `any`型を排除し、型安全性を向上
 
 ### Terminal Viewのアーキテクチャ（v0.9.0で改善）
 

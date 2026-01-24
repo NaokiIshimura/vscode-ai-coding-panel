@@ -5,6 +5,47 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.7] - 2026-01-24
+
+### 追加
+- **Terminal WebViewの外部化**: Terminal viewのHTML/CSS/JavaScriptを外部ファイルに分離
+  - `resources/webview/terminal/`ディレクトリにindex.html、style.css、main.jsを作成
+  - コードの保守性と関心の分離を改善
+  - Editor viewの外部リソース構造（v0.9.1）と統一
+
+### 変更
+- **CSP（Content Security Policy）の改善**: セキュリティを向上させつつ、機能性を維持
+  - インラインスクリプトを削除し、厳格なCSP要件に準拠
+  - ターミナル設定をdata属性（`data-terminal-config`）経由で渡すように変更
+  - xterm.jsのインラインスタイル使用のため`style-src 'unsafe-inline'`を追加
+  - Unicode11 Addonサポートのため`allowProposedApi: true`を有効化
+
+### 修正
+- **ターミナルフォント設定の不具合**: フォント設定が適用されない問題を修正
+  - ターミナル設定（fontFamily、fontSize等）がCSPによってブロックされていた問題を解消
+  - インラインスクリプト（`<script>window.terminalConfig = {...}</script>`）からdata属性アプローチに変更
+  - 設定がHTML経由で安全に渡され、main.jsでパースされるように改善
+  - Unicode11 Addonにより、CJK文字（日本語、中国語、韓国語）が正しく表示されるように修正
+
+### 改善
+- **ファイル操作の非同期化**: すべてのファイル操作をasync/awaitに移行
+  - PlansProvider: `setRootPath`、`getFilesInDirectory`、`findOldestTargetFile`を非同期化
+  - EditorProvider: `_getHtmlForWebview`で`fs.promises.readFile`を使用
+  - TemplateService: `loadTemplate`を`fs.promises.access`と`readFile`で非同期化
+  - UIブロッキングを解消し、レスポンシブ性を向上
+- **依存性注入の改善**: EditorProviderでTemplateServiceのDIをサポート
+  - コンストラクタにオプショナル`templateService`パラメータを追加
+  - テスタビリティとコードの柔軟性が向上
+- **型安全性の向上**: TerminalServiceで型定義を強化
+  - `any`型を`IPty`インターフェース定義に置き換え
+  - 型安全性とIDE サポートが向上
+
+### 技術的変更
+- TerminalProviderとEditorProviderで`_getHtmlForWebview`を非同期化
+- 両プロバイダーで`resolveWebviewView`を非同期化
+- すべての呼び出し元で非同期ファイル操作を適切にawaitするように更新
+- HTML/CSS/JSの外部化によりTerminalProviderから約850行のインラインコードを削減
+
 ## [0.9.6] - 2026-01-24
 
 ### セキュリティ
@@ -1121,3 +1162,4 @@ v0.8.33以前からアップグレードする場合:
 [0.9.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.3...v0.9.4
 [0.9.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.4...v0.9.5
 [0.9.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.5...v0.9.6
+[0.9.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.6...v0.9.7

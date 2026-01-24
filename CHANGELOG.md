@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.7] - 2026-01-24
+
+### Added
+- **Terminal WebView Externalization**: Moved Terminal view's HTML/CSS/JavaScript to external files
+  - Created `resources/webview/terminal/` directory with index.html, style.css, and main.js
+  - Improved code maintainability and separation of concerns
+  - Consistent with Editor view's external resource structure (v0.9.1)
+
+### Changed
+- **CSP (Content Security Policy) Enhancement**: Improved security while maintaining functionality
+  - Removed inline scripts to comply with strict CSP requirements
+  - Terminal configuration now passed via data attributes (`data-terminal-config`)
+  - Added `style-src 'unsafe-inline'` for xterm.js inline style requirements
+  - Enabled `allowProposedApi: true` for Unicode11 Addon support
+
+### Fixed
+- **Terminal Font Configuration**: Fixed issue where font settings were not being applied
+  - Terminal configuration (fontFamily, fontSize, etc.) was blocked by CSP
+  - Changed from inline script (`<script>window.terminalConfig = {...}</script>`) to data attribute approach
+  - Configuration is now safely passed through HTML and parsed in main.js
+  - CJK characters (Japanese, Chinese, Korean) now display correctly with Unicode11 Addon
+
+### Improved
+- **Asynchronous File Operations**: Migrated all file operations to async/await
+  - PlansProvider: `setRootPath`, `getFilesInDirectory`, `findOldestTargetFile` now async
+  - EditorProvider: `_getHtmlForWebview` now uses `fs.promises.readFile`
+  - TemplateService: `loadTemplate` now async with `fs.promises.access` and `readFile`
+  - Eliminates UI blocking and improves responsiveness
+- **Dependency Injection**: EditorProvider now supports TemplateService DI
+  - Added optional `templateService` parameter to constructor
+  - Improved testability and code flexibility
+- **Type Safety**: Enhanced type definitions in TerminalService
+  - Added `IPty` interface definition replacing `any` type
+  - Better type safety and IDE support
+
+### Technical
+- Changed `_getHtmlForWebview` to async in TerminalProvider and EditorProvider
+- Changed `resolveWebviewView` to async in both providers
+- Updated all callers to properly await async file operations
+- HTML/CSS/JS externalization eliminates ~850 lines of inline code in TerminalProvider
+
 ## [0.9.6] - 2026-01-24
 
 ### Security
@@ -1650,3 +1691,4 @@ If you are upgrading from v0.8.33 or earlier:
 [0.9.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.3...v0.9.4
 [0.9.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.4...v0.9.5
 [0.9.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.5...v0.9.6
+[0.9.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.6...v0.9.7

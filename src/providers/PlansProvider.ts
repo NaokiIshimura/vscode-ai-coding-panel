@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { FileItem } from './items/FileItem';
 import { FileInfo } from '../utils/fileUtils';
@@ -64,14 +65,14 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         this.treeView = treeView;
     }
 
-    setRootPath(rootPath: string, relativePath?: string): void {
+    async setRootPath(rootPath: string, relativePath?: string): Promise<void> {
         this.rootPath = rootPath;
         this.activeFolderPath = rootPath;
         this.configuredRelativePath = relativePath;
 
-        // パスの存在確認
+        // パスの存在確認（非同期化）
         try {
-            const stat = fs.statSync(rootPath);
+            const stat = await fsPromises.stat(rootPath);
             if (!stat.isDirectory()) {
                 this.pathNotFound = true;
             } else {
@@ -494,7 +495,7 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         }
 
         try {
-            const files = this.getFilesInDirectory(currentPath);
+            const files = await this.getFilesInDirectory(currentPath);
             const currentFilePath = this.editorProvider?.getCurrentFilePath();
             const fileItems = files.map(file => {
                 const isDirectory = file.isDirectory;
@@ -563,9 +564,9 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
      * 指定されたディレクトリ内から対象ファイル（TASK.md、PROMPT.md、SPEC.md）を検索し、
      * 最も古いファイルのパスを返す
      */
-    private findOldestTargetFile(dirPath: string): string | undefined {
+    private async findOldestTargetFile(dirPath: string): Promise<string | undefined> {
         try {
-            const files = this.getFilesInDirectory(dirPath);
+            const files = await this.getFilesInDirectory(dirPath);
 
             // 対象ファイルのパターン（大文字小文字を区別しない）
             const targetPatterns = ['TASK.MD', 'PROMPT.MD', 'SPEC.MD'];
@@ -615,7 +616,7 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
 
         // 対象ファイル（TASK.md、PROMPT.md、SPEC.md）を検索して自動選択
         if (this.editorProvider) {
-            const oldestFile = this.findOldestTargetFile(targetPath);
+            const oldestFile = await this.findOldestTargetFile(targetPath);
             if (oldestFile) {
                 await this.editorProvider.showFile(oldestFile);
             }
@@ -750,16 +751,16 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         return `${year}-${month}-${day}`;
     }
 
-    private getFilesInDirectory(dirPath: string): FileInfo[] {
+    private async getFilesInDirectory(dirPath: string): Promise<FileInfo[]> {
         const directories: FileInfo[] = [];
         const files: FileInfo[] = [];
 
         try {
-            const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+            const entries = await fsPromises.readdir(dirPath, { withFileTypes: true });
 
             for (const entry of entries) {
                 const fullPath = path.join(dirPath, entry.name);
-                const stat = fs.statSync(fullPath);
+                const stat = await fsPromises.stat(fullPath);
 
                 if (entry.isDirectory()) {
                     directories.push({

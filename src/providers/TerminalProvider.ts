@@ -855,7 +855,6 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         this._terminalService.onSessionExit((sessionId, exitCode, signal) => {
             const tab = this._tabs.find(t => t.sessionId === sessionId);
             if (tab) {
-                console.log(`Session ${sessionId} for tab ${tab.id} exited with code ${exitCode}`);
                 tab.isClosed = true;
                 tab.isClaudeCodeRunning = false;
 

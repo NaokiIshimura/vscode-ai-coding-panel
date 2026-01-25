@@ -5,6 +5,45 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.13] - 2026-01-25
+
+### 追加
+- **包括的なテストフレームワーク**: Mocha + @vscode/test-electronによる完全なテストスイートを実装
+  - Utils（fileUtils、templateUtils、workspaceSetup）のユニットテスト
+  - Services（TemplateService、FileOperationService）のユニットテスト
+  - Providers（MenuProvider、PlansProvider、EditorProvider、TerminalProvider）のユニットテスト
+  - Commands（settings、documentation、files）のユニットテスト
+  - 拡張機能のアクティベーションとコマンド登録の統合テスト
+  - 完全なユーザーワークフローをカバーするエンドツーエンドテスト
+  - 合計: 131個のテストが成功
+- **コードカバレッジ**: テストカバレッジレポート用のnyc（Istanbul）を統合
+  - `.nycrc`設定ファイルを追加
+  - `npm run test:coverage`コマンドを追加
+  - カバレッジレポートを`coverage/`ディレクトリに生成
+- **CI/CD統合**: 自動テスト実行用のGitHub Actionsワークフロー
+  - マルチプラットフォームテスト（Ubuntu、macOS、Windows）
+  - マルチバージョンテスト（Node.js 18.x、20.x）
+  - プルリクエストとmainブランチプッシュ時の自動テスト実行
+  - テスト結果のアーティファクトアップロード（7日間保持）
+
+### 技術的変更
+- **テストインフラ**: 堅牢なテストフレームワークのセットアップを作成
+  - テストランナー: `src/test/runTest.ts`
+  - テストスイートインデックス: `src/test/suite/index.ts`
+  - テスト用のVSCodeデバッグ設定
+  - 分離されたテストデータ用のテストフィクスチャ
+- **デバッグコードのクリーンアップ**: デバッグ用console.log文を削除
+  - TerminalProvider、TerminalServiceから不要なログを削除
+  - extension.tsとcommands/plans.tsのエラーログをconsole.errorに変換
+  - GitignoreParserからデバッグログを削除
+
+### 改善
+- **ドキュメント**: 包括的なテスト情報でCLAUDE.mdを更新
+  - ツールの説明を含むテストフレームワークセクションを追加
+  - テスト実行方法（VSCodeデバッガーとCLI）を追加
+  - テスト統計とカバレッジ情報を追加
+  - CI/CDワークフローのドキュメントを追加
+
 ## [0.9.12] - 2026-01-25
 
 ### 追加

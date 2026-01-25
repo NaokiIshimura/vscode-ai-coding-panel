@@ -537,6 +537,6 @@ async function selectInitialFolder(treeView: vscode.TreeView<FileItem>, rootPath
 
         await treeView.reveal(rootItem, { select: true, focus: false, expand: true });
     } catch (error) {
-        console.log('Failed to select initial folder:', error);
+        console.error('Failed to select initial folder:', error);
     }
 }

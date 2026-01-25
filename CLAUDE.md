@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-AIコーディングツール（Claude Code、Cursor、GitHub Copilot等）との連携を強化するVSCode拡張機能。ワークスペース内のファイル・フォルダの効率的な閲覧・管理、Git変更ファイルの追跡など、AIとのコーディング作業を支援する機能を提供する。
+Claude Codeでの生産性を最大化するために設計された、強力なVS Codeパネル拡張機能。プロンプトファイルの管理、AIコマンドの実行、結果の確認を1つの統合パネルで完結し、ファイルエクスプローラー、エディタ、ターミナル間のコンテキスト切り替えを不要にする。
 
 ## 開発コマンド
 

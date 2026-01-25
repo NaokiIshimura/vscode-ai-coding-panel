@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.14] - 2026-01-25
+
+### Changed
+- **Package Description**: Updated package.json description to better reflect the extension's Claude Code focus
+  - New: "A powerful VS Code panel extension designed to maximize your productivity with Claude Code."
+  - Previous: Generic AI coding tools integration description
+
 ## [0.9.13] - 2026-01-25
 
 ### Added
@@ -1844,3 +1851,5 @@ If you are upgrading from v0.8.33 or earlier:
 [0.9.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.9...v0.9.10
 [0.9.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.10...v0.9.11
 [0.9.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.11...v0.9.12
+[0.9.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.12...v0.9.13
+[0.9.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.13...v0.9.14

@@ -5,12 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.14] - 2026-01-25
+## [0.9.14] - 2026-01-26
+
+### Added
+- **Create Directory with Initial Prompt**: Plans View "Create directory" button now automatically creates an initial prompt file
+  - Automatically generates timestamped PROMPT.md file (format: `YYYY_MMDD_HHMM_SS_PROMPT.md`)
+  - Includes helpful template explaining Run/Plan/Spec button usage
+  - File is automatically opened in Editor View and selected in Plans View
+  - Template file: `resources/templates/initial_prompt.md`
+  - Provides immediate guidance for new users
 
 ### Changed
 - **Package Description**: Updated package.json description to better reflect the extension's Claude Code focus
   - New: "A powerful VS Code panel extension designed to maximize your productivity with Claude Code."
   - Previous: Generic AI coding tools integration description
+
+### Technical
+- **Command Enhancement**: Extended `createDefaultPath` command in `src/commands/plans.ts`
+  - Integrated TemplateService for timestamp generation (Japanese timezone)
+  - Added template loading with fallback to default text
+  - Asynchronous file operations using fsPromises
+  - Error handling for template file not found scenarios
+- **File Selection**: Integrated PlansProvider's `revealFile` method
+  - Created files are automatically selected in Plans View
+  - Maintains consistency with other file creation workflows
 
 ## [0.9.13] - 2026-01-25
 

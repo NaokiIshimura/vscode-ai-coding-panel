@@ -62,6 +62,8 @@ src/
 ├── types/                # 共通型定義
 │   └── index.ts          # FileOperationResult, FileStats, FilePermissions, DisplayOptions等
 └── resources/            # 外部リソース（v0.9.1で新設）
+    ├── templates/        # テンプレートファイル（v0.9.14で追加）
+    │   └── initial_prompt.md  # 初期プロンプトファイルのテンプレート
     └── webview/
         ├── editor/       # EditorProvider用外部ファイル
         │   ├── index.html  # HTMLテンプレート
@@ -286,6 +288,34 @@ iTerm2のように、terminal内で実行中のプロセスに応じてterminal 
 - タブ名更新: プロセス名が変更された場合のみ更新（不要な更新を回避）
 - タブタイトル構造: `[コマンドアイコン] [ローダー] [プロセス名]`
 
+### v0.9.14新機能: Create Directory機能の拡張
+
+Plans Viewの「Create directory」機能を拡張し、初期プロンプトファイルの自動作成機能を実装：
+
+**実装内容**
+- **初期プロンプトテンプレート**: `resources/templates/initial_prompt.md` を追加
+  - Run/Plan/Specボタンの使い方を説明する英語のテンプレート
+  - 新規ユーザーへのガイダンスとして機能
+- **コマンドロジック拡張**: `src/commands/plans.ts` の `createDefaultPath` コマンドを拡張
+  - ディレクトリ作成時にタイムスタンプ付きPROMPT.mdファイルを自動生成（`YYYY_MMDD_HHMM_SS_PROMPT.md`）
+  - テンプレートを読み込んでファイルに書き込み（テンプレートが見つからない場合はデフォルトテキストを使用）
+  - EditorProviderでファイルを自動的に開く
+  - PlansProviderでファイルを選択状態にする
+- **ファイル選択機能**: PlansProviderの `revealFile` メソッドを活用
+  - 作成されたファイルが自動的にPlans Viewで選択される
+
+**メリット**
+- 新規ユーザーがすぐに使い始められる
+- プロンプトファイルの作成が1クリックで完了
+- Run/Plan/Specボタンの使い方が明確
+- 一貫性のあるファイル命名規則（タイムスタンプ付き）
+
+**技術詳細**
+- TemplateServiceを使用したタイムスタンプ生成（日本時間）
+- 非同期ファイル操作（fsPromises）でUIブロッキングを防止
+- エラーハンドリング: テンプレート未検出時のフォールバック機能
+- 既存の「Create directory」機能との後方互換性を維持
+
 ### v0.9.10新機能: プロセスベースのClaude Code検知
 
 プロンプト表示に依存しない、信頼性の高いClaude Code検知機能を実装：
@@ -367,14 +397,17 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 
 ### データフロー
 
-1. PlansProviderでディレクトリ/ファイルを選択（フラットリスト形式）
-2. ディレクトリクリックでそのディレクトリ内に移動、".."で親に移動
-3. ディレクトリ移動時、自動的に最も古いTASK.md/PROMPT.md/SPEC.mdファイルを検索してEditorViewに表示
-4. タイムスタンプ形式のMarkdownファイル選択時、EditorProviderにファイルパスが渡される
-5. FileWatcherServiceがファイル変更を監視し、各Providerに通知
-6. EditorのRunボタンでTerminalProviderにコマンドを送信
-7. Terminal Viewでタブを選択すると、Editor ViewとPlans Viewが自動的に連携（v0.9.3）
-8. Claude Code検知時に`claudeCodeStateChanged`メッセージでローダー表示を更新（v0.9.8）
+1. Plans Viewで「Create directory」をクリックすると、`.claude/plans` ディレクトリと初期プロンプトファイル（`YYYY_MMDD_HHMM_SS_PROMPT.md`）を自動作成（v0.9.14）
+   - 初期プロンプトファイルには、Run/Plan/Specボタンの使い方を説明するテンプレートが含まれる
+   - 作成されたファイルは自動的にEditor Viewで開かれ、Plans Viewで選択される
+2. PlansProviderでディレクトリ/ファイルを選択（フラットリスト形式）
+3. ディレクトリクリックでそのディレクトリ内に移動、".."で親に移動
+4. ディレクトリ移動時、自動的に最も古いTASK.md/PROMPT.md/SPEC.mdファイルを検索してEditorViewに表示
+5. タイムスタンプ形式のMarkdownファイル選択時、EditorProviderにファイルパスが渡される
+6. FileWatcherServiceがファイル変更を監視し、各Providerに通知
+7. EditorのRunボタンでTerminalProviderにコマンドを送信
+8. Terminal Viewでタブを選択すると、Editor ViewとPlans Viewが自動的に連携（v0.9.3）
+9. Claude Code検知時に`claudeCodeStateChanged`メッセージでローダー表示を更新（v0.9.8）
 
 ### 設定項目（package.json）
 

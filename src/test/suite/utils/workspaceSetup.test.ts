@@ -19,20 +19,47 @@ suite('workspaceSetup Test Suite', () => {
 		// .vscodeディレクトリを削除（Windowsでのファイルロック対策としてリトライを追加）
 		const vscodeDir = path.join(testWorkspaceRoot, '.vscode');
 		if (fs.existsSync(vscodeDir)) {
-			fs.rmSync(vscodeDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			try {
+				fs.rmSync(vscodeDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			} catch (error) {
+				// Windows環境ではFile Watcherがロックしているため、削除失敗を許容
+				if (process.platform === 'win32') {
+					console.warn(`Warning: Could not remove ${vscodeDir}:`, error);
+				} else {
+					throw error;
+				}
+			}
 		}
 
 		// .claudeディレクトリを削除
 		const claudeDir = path.join(testWorkspaceRoot, '.claude');
 		if (fs.existsSync(claudeDir)) {
-			fs.rmSync(claudeDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			try {
+				fs.rmSync(claudeDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			} catch (error) {
+				// Windows環境ではFile Watcherがロックしているため、削除失敗を許容
+				if (process.platform === 'win32') {
+					console.warn(`Warning: Could not remove ${claudeDir}:`, error);
+				} else {
+					throw error;
+				}
+			}
 		}
 	});
 
 	// テスト後にテストワークスペースを削除
 	suiteTeardown(() => {
 		if (fs.existsSync(testWorkspaceRoot)) {
-			fs.rmSync(testWorkspaceRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			try {
+				fs.rmSync(testWorkspaceRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			} catch (error) {
+				// Windows環境ではFile Watcherがロックしているため、削除失敗を許容
+				if (process.platform === 'win32') {
+					console.warn(`Warning: Could not remove ${testWorkspaceRoot}:`, error);
+				} else {
+					throw error;
+				}
+			}
 		}
 	});
 
@@ -128,7 +155,16 @@ suite('workspaceSetup Test Suite', () => {
 			} finally {
 				// テスト用ディレクトリのみをクリーンアップ（実際のプロジェクトファイルは保護）
 				if (fs.existsSync(testExtensionPath)) {
-					fs.rmSync(testExtensionPath, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+					try {
+						fs.rmSync(testExtensionPath, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+					} catch (error) {
+						// Windows環境ではFile Watcherがロックしているため、削除失敗を許容
+						if (process.platform === 'win32') {
+							console.warn(`Warning: Could not remove ${testExtensionPath}:`, error);
+						} else {
+							throw error;
+						}
+					}
 				}
 			}
 		});

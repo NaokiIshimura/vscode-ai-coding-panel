@@ -70,12 +70,10 @@ export class TerminalService implements ITerminalService {
             try {
                 this.nodePty = require(ptyPath);
                 this._isAvailable = true;
-                console.log('node-pty loaded from:', ptyPath);
                 return;
             } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : String(error);
                 errors.push(`${ptyPath}: ${errorMsg}`);
-                console.log('Failed to load node-pty from:', ptyPath);
             }
         }
 
@@ -83,7 +81,6 @@ export class TerminalService implements ITerminalService {
         try {
             this.nodePty = require('node-pty');
             this._isAvailable = true;
-            console.log('node-pty loaded via direct require');
         } catch (fallbackError) {
             const errorMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
             errors.push(`Direct require: ${errorMsg}`);
@@ -175,8 +172,6 @@ export class TerminalService implements ITerminalService {
 
             // PTY終了を監視
             pty.onExit(({ exitCode, signal }: { exitCode: number, signal?: number }) => {
-                console.log(`Terminal session ${sessionId} exited with code ${exitCode}, signal ${signal}`);
-
                 // 終了コールバックを呼び出す
                 this.exitCallbacks.forEach(callback => {
                     try {

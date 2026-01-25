@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.13] - 2026-01-25
+
+### Added
+- **Comprehensive Test Framework**: Implemented full test suite with Mocha + @vscode/test-electron
+  - Unit tests for Utils (fileUtils, templateUtils, workspaceSetup)
+  - Unit tests for Services (TemplateService, FileOperationService)
+  - Unit tests for Providers (MenuProvider, PlansProvider, EditorProvider, TerminalProvider)
+  - Unit tests for Commands (settings, documentation, files)
+  - Integration tests for extension activation and command registration
+  - End-to-end tests covering complete user workflows
+  - Total: 131 passing tests
+- **Code Coverage**: Integrated nyc (Istanbul) for test coverage reporting
+  - Added `.nycrc` configuration file
+  - Added `npm run test:coverage` command
+  - Coverage reports generated in `coverage/` directory
+- **CI/CD Integration**: GitHub Actions workflow for automated testing
+  - Multi-platform testing (Ubuntu, macOS, Windows)
+  - Multi-version testing (Node.js 18.x, 20.x)
+  - Automatic test execution on pull requests and main branch pushes
+  - Test results artifact upload with 7-day retention
+
+### Technical
+- **Test Infrastructure**: Created robust test framework setup
+  - Test runner: `src/test/runTest.ts`
+  - Test suite index: `src/test/suite/index.ts`
+  - VSCode debug configuration for tests
+  - Test fixtures for isolated test data
+- **Debug Code Cleanup**: Removed debug console.log statements
+  - Removed unnecessary logging from TerminalProvider, TerminalService
+  - Converted error logging to console.error in extension.ts and commands/plans.ts
+  - Removed debug logs from GitignoreParser
+
+### Improved
+- **Documentation**: Updated CLAUDE.md with comprehensive test information
+  - Added test framework section with tool descriptions
+  - Added test execution methods (VSCode debugger and CLI)
+  - Added test statistics and coverage information
+  - Added CI/CD workflow documentation
+
 ## [0.9.12] - 2026-01-25
 
 ### Added

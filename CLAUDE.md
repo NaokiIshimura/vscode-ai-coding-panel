@@ -387,16 +387,73 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 - `aiCodingSidebar.editor.specCommand`: Specボタン実行コマンド
 - `aiCodingSidebar.terminal.*`: ターミナル設定（shell, fontSize, fontFamily, cursorStyle, cursorBlink, scrollback）
 
+## テストフレームワーク
+
+### テストツール
+- **フレームワーク**: Mocha + @vscode/test-electron
+- **アサーションライブラリ**: Chai
+- **カバレッジツール**: nyc (Istanbul)
+- **テストファイル**: `src/test/suite/**/*.test.ts`
+
+### テスト実行方法
+
+#### VSCode内でのデバッグ実行（推奨）
+1. `Cmd+Shift+D` (Mac) / `Ctrl+Shift+D` (Windows/Linux) でデバッグビューを開く
+2. ドロップダウンから「Extension Tests」を選択
+3. `F5` キーを押してテストを実行
+
+#### コマンドラインでの実行
+```bash
+npm test
+```
+
+#### カバレッジ付きテスト実行
+```bash
+npm run test:coverage
+```
+カバレッジレポートは `coverage/` ディレクトリに生成されます。
+
+### 実装済みのテスト
+
+- **Utils**: fileUtils, templateUtils, workspaceSetup
+- **Services**: TemplateService, FileOperationService, ConfigurationProvider (スキップ)
+- **Providers**: MenuProvider, PlansProvider, EditorProvider, TerminalProvider
+- **Commands**: settings, documentation, files
+- **Integration**: 拡張機能アクティベーション、コマンド登録、エンドツーエンドテスト
+
+### テスト統計
+- **合計**: 131 passing
+- **スキップ**: 16 pending (ConfigurationProvider)
+- **失敗**: 0 failing
+
 ## プルリクエスト作成前のチェックリスト
 
 ### 必須手順（順番を守ること）
 
 1. **コンパイル確認**: `npm run compile`
-2. **VSIXパッケージ作成**: `npm run package`
+2. **テスト実行**: `npm test` または VSCode内で「Extension Tests」を実行
+3. **VSIXパッケージ作成**: `npm run package`
    - **重要**: PR作成前に必ずVSIXパッケージを作成する
    - `releases/ai-coding-sidebar-*.vsix` が生成されることを確認
 
-## リリースプロセス
+## CI/CD
+
+### GitHub Actions ワークフロー
+
+#### テストワークフロー (test.yml)
+プルリクエストとmainブランチへのプッシュ時に自動実行：
+
+- **複数OS**: Ubuntu, macOS, Windows
+- **複数Node.jsバージョン**: 18.x, 20.x
+- **実行内容**:
+  1. 依存関係のインストール (`npm ci`)
+  2. TypeScriptコンパイル (`npm run compile`)
+  3. テスト実行 (`npm test`)
+     - Linux: `xvfb-run -a npm test` (ヘッドレスモード)
+     - macOS/Windows: `npm test`
+  4. テスト結果のアップロード
+
+#### リリースワークフロー
 
 mainブランチへのプッシュで自動的に以下が実行される：
 
@@ -410,4 +467,3 @@ mainブランチへのプッシュで自動的に以下が実行される：
 - Git操作は明示的な指示がない限りコミットしない
 - ブランチを作成する場合は、必ずmainブランチから切ること
 - ファイル末尾は必ず空行を含める
-- テストフレームワークは未実装

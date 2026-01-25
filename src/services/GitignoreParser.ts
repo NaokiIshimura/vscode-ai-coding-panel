@@ -19,7 +19,6 @@ export class GitignoreParser {
         const gitignorePath = path.join(this.workspaceRoot, '.gitignore');
 
         if (!fs.existsSync(gitignorePath)) {
-            console.log('No .gitignore file found, using default exclusion patterns');
             this.setDefaultPatterns();
             return;
         }
@@ -32,8 +31,6 @@ export class GitignoreParser {
             if (!this.patterns.includes('.git')) {
                 this.patterns.push('.git');
             }
-
-            console.log('Parsed .gitignore patterns:', this.patterns);
         } catch (error) {
             console.error('Failed to parse .gitignore:', error);
             this.setDefaultPatterns();

@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { CommandDependencies } from './types';
 import { FileItem } from '../providers';
 import { loadTemplate } from '../utils/templateUtils';
 import { ConfigurationProvider } from '../services/ConfigurationProvider';
+import { TemplateService } from '../services/TemplateService';
 
 /**
  * Plans関連のコマンドを登録
@@ -483,7 +485,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 12. createDefaultPath - デフォルトパスの作成
+    // 12. createDefaultPath - デフォルトパスの作成＋初期プロンプトファイル作成
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.createDefaultPath', async (targetPath: string, relativePath?: string) => {
             if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -494,6 +496,7 @@ export function registerPlansCommands(
             const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
             try {
+                // ディレクトリ作成
                 fs.mkdirSync(targetPath, { recursive: true });
 
                 const displayPath = relativePath || path.relative(workspaceRoot, targetPath);
@@ -501,9 +504,51 @@ export function registerPlansCommands(
 
                 await plansProvider.setRootPath(targetPath, relativePath);
 
+                // 初期プロンプトファイルを作成
+                const templateService = new TemplateService(context);
+                const fileName = templateService.generatePromptFileName();
+                const filePath = path.join(targetPath, fileName);
+
+                try {
+                    // テンプレートファイルを読み込み
+                    const templatePath = path.join(context.extensionPath, 'resources', 'templates', 'initial_prompt.md');
+                    let content: string;
+
+                    try {
+                        content = await fsPromises.readFile(templatePath, 'utf8');
+                    } catch (templateError) {
+                        // テンプレートファイルが見つからない場合はデフォルトテキストを使用
+                        content = 'Write your prompt in this editor.\n\nClick one of the buttons below to send your prompt to the terminal:\n- **Run**: Execute the prompt immediately\n- **Plan**: Create an implementation plan\n- **Spec**: Generate a specification document\n';
+                    }
+
+                    // ファイル作成
+                    const result = await fileOperationService.createFile(filePath, content);
+
+                    if (result.success) {
+                        // PlansProviderを更新
+                        plansProvider.refresh();
+
+                        // 少し待ってからファイルを開く・選択する
+                        await new Promise(resolve => setTimeout(resolve, 300));
+
+                        // EditorProviderでファイルを開く
+                        await editorProvider.showFile(filePath);
+
+                        // PlansProviderでファイルを選択状態にする
+                        await plansProvider.revealFile(filePath);
+
+                        vscode.window.showInformationMessage(`Created initial prompt file: ${fileName}`);
+                    } else {
+                        vscode.window.showWarningMessage(`Directory created but failed to create initial prompt file: ${result.error}`);
+                    }
+                } catch (fileError) {
+                    console.error('Failed to create initial prompt file:', fileError);
+                    vscode.window.showWarningMessage(`Directory created but failed to create initial prompt file: ${fileError}`);
+                }
+
                 setTimeout(async () => {
                     await selectInitialFolder(treeView, targetPath);
-                }, 300);
+                }, 500);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to create directory: ${error}`);
             }

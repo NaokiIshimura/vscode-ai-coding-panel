@@ -5,12 +5,30 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
-## [0.9.14] - 2026-01-25
+## [0.9.14] - 2026-01-26
+
+### 追加
+- **初期プロンプト付きディレクトリ作成**: Plans Viewの「Create directory」ボタンで初期プロンプトファイルを自動作成
+  - タイムスタンプ付きPROMPT.mdファイルを自動生成（形式: `YYYY_MMDD_HHMM_SS_PROMPT.md`）
+  - Run/Plan/Specボタンの使い方を説明するテンプレートを含む
+  - ファイルは自動的にEditor Viewで開かれ、Plans Viewで選択される
+  - テンプレートファイル: `resources/templates/initial_prompt.md`
+  - 新規ユーザーへ即座にガイダンスを提供
 
 ### 変更
 - **パッケージ説明文**: package.jsonの説明文をClaude Codeへのフォーカスをより明確にするよう更新
   - 新: "A powerful VS Code panel extension designed to maximize your productivity with Claude Code."
   - 旧: 汎用的なAIコーディングツール連携の説明
+
+### 技術的変更
+- **コマンド拡張**: `src/commands/plans.ts`の`createDefaultPath`コマンドを拡張
+  - TemplateServiceを統合してタイムスタンプ生成（日本時間）
+  - デフォルトテキストへのフォールバック付きテンプレート読み込み
+  - fsPromisesを使用した非同期ファイル操作
+  - テンプレートファイル未検出時のエラーハンドリング
+- **ファイル選択**: PlansProviderの`revealFile`メソッドを統合
+  - 作成されたファイルが自動的にPlans Viewで選択される
+  - 他のファイル作成ワークフローとの一貫性を維持
 
 ## [0.9.13] - 2026-01-25
 

@@ -18,6 +18,9 @@
     // スクロール位置の状態管理（最下部にいるかどうか）
     const isAtBottomState = new Map(); // tabId -> boolean
 
+    // パネル非表示時のスクロール位置保存用
+    const savedScrollPositions = new Map(); // tabId -> boolean
+
     // 最下部判定のヘルパー関数
     function isTerminalAtBottom(term) {
         const buffer = term.buffer.active;
@@ -338,6 +341,9 @@
         // フィット調整とリサイズ通知（DOMレンダリング後に実行）
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
+                // フィット調整前に最下部にいたかどうかを確認
+                const wasAtBottom = isAtBottomState.get(tabId);
+
                 tabInfo.fitAddon.fit();
                 vscode.postMessage({
                     type: 'resize',
@@ -345,6 +351,15 @@
                     cols: tabInfo.term.cols,
                     rows: tabInfo.term.rows
                 });
+
+                // 最下部にいた場合は、フィット調整後に復元
+                if (wasAtBottom) {
+                    requestAnimationFrame(() => {
+                        tabInfo.term.scrollToBottom();
+                        isAtBottomState.set(tabId, true);
+                    });
+                }
+
                 tabInfo.term.focus();
             });
         });
@@ -420,6 +435,38 @@
                     if (tabInfo) {
                         tabInfo.term.focus();
                     }
+                }
+                break;
+            case 'saveScrollPositions':
+                {
+                    // 全タブの現在のスクロール位置を保存
+                    tabs.forEach((tabInfo, tabId) => {
+                        const atBottom = isTerminalAtBottom(tabInfo.term);
+                        savedScrollPositions.set(tabId, atBottom);
+                    });
+                }
+                break;
+            case 'restoreScrollPositions':
+                {
+                    // 全タブのスクロール位置を復元
+                    tabs.forEach((tabInfo, tabId) => {
+                        // 保存されたスクロール位置を使用（なければisAtBottomStateを使用）
+                        const wasAtBottom = savedScrollPositions.has(tabId)
+                            ? savedScrollPositions.get(tabId)
+                            : isAtBottomState.get(tabId);
+
+                        // 最下部にいた場合は復元
+                        if (wasAtBottom) {
+                            // DOM更新を確実に待つため、2回のrequestAnimationFrameを使用
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => {
+                                    tabInfo.term.scrollToBottom();
+                                    // 確実に最下部にいることを記録
+                                    isAtBottomState.set(tabId, true);
+                                });
+                            });
+                        }
+                    });
                 }
                 break;
             case 'claudeCodeStateChanged':

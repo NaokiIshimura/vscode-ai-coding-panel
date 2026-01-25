@@ -71,6 +71,17 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
 
+        // WebViewの可視性変更イベントを監視
+        webviewView.onDidChangeVisibility(() => {
+            if (!webviewView.visible) {
+                // 非表示になる前にスクロール状態を保存
+                this._onWebviewBecameHidden();
+            } else {
+                // 表示時にスクロール位置を復元
+                this._onWebviewBecameVisible();
+            }
+        });
+
         // Webviewからのメッセージを受信
         webviewView.webview.onDidReceiveMessage(async (data) => {
             switch (data.type) {
@@ -221,6 +232,46 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         webviewView.onDidDispose(() => {
             this._cleanup();
         });
+    }
+
+    /**
+     * WebViewが非表示になる前の処理
+     * - 現在のスクロール状態を保存
+     */
+    private _onWebviewBecameHidden(): void {
+        if (!this._view) {
+            return;
+        }
+
+        // WebViewに現在のスクロール状態を保存するよう指示
+        this._view.webview.postMessage({
+            type: 'saveScrollPositions'
+        });
+    }
+
+    /**
+     * WebViewが表示状態になった時の処理
+     * - スクロール位置を復元
+     * - アクティブタブにフォーカス
+     */
+    private _onWebviewBecameVisible(): void {
+        if (!this._view) {
+            return;
+        }
+
+        // WebViewにスクロール位置復元を指示（少し遅延させてDOM更新を待つ）
+        setTimeout(() => {
+            this._view?.webview.postMessage({
+                type: 'restoreScrollPositions'
+            });
+        }, 50);
+
+        // アクティブタブにフォーカス（さらに遅延させてスクロール復元後に実行）
+        setTimeout(() => {
+            this._view?.webview.postMessage({
+                type: 'focus'
+            });
+        }, 200);
     }
 
     private static readonly MAX_TABS = 5;

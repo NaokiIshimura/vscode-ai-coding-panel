@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-01-26
+
+### Overview
+🎉 **First Stable Release** - AI Coding Sidebar has reached production-ready status with comprehensive features, robust architecture, and full test coverage.
+
+This extension provides a powerful VS Code panel designed to maximize productivity with Claude Code, integrating Plans (file management), Editor (command center), Terminal (Claude Code-optimized), and Menu (quick settings) into a unified workflow.
+
+### Highlights
+- **Comprehensive Test Framework**: 131 passing tests with Mocha + @vscode/test-electron
+- **Multi-Platform CI/CD**: Automated testing on Ubuntu, macOS, Windows with Node.js 18.x and 20.x
+- **Robust Architecture**: Clean separation of concerns with commands, providers, services, and utilities
+- **Claude Code Integration**: Auto-detection, context-aware shortcuts, and seamless terminal integration
+- **User Experience**: Initial prompt templates, auto-file selection, drag & drop, persistent sessions
+- **Performance**: Asynchronous file operations, optimized process detection, debounced events
+- **Security**: CSP-compliant WebViews, command injection protection, safe environment variables
+
+### Production Ready
+This release marks the transition from beta (0.x) to stable (1.0.x). All core features are implemented, tested, and ready for production use.
+
 ## [0.9.14] - 2026-01-26
 
 ### Added

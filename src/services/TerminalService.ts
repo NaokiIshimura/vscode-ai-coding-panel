@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import { ITerminalService, TerminalOutputListener, TerminalExitListener } from '../interfaces/ITerminalService';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { ITerminalService, TerminalOutputListener, TerminalExitListener, ProcessInfo } from '../interfaces/ITerminalService';
+
+const execPromise = promisify(exec);
 
 /**
  * node-ptyの最小型定義
@@ -289,6 +293,80 @@ export class TerminalService implements ITerminalService {
         });
     }
 
+
+    /**
+     * 指定されたセッションの子プロセスを取得
+     */
+    async getChildProcesses(sessionId: string): Promise<ProcessInfo[]> {
+        const session = this.sessions.get(sessionId);
+        if (!session) {
+            return [];
+        }
+
+        const ptyPid = session.pty.pid;
+        const platform = os.platform();
+
+        try {
+            if (platform === 'win32') {
+                // Windows用の実装
+                const { stdout } = await execPromise(
+                    `wmic process where (ParentProcessId=${ptyPid}) get ProcessId,CommandLine /format:csv`
+                );
+
+                return stdout
+                    .trim()
+                    .split('\n')
+                    .slice(1) // ヘッダーをスキップ
+                    .filter(line => line.trim())
+                    .map(line => {
+                        const parts = line.split(',');
+                        return {
+                            pid: parseInt(parts[1]) || 0,
+                            ppid: ptyPid,
+                            command: parts[2] || ''
+                        };
+                    })
+                    .filter(proc => proc.pid > 0);
+            } else {
+                // macOS/Linux用の実装
+                const { stdout } = await execPromise(
+                    `ps -o pid,ppid,comm | grep -E "^\\s*[0-9]+\\s+${ptyPid}\\s"`
+                );
+
+                return stdout
+                    .trim()
+                    .split('\n')
+                    .filter(line => line.trim())
+                    .map(line => {
+                        const parts = line.trim().split(/\s+/);
+                        return {
+                            pid: parseInt(parts[0]) || 0,
+                            ppid: parseInt(parts[1]) || 0,
+                            command: parts.slice(2).join(' ')
+                        };
+                    })
+                    .filter(proc => proc.pid > 0);
+            }
+        } catch (error) {
+            // プロセスが見つからない場合はエラーではなく空配列を返す
+            if (error instanceof Error && error.message.includes('Command failed')) {
+                return [];
+            }
+            console.error('Error getting child processes:', error);
+            return [];
+        }
+    }
+
+    /**
+     * 指定されたセッションでClaude Codeが起動しているか確認
+     */
+    async isClaudeCodeRunning(sessionId: string): Promise<boolean> {
+        const children = await this.getChildProcesses(sessionId);
+        return children.some(proc =>
+            proc.command.toLowerCase().includes('claude') ||
+            proc.command.toLowerCase().includes('anthropic')
+        );
+    }
 
     /**
      * リソースを破棄

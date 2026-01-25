@@ -65,6 +65,7 @@ xterm.jsを使用した完全なPTYサポートを備えた埋め込みターミ
 | Unicode対応 | CJK文字やその他のUnicode文字を適切な幅で正しく表示 |
 | Claude Codeショートカット | Claude Code用のクイックコマンドボタン：未起動時は `claude`, `claude -c`, `claude -r`、起動中は `/compact`, `/clear` |
 | Claude Code自動検知 | ターミナル出力からClaude Codeの起動・終了を自動検知してショートカットボタンを切り替え（ショートカットボタンを使わずに起動した場合も動作） |
+| プロセスベース検知 | 子プロセスを監視（1.5秒ごと）してClaude Codeセッションを確実に検知。プロンプトパターンに依存せず、プロンプト変更に影響されない。誤検知を大幅に削減 |
 | スマートEnterキー | シェルコマンドにはEnterキーを送信、Claude Codeコマンドには送信しない（不要な改行を防止） |
 | タブ-ファイル関連付け | Editor viewからコマンドを実行すると、現在のファイルがアクティブなターミナルタブに関連付けられる |
 | タブ切り替え時の自動同期 | ターミナルタブを切り替えると、関連付けられたファイルがEditor viewで自動的に開き、Plans viewはそのディレクトリに移動 |
@@ -287,14 +288,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-0.9.8.vsix
+   code --install-extension ai-coding-sidebar-0.9.10.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-0.9.8.vsix
+code --install-extension releases/ai-coding-sidebar-0.9.10.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -308,7 +309,7 @@ code --install-extension releases/ai-coding-sidebar-0.9.8.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-0.9.8.vsix
+   code --install-extension releases/ai-coding-sidebar-0.9.10.vsix
    ```
 4. VS Codeを再起動
 

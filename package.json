@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A sidebar extension that strengthens integration with AI coding tools.Browse and manage files and folders efficiently to keep coding with AI smooth.",
-  "version": "0.9.8",
+  "version": "0.9.10",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {

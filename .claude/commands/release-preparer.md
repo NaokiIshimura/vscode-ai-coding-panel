@@ -30,14 +30,72 @@ cat package.json | grep '"version"'
 git status
 ```
 
-## 2. バージョン更新
+## 2. デバッグコードのクリーンアップ
+
+リリース前に、デバッグ目的で追加したコードを削除します。
+
+### 削除対象
+
+- **console.log/console.error等のデバッグログ**
+  - 本番環境では不要なログ出力
+  - ただし、エラーハンドリングに必要な`console.error`は残す
+
+- **デバッグ用のコメント**
+  - `// TODO: debug`, `// FIXME: test`などの一時的なコメント
+  - コードの動作確認用のコメントアウト
+
+- **テスト用の一時的なコード**
+  - 動作検証のために追加した仮実装
+  - 未使用のインポート文
+
+### 検索コマンド
+
+```bash
+# console.logを検索（src配下）
+grep -rn "console.log" src/
+
+# console.debugを検索
+grep -rn "console.debug" src/
+
+# デバッグコメントを検索
+grep -rn "// TODO.*debug\|// FIXME.*test\|// DEBUG" src/
+
+# コメントアウトされたコードブロックを検索（目視確認推奨）
+grep -rn "^[[:space:]]*//.*(" src/
+```
+
+### 削除時の注意事項
+
+**残すべきログ**：
+- `console.error`: エラーハンドリングに必要
+- `console.warn`: 重要な警告メッセージ
+- 初期化時のバージョン情報など、本番環境でも必要なログ
+
+**削除すべきログ**：
+- `console.log`: デバッグ用の一時的なログ
+- `console.debug`: デバッグ専用のログ
+- 処理の途中経過を記録するだけのログ
+
+### 実施手順
+
+1. 上記の検索コマンドで対象を特定
+2. 各ファイルを確認し、デバッグコードを削除
+3. `npm run compile`でコンパイルエラーがないことを確認
+4. `npm run package`でパッケージが正常に作成されることを確認
+
+### 実施例
+
+バージョン固有のクリーンアップドキュメントがある場合は参照：
+- v0.9.10: `.claude/plans/v0.9.10/2026_0125_1230_00_cleanup_debug_logs.md`
+
+## 3. バージョン更新
 
 ```bash
 # パッチバージョンを上げる
 npm run version:patch
 ```
 
-## 3. ブランチ作成
+## 4. ブランチ作成
 
 - ブランチ名: `v{バージョン}` （例: `v0.7.28`）
 - mainブランチから作成
@@ -48,9 +106,9 @@ git pull origin main
 git checkout -b v{バージョン}
 ```
 
-## 4. CLAUDE.md & README更新
+## 5. CLAUDE.md & README更新
 
-**注意**: 手順4と手順5（CHANGELOG更新）は並行して実行できます。
+**注意**: 手順5と手順6（CHANGELOG更新）は並行して実行できます。
 
 対象ファイル：
 - `CLAUDE.md`（プロジェクトドキュメント）
@@ -97,7 +155,7 @@ git checkout -b v{バージョン}
 - README-JA.md: 日本語で記述
 - 英語版と日本語版の内容を同期させる
 
-## 5. CHANGELOG更新
+## 6. CHANGELOG更新
 
 対象ファイル：
 - `CHANGELOG.md`（英語版）
@@ -145,7 +203,7 @@ git checkout -b v{バージョン}
 - CHANGELOG-JA.md: 日本語で記述
 - 英語版と日本語版の内容を同期させる
 
-## 6. Git Commit
+## 7. Git Commit
 
 ```bash
 # 変更をステージング（.claude, .vscodeは除外）
@@ -155,13 +213,13 @@ git add package.json package-lock.json CLAUDE.md README.md README-JA.md CHANGELO
 git commit -m "Release v{バージョン}: Update documentation"
 ```
 
-## 7. Push
+## 8. Push
 
 ```bash
 git push origin v{バージョン}
 ```
 
-## 8. PR作成
+## 9. PR作成
 
 GitHub MCPまたはghコマンドを使用してPRを作成：
 

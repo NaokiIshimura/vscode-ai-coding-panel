@@ -310,7 +310,7 @@ export class TerminalService implements ITerminalService {
             if (platform === 'win32') {
                 // Windows用の実装
                 const { stdout } = await execPromise(
-                    `wmic process where (ParentProcessId=${ptyPid}) get ProcessId,CommandLine /format:csv`
+                    `wmic process where (ParentProcessId=${ptyPid}) get ProcessId,Name,CommandLine /format:csv`
                 );
 
                 return stdout
@@ -320,10 +320,14 @@ export class TerminalService implements ITerminalService {
                     .filter(line => line.trim())
                     .map(line => {
                         const parts = line.split(',');
+                        const command = parts[3] || '';
+                        const name = parts[2] || this._extractProcessName(command);
                         return {
                             pid: parseInt(parts[1]) || 0,
                             ppid: ptyPid,
-                            command: parts[2] || ''
+                            command: command,
+                            name: name,
+                            isForeground: false
                         };
                     })
                     .filter(proc => proc.pid > 0);
@@ -339,10 +343,14 @@ export class TerminalService implements ITerminalService {
                     .filter(line => line.trim())
                     .map(line => {
                         const parts = line.trim().split(/\s+/);
+                        const command = parts.slice(2).join(' ');
+                        const name = this._extractProcessName(command);
                         return {
                             pid: parseInt(parts[0]) || 0,
                             ppid: parseInt(parts[1]) || 0,
-                            command: parts.slice(2).join(' ')
+                            command: command,
+                            name: name,
+                            isForeground: false
                         };
                     })
                     .filter(proc => proc.pid > 0);
@@ -358,6 +366,28 @@ export class TerminalService implements ITerminalService {
     }
 
     /**
+     * コマンド文字列からプロセス名を抽出
+     */
+    private _extractProcessName(command: string): string {
+        if (!command) {
+            return '';
+        }
+        // パスからファイル名を抽出 (例: "/usr/bin/vim" -> "vim", "bash" -> "bash")
+        const baseName = command.split('/').pop() || command;
+        // 引数を除外 (例: "vim file.txt" -> "vim")
+        return baseName.split(/\s+/)[0] || '';
+    }
+
+    /**
+     * 親プロセス名を表示すべきかどうかを判定
+     * claude, anthropic等の特定プロセスの場合はtrue
+     */
+    private _shouldShowParentProcess(processName: string): boolean {
+        const lowerName = processName.toLowerCase();
+        return lowerName.includes('claude') || lowerName.includes('anthropic');
+    }
+
+    /**
      * 指定されたセッションでClaude Codeが起動しているか確認
      */
     async isClaudeCodeRunning(sessionId: string): Promise<boolean> {
@@ -366,6 +396,182 @@ export class TerminalService implements ITerminalService {
             proc.command.toLowerCase().includes('claude') ||
             proc.command.toLowerCase().includes('anthropic')
         );
+    }
+
+    /**
+     * 指定されたセッションのフォアグラウンドプロセス名を取得
+     */
+    async getForegroundProcess(sessionId: string): Promise<string | null> {
+        const session = this.sessions.get(sessionId);
+        if (!session) {
+            return null;
+        }
+
+        const ptyPid = session.pty.pid;
+        const platform = os.platform();
+
+        try {
+            if (platform === 'win32') {
+                // Windows用の実装
+                // PTYの子孫プロセスを再帰的に取得して、最も深い子プロセスを返す
+                const { stdout } = await execPromise(
+                    `wmic process where (ParentProcessId=${ptyPid}) get ProcessId,Name /format:csv`
+                );
+
+                const lines = stdout.trim().split('\n').slice(1).filter(line => line.trim());
+                if (lines.length === 0) {
+                    return null;
+                }
+
+                // 最初の子プロセス（シェル）を取得
+                const parts = lines[0].split(',');
+                const shellName = parts[1]?.trim();
+                const shellPid = parts[0]?.trim();
+
+                if (!shellPid) {
+                    return shellName || null;
+                }
+
+                // シェルの子プロセスを取得（第2階層）
+                try {
+                    const { stdout: childStdout } = await execPromise(
+                        `wmic process where (ParentProcessId=${shellPid}) get ProcessId,Name /format:csv`
+                    );
+
+                    const childLines = childStdout.trim().split('\n').slice(1).filter(line => line.trim());
+                    if (childLines.length > 0) {
+                        const childParts = childLines[0].split(',');
+                        const childName = childParts[1]?.trim();
+                        const childPid = childParts[0]?.trim();
+
+                        if (!childPid) {
+                            return childName || shellName || null;
+                        }
+
+                        // 第2階層の子プロセスを取得（第3階層）
+                        try {
+                            const { stdout: grandchildStdout } = await execPromise(
+                                `wmic process where (ParentProcessId=${childPid}) get Name /format:list`
+                            );
+
+                            const grandchildLines = grandchildStdout.trim().split('\n').filter(line => line.startsWith('Name='));
+                            if (grandchildLines.length > 0) {
+                                const grandchildName = grandchildLines[0].split('=')[1]?.trim();
+                                if (grandchildName) {
+                                    // 同じ名前の場合は重複を避ける
+                                    if (childName === grandchildName) {
+                                        return childName;
+                                    }
+                                    // 親プロセスと子プロセスの両方を表示: "claude(caffeinate)"
+                                    return `${childName}(${grandchildName})`;
+                                }
+                            }
+                        } catch {
+                            // 第3階層が見つからない場合
+                        }
+
+                        // 第2階層があるが第3階層がない場合
+                        // 特定のプロセス（claude, anthropic等）の場合のみ親子を組み合わせて表示
+                        if (this._shouldShowParentProcess(shellName)) {
+                            // 同じ名前の場合は重複を避ける
+                            if (shellName === childName) {
+                                return childName;
+                            }
+                            return `${shellName}(${childName})`;
+                        }
+
+                        // 通常のシェルの場合は子プロセスのみ表示
+                        return childName || shellName || null;
+                    }
+                } catch {
+                    // シェルの子プロセスが見つからない場合はシェル名を返す
+                }
+
+                return shellName || null;
+            } else {
+                // macOS/Linux用の実装
+                // PTYの直接の子プロセス（シェル）を取得
+                const { stdout } = await execPromise(
+                    `ps -o pid,ppid,comm | grep -E "^\\s*[0-9]+\\s+${ptyPid}\\s" | head -1`
+                );
+
+                if (!stdout.trim()) {
+                    return null;
+                }
+
+                const parts = stdout.trim().split(/\s+/);
+                if (parts.length < 3) {
+                    return null;
+                }
+
+                const shellPid = parts[0];
+                const shellCommand = parts.slice(2).join(' ');
+                const shellName = this._extractProcessName(shellCommand);
+
+                // シェルの子プロセスを取得（第2階層）
+                try {
+                    const { stdout: childStdout } = await execPromise(
+                        `ps -o pid,ppid,comm | grep -E "^\\s*[0-9]+\\s+${shellPid}\\s" | head -1`
+                    );
+
+                    if (childStdout.trim()) {
+                        const childParts = childStdout.trim().split(/\s+/);
+                        if (childParts.length >= 3) {
+                            const childPid = childParts[0];
+                            const childCommand = childParts.slice(2).join(' ');
+                            const childName = this._extractProcessName(childCommand);
+
+                            // 第2階層の子プロセスを取得（第3階層）
+                            try {
+                                const { stdout: grandchildStdout } = await execPromise(
+                                    `ps -o pid,ppid,comm | grep -E "^\\s*[0-9]+\\s+${childPid}\\s" | head -1`
+                                );
+
+                                if (grandchildStdout.trim()) {
+                                    const grandchildParts = grandchildStdout.trim().split(/\s+/);
+                                    if (grandchildParts.length >= 3) {
+                                        const grandchildCommand = grandchildParts.slice(2).join(' ');
+                                        const grandchildName = this._extractProcessName(grandchildCommand);
+                                        // 同じ名前の場合は重複を避ける
+                                        if (childName === grandchildName) {
+                                            return childName;
+                                        }
+                                        // 親プロセスと子プロセスの両方を表示: "claude(caffeinate)"
+                                        return `${childName}(${grandchildName})`;
+                                    }
+                                }
+                            } catch (grandchildError) {
+                                // 第3階層が見つからない場合
+                            }
+
+                            // 第2階層があるが第3階層がない場合
+                            // 特定のプロセス（claude, anthropic等）の場合のみ親子を組み合わせて表示
+                            if (this._shouldShowParentProcess(shellName)) {
+                                // 同じ名前の場合は重複を避ける
+                                if (shellName === childName) {
+                                    return childName;
+                                }
+                                return `${shellName}(${childName})`;
+                            }
+
+                            // 通常のシェルの場合は子プロセスのみ表示
+                            return childName || shellName || null;
+                        }
+                    }
+                } catch (childError) {
+                    // シェルの子プロセスが見つからない場合はシェル名を返す
+                }
+
+                return shellName || null;
+            }
+        } catch (error) {
+            // プロセスが見つからない場合はnullを返す
+            if (error instanceof Error && error.message.includes('Command failed')) {
+                return null;
+            }
+            console.error('Error getting foreground process:', error);
+            return null;
+        }
     }
 
     /**

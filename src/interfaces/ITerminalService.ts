@@ -17,6 +17,8 @@ export interface ProcessInfo {
     pid: number;
     ppid: number;
     command: string;
+    name?: string;           // プロセス名（例: "bash", "vim", "claude"）
+    isForeground?: boolean;  // フォアグラウンドプロセスか
 }
 
 /**
@@ -90,4 +92,11 @@ export interface ITerminalService extends vscode.Disposable {
      * @returns Claude Codeが起動している場合true
      */
     isClaudeCodeRunning(sessionId: string): Promise<boolean>;
+
+    /**
+     * 指定されたセッションのフォアグラウンドプロセス名を取得
+     * @param sessionId セッションID
+     * @returns フォアグラウンドプロセス名（存在しない場合はnull）
+     */
+    getForegroundProcess(sessionId: string): Promise<string | null>;
 }

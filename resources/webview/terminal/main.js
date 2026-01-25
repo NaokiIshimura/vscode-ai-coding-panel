@@ -587,6 +587,50 @@
                     }
                 }
                 break;
+
+            case 'updateTabName':
+                {
+                    const tabElement = document.querySelector('[data-tab-id="' + message.tabId + '"]');
+                    if (!tabElement) {
+                        break;
+                    }
+
+                    const titleSpan = tabElement.querySelector('.tab-title');
+                    if (!titleSpan) {
+                        break;
+                    }
+
+                    // 既存のアイコンを保持しつつ、プロセス名を更新
+                    const commandIcon = titleSpan.querySelector('.command-icon');
+                    const loader = titleSpan.querySelector('.loader');
+                    let shellNameSpan = titleSpan.querySelector('.shell-name');
+
+                    if (!shellNameSpan) {
+                        shellNameSpan = document.createElement('span');
+                        shellNameSpan.className = 'shell-name';
+                    }
+
+                    // プロセス名を更新
+                    shellNameSpan.textContent = message.processName;
+
+                    // ローダーの状態を保持
+                    const isLoaderVisible = loader && !loader.classList.contains('hidden');
+
+                    // タブタイトルを再構築（コマンドアイコン -> ローダー -> プロセス名）
+                    titleSpan.innerHTML = '';
+                    if (commandIcon) titleSpan.appendChild(commandIcon);
+                    if (loader) {
+                        titleSpan.appendChild(loader);
+                        // ローダーの状態を復元
+                        if (isLoaderVisible) {
+                            loader.classList.remove('hidden');
+                        } else {
+                            loader.classList.add('hidden');
+                        }
+                    }
+                    titleSpan.appendChild(shellNameSpan);
+                }
+                break;
         }
     });
 

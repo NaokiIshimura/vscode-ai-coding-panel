@@ -256,6 +256,36 @@ Terminal ViewのWebView外部化とセキュリティ改善、非同期ファイ
 - メッセージング: `saveScrollPositions`（保存）、`restoreScrollPositions`（復元）
 - 2段階復元: パネル表示時とタブアクティブ化時の両方で復元を実行
 
+### v0.9.12新機能: 実行中プロセスに応じた動的タブ名更新
+
+iTerm2のように、terminal内で実行中のプロセスに応じてterminal viewのタブ名が動的に変わる機能を実装：
+
+**実装内容**
+- **TerminalServiceの拡張**: フォアグラウンドプロセス名取得機能を追加
+  - `getForegroundProcess(sessionId)`: フォアグラウンドプロセス名を取得
+  - `ProcessInfo`インターフェースに`name`と`isForeground`フィールドを追加
+  - プラットフォーム別実装（macOS/Linux: `ps`、Windows: `wmic`）
+  - `_extractProcessName()`: コマンド文字列からプロセス名を抽出
+- **TerminalProviderの拡張**: プロセス名変更の検知とタブ名更新
+  - `_lastProcessNames` Map: タブごとの最後のプロセス名を追跡
+  - `_checkProcessAndUpdateTab()`: プロセス名を取得してタブ名を更新
+  - `_updateTabNameWithProcess()`: WebViewにタブ名更新を通知
+  - `_getDisplayName()`: プロセス名から表示名を生成
+- **WebViewの更新**: タブ名の動的更新表示
+  - `updateTabName`メッセージハンドラを追加
+  - 既存のコマンド種別アイコン（▶️、📝、📑）を保持しつつプロセス名を更新
+
+**メリット**
+- 実行中のプロセスが一目でわかる
+- iTerm2と同様の使いやすさを実現
+- 既存のコマンド種別アイコン機能との共存
+- パフォーマンスへの影響は最小限（1.5秒間隔のチェック）
+
+**技術詳細**
+- プロセス名抽出: パスとスペースで分割してベース名を取得
+- タブ名更新: プロセス名が変更された場合のみ更新（不要な更新を回避）
+- タブタイトル構造: `[コマンドアイコン] [ローダー] [プロセス名]`
+
 ### v0.9.10新機能: プロセスベースのClaude Code検知
 
 プロンプト表示に依存しない、信頼性の高いClaude Code検知機能を実装：

@@ -5,6 +5,46 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.12] - 2026-01-25
+
+### 追加
+- **動的ターミナルタブ名**: Terminal Viewのタブ名が実行中のプロセスに応じて動的に変わる機能（iTerm2風）
+  - タブ名がフォアグラウンドプロセスを反映して自動的に変化（例: `vim`、`claude`、`git`）
+  - 複数階層のプロセス階層をサポート（最大3階層）
+  - Claude Codeプロセスでは親子プロセスを表示: `claude(caffeinate)`、`claude(git)`
+  - 親子プロセスが同じ名前の場合は重複を回避
+  - 既存のプロセスチェック機構を利用して1.5秒間隔で更新
+
+### 改善
+- **TerminalServiceプロセス検知**: フォアグラウンドプロセス名取得機能を拡張
+  - 現在実行中のプロセスを取得する`getForegroundProcess()`メソッドを追加
+  - `ProcessInfo`インターフェースに`name`と`isForeground`フィールドを追加
+  - 複数階層のプロセス階層を走査（PTY → シェル → プロセス → サブプロセス）
+  - プラットフォーム別実装（macOS/Linux: `ps`、Windows: `wmic`）
+  - コマンドパスと引数からプロセス名をスマートに抽出
+- **TerminalProviderタブ管理**: プロセスベースのタブ名更新機能を統合
+  - タブごとのプロセス名変更を追跡する`_lastProcessNames` Mapを追加
+  - プロセス変更を検知してタブ名を更新する`_checkProcessAndUpdateTab()`を追加
+  - WebViewにタブ名更新を送信する`_updateTabNameWithProcess()`を追加
+  - プロセス名を表示用にフォーマットする`_getDisplayName()`ヘルパーを追加
+  - 親プロセス名を表示すべきか判定する`_shouldShowParentProcess()`を追加
+- **Terminal WebView**: 動的プロセス名でタブタイトル表示を強化
+  - タブ名更新用の`updateTabName`メッセージハンドラを追加
+  - 既存のコマンド種別アイコン（▶️、📝、📑）とローダー状態を保持
+  - 既存のタブUI構造とシームレスに統合
+
+### 技術的変更
+- **プロセス階層検知**: 3階層のプロセス階層を走査
+  - 第1階層: PTYの直接の子プロセス（シェル: bash、zsh）
+  - 第2階層: シェルの子プロセス（例: claude、vim、git）
+  - 第3階層: プロセスの子プロセス（例: claudeの下のcaffeinate）
+- **表示ロジック**:
+  - 第3階層が存在: `第2階層(第3階層)`形式で表示（例: `claude(caffeinate)`）
+  - 第3階層なし + 親がclaude/anthropic: `第1階層(第2階層)`形式で表示（例: `claude(git)`）
+  - 第3階層なし + 親が通常シェル: `第2階層`のみ表示（例: `vim`）
+  - 同じ名前: 重複を回避（例: `git(git)` → `git`）
+- **フォーマット**: スペースなしのコンパクト形式: `親(子)` （`親 (子)`ではない）
+
 ## [0.9.11] - 2026-01-25
 
 ### 修正
@@ -1235,3 +1275,4 @@ v0.8.33以前からアップグレードする場合:
 [0.9.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.8...v0.9.9
 [0.9.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.9...v0.9.10
 [0.9.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.10...v0.9.11
+[0.9.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.11...v0.9.12

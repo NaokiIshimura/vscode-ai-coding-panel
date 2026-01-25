@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.12] - 2026-01-25
+
+### Added
+- **Dynamic Terminal Tab Names**: Terminal View tab names now dynamically update based on the running process (like iTerm2)
+  - Tab names automatically change to reflect the foreground process (e.g., `vim`, `claude`, `git`)
+  - Multi-level process hierarchy support (up to 3 levels deep)
+  - For Claude Code processes, displays parent and child processes: `claude(caffeinate)`, `claude(git)`
+  - Avoids duplicate names when parent and child processes are the same
+  - Updates every 1.5 seconds via existing process check mechanism
+
+### Improved
+- **TerminalService Process Detection**: Extended to retrieve foreground process names
+  - Added `getForegroundProcess()` method to get the currently running process
+  - Enhanced `ProcessInfo` interface with `name` and `isForeground` fields
+  - Multi-level process hierarchy traversal (PTY → shell → process → subprocess)
+  - Platform-specific implementation (macOS/Linux: `ps`, Windows: `wmic`)
+  - Smart process name extraction from command paths and arguments
+- **TerminalProvider Tab Management**: Integrated process-based tab name updates
+  - Added `_lastProcessNames` Map to track process name changes per tab
+  - Added `_checkProcessAndUpdateTab()` to detect process changes and update tab names
+  - Added `_updateTabNameWithProcess()` to send tab name updates to WebView
+  - Added `_getDisplayName()` helper to format process names for display
+  - Added `_shouldShowParentProcess()` to determine when to show parent process names
+- **Terminal WebView**: Enhanced tab title display with dynamic process names
+  - Added `updateTabName` message handler for tab name updates
+  - Preserves existing command type icons (▶️, 📝, 📑) and loader state
+  - Seamless integration with existing tab UI structure
+
+### Technical
+- **Process Hierarchy Detection**: Traverses 3 levels of process hierarchy
+  - Level 1: PTY's direct child (shell: bash, zsh)
+  - Level 2: Shell's child process (e.g., claude, vim, git)
+  - Level 3: Process's child (e.g., caffeinate under claude)
+- **Display Logic**:
+  - Level 3 exists: Shows `Level2(Level3)` (e.g., `claude(caffeinate)`)
+  - Level 3 missing + parent is claude/anthropic: Shows `Level1(Level2)` (e.g., `claude(git)`)
+  - Level 3 missing + parent is normal shell: Shows `Level2` only (e.g., `vim`)
+  - Same names: Avoids duplication (e.g., `git(git)` → `git`)
+- **Format**: Compact format without spaces: `parent(child)` instead of `parent (child)`
+
 ## [0.9.11] - 2026-01-25
 
 ### Fixed
@@ -1764,3 +1804,4 @@ If you are upgrading from v0.8.33 or earlier:
 [0.9.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.8...v0.9.9
 [0.9.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.9...v0.9.10
 [0.9.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.10...v0.9.11
+[0.9.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.11...v0.9.12

@@ -45,6 +45,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     // プロセスチェック用のインターバル（タブごと）
     private _processCheckIntervals = new Map<string, NodeJS.Timeout>();
 
+    // プロセス名追跡（タブごと）
+    private _lastProcessNames = new Map<string, string>();
+
     constructor(
         private readonly _extensionUri: vscode.Uri,
     ) {
@@ -957,9 +960,65 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                     isProcessing: tab.isProcessing || false
                 });
             }
+
+            // フォアグラウンドプロセス名を取得してタブ名を更新
+            await this._checkProcessAndUpdateTab(tab);
         } catch (error) {
             console.error(`[TerminalProvider] Error checking Claude Code process:`, error);
         }
+    }
+
+    /**
+     * プロセス名を取得してタブ名を更新
+     */
+    private async _checkProcessAndUpdateTab(tab: TerminalTab): Promise<void> {
+        try {
+            // フォアグラウンドプロセスを取得
+            const processName = await this._terminalService.getForegroundProcess(tab.sessionId);
+
+            // プロセス名が変更された場合、タブ名を更新
+            const lastProcessName = this._lastProcessNames.get(tab.id);
+            if (processName && processName !== lastProcessName) {
+                this._lastProcessNames.set(tab.id, processName);
+                this._updateTabNameWithProcess(tab.id, processName);
+            } else if (!processName && lastProcessName) {
+                // プロセスが終了した場合、シェル名に戻す
+                this._lastProcessNames.delete(tab.id);
+                this._updateTabNameWithProcess(tab.id, tab.shellName);
+            }
+        } catch (error) {
+            console.error(`[TerminalProvider] Error checking process for tab ${tab.id}:`, error);
+        }
+    }
+
+    /**
+     * タブ名をプロセス名で更新
+     */
+    private _updateTabNameWithProcess(tabId: string, processName: string): void {
+        const tab = this._tabs.find(t => t.id === tabId);
+        if (!tab) {
+            return;
+        }
+
+        // プロセス名に応じたタブ名を生成
+        const displayName = this._getDisplayName(processName);
+
+        // WebViewにタブ名更新を通知
+        this._view?.webview.postMessage({
+            type: 'updateTabName',
+            tabId: tabId,
+            processName: displayName
+        });
+    }
+
+    /**
+     * プロセス名から表示名を生成
+     */
+    private _getDisplayName(processName: string): string {
+        // プロセス名のクリーンアップ
+        // 例: "/usr/bin/vim" -> "vim", "bash" -> "bash"
+        const baseName = processName.split('/').pop() || processName;
+        return baseName;
     }
 
     dispose(): void {
@@ -969,5 +1028,8 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         // すべてのプロセスチェックを停止
         this._processCheckIntervals.forEach(interval => clearInterval(interval));
         this._processCheckIntervals.clear();
+
+        // プロセス名追跡をクリア
+        this._lastProcessNames.clear();
     }
 }

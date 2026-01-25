@@ -5,6 +5,13 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.14] - 2026-01-25
+
+### 変更
+- **パッケージ説明文**: package.jsonの説明文をClaude Codeへのフォーカスをより明確にするよう更新
+  - 新: "A powerful VS Code panel extension designed to maximize your productivity with Claude Code."
+  - 旧: 汎用的なAIコーディングツール連携の説明
+
 ## [0.9.13] - 2026-01-25
 
 ### 追加
@@ -1315,3 +1322,5 @@ v0.8.33以前からアップグレードする場合:
 [0.9.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.9...v0.9.10
 [0.9.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.10...v0.9.11
 [0.9.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.11...v0.9.12
+[0.9.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.12...v0.9.13
+[0.9.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.13...v0.9.14

@@ -103,20 +103,22 @@ suite('workspaceSetup Test Suite', () => {
 
 	suite('setupTemplate', () => {
 		test('Should create templates directory', async () => {
+			// テスト用のフィクスチャディレクトリを使用（実際のプロジェクトファイルを保護）
+			const testExtensionPath = path.join(__dirname, '../../fixtures/testExtension');
+			const extensionTemplatesDir = path.join(testExtensionPath, 'templates');
+
 			// モックの拡張機能コンテキストを作成
 			const context = {
-				extensionPath: path.join(__dirname, '../../../..')
+				extensionPath: testExtensionPath
 			} as vscode.ExtensionContext;
 
-			// テンプレートファイルが存在することを前提とするため、
-			// 実際の拡張機能パスのtemplatesディレクトリにテンプレートを作成
-			const extensionTemplatesDir = path.join(context.extensionPath, 'templates');
+			// テスト用のテンプレートディレクトリとファイルを作成
 			if (!fs.existsSync(extensionTemplatesDir)) {
 				fs.mkdirSync(extensionTemplatesDir, { recursive: true });
-				fs.writeFileSync(path.join(extensionTemplatesDir, 'task.md'), '# Task Template', 'utf8');
-				fs.writeFileSync(path.join(extensionTemplatesDir, 'spec.md'), '# Spec Template', 'utf8');
-				fs.writeFileSync(path.join(extensionTemplatesDir, 'prompt.md'), '# Prompt Template', 'utf8');
 			}
+			fs.writeFileSync(path.join(extensionTemplatesDir, 'task.md'), '# Task Template', 'utf8');
+			fs.writeFileSync(path.join(extensionTemplatesDir, 'spec.md'), '# Spec Template', 'utf8');
+			fs.writeFileSync(path.join(extensionTemplatesDir, 'prompt.md'), '# Prompt Template', 'utf8');
 
 			try {
 				await setupTemplate(context, testWorkspaceRoot);
@@ -124,9 +126,9 @@ suite('workspaceSetup Test Suite', () => {
 				const templatesDir = path.join(testWorkspaceRoot, '.vscode', 'ai-coding-panel', 'templates');
 				assert.ok(fs.existsSync(templatesDir));
 			} finally {
-				// クリーンアップ
-				if (fs.existsSync(extensionTemplatesDir)) {
-					fs.rmSync(extensionTemplatesDir, { recursive: true, force: true });
+				// テスト用ディレクトリのみをクリーンアップ（実際のプロジェクトファイルは保護）
+				if (fs.existsSync(testExtensionPath)) {
+					fs.rmSync(testExtensionPath, { recursive: true, force: true });
 				}
 			}
 		});

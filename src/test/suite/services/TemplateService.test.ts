@@ -114,21 +114,22 @@ suite('TemplateService Test Suite', () => {
 				dirpath: 'test'
 			};
 
-			// テンプレートを作成
-			const templateContent = '# {{filename}}\n\nDate: {{datetime}}\nPath: {{filepath}}';
-			const extensionPath = path.join(__dirname, '../../../..');
-			const templatePath = path.join(extensionPath, 'templates', 'prompt.md');
+			// テスト用のフィクスチャディレクトリを使用（実際のプロジェクトファイルを保護）
+			const testExtensionPath = path.join(__dirname, '../../fixtures/testTemplateService');
+			const templatePath = path.join(testExtensionPath, 'templates', 'prompt.md');
 
-			// templatesディレクトリを作成
+			// テスト用のtemplatesディレクトリを作成
 			const templatesDir = path.dirname(templatePath);
 			if (!fs.existsSync(templatesDir)) {
 				fs.mkdirSync(templatesDir, { recursive: true });
 			}
 
+			// テンプレートを作成
+			const templateContent = '# {{filename}}\n\nDate: {{datetime}}\nPath: {{filepath}}';
 			fs.writeFileSync(templatePath, templateContent, 'utf8');
 
 			try {
-				const context = { extensionPath } as vscode.ExtensionContext;
+				const context = { extensionPath: testExtensionPath } as vscode.ExtensionContext;
 				const serviceWithContext = new TemplateService(context);
 
 				const result = await serviceWithContext.loadTemplate(variables, 'prompt');
@@ -144,11 +145,9 @@ suite('TemplateService Test Suite', () => {
 				assert.ok(!result.includes('{{datetime}}'));
 				assert.ok(!result.includes('{{filepath}}'));
 			} finally {
-				// クリーンアップ（ファイルのみ削除）
-				try {
-					fs.unlinkSync(templatePath);
-				} catch (error) {
-					// ファイルが存在しない場合はスキップ
+				// テスト用ディレクトリ全体をクリーンアップ（実際のプロジェクトファイルは保護）
+				if (fs.existsSync(testExtensionPath)) {
+					fs.rmSync(testExtensionPath, { recursive: true, force: true });
 				}
 			}
 		});

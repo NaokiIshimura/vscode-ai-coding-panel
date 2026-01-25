@@ -1,27 +1,37 @@
-# AI Coding Panel
+# AI Coding Panel for Claude Code
 
 [![Version](https://img.shields.io/badge/version-0.9.10-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
-A panel extension that strengthens integration with AI coding tools.
+A powerful VS Code panel extension designed to maximize your productivity with Claude Code.
 
-Streamline your AI-assisted coding workflow by managing prompt files, running AI commands, and viewing results—all within a single panel. No more switching between file explorer, editor, and terminal. Focus on coding while AI does the heavy lifting.
+Streamline your Claude Code workflow by managing prompt files, executing AI commands, and viewing results—all within a single integrated panel. No more context switching between file explorer, editor, and terminal.
 
 ![Screenshot](images/screenshot.png)
+
+## Why This Extension for Claude Code?
+
+This extension is purpose-built to enhance your Claude Code experience:
+
+- **Seamless Terminal Integration**: Auto-detects Claude Code sessions with process-based monitoring (no prompt pattern dependency)
+- **Smart Context Management**: Automatically syncs file context across Terminal, Editor, and Plans views when switching tabs
+- **Intelligent Command Shortcuts**: Context-aware buttons that adapt to whether Claude Code is running or idle
+- **Dynamic Tab Names**: Shows running processes (like iTerm2) with command type icons (▶️ Run, 📝 Plan, 📑 Spec)
+- **Persistent Sessions**: Terminal sessions survive view switches—no lost context or history
 
 ## Features
 
 | Feature | Description |
 | --- | --- |
-| **Plans** | Browse and manage files in a flat list view with directory navigation |
-| **Editor** | Edit Markdown files directly in the panel with Run button integration |
-| **Terminal** | Embedded terminal with multiple tabs and PTY support |
+| **Plans** | Browse and manage prompt files in a flat list view with directory navigation |
+| **Editor** | Command center for executing Claude Code with Run/Plan/Spec buttons |
+| **Terminal** | Claude Code-optimized terminal with auto-detection, context-aware shortcuts, and persistent sessions |
 | **Menu** | Quick access to settings and common operations |
 
 ## Feature Details
 
 ### Plans
 
-Display directories and files under a specified path in a flat list view.
+Browse and manage files in a flat list view with directory navigation.
 
 | Feature | Description |
 | --- | --- |
@@ -34,43 +44,40 @@ Display directories and files under a specified path in a flat list view.
 | Auto-refresh | Automatically updates when files are created, modified, or deleted |
 | Settings icon | Quick access to default path and sort configuration |
 
-### Editor
+### Editor (Claude Code Command Center)
 
-Edit Markdown files directly in the panel.
+Edit Markdown prompt files and execute Claude Code commands directly from the panel.
 
 | Feature | Description |
 | --- | --- |
+| **Run/Plan/Spec Commands** | Execute Claude Code with pre-configured commands:<br>- **Run** (`Cmd+R` / `Ctrl+R`): `claude "Review the file at ${filePath}"`<br>- **Plan**: `claude --permission-mode plan "Review ... create an implementation plan ..."`<br>- **Spec**: `claude --permission-mode plan "Review ... create specification documents ..."`<br>Auto-saves before execution and works even without a file open |
+| **Auto-Terminal Integration** | Commands are sent to Terminal view with automatic file-tab association for seamless workflow |
 | Auto-display | Automatically opens when selecting a timestamp-named Markdown file (format: `YYYY_MMDD_HHMM_SS_PROMPT.md`). Other Markdown files open in the standard editor |
 | Save button | Displays in header with color change indicating unsaved changes. Creates new file if none is open (saves to current Plans directory) |
-| Run task | Press `Cmd+R` / `Ctrl+R` to send a customizable command to terminal (auto-saves before running, works even without a file open) |
 | New file buttons | Create PROMPT.md, TASK.md, or SPEC.md files from the header. Also available with `Cmd+M` / `Ctrl+M` for PROMPT.md |
-| Customizable run command | Configure the command executed by the Run button in settings |
-| Run without file | Execute commands using editor content when no file is open |
-| Terminal View integration | Run commands are sent to the embedded Terminal view |
+| Customizable commands | Configure Run, Plan, and Spec commands in settings to match your workflow |
 | Read-only mode | Automatically switches to read-only mode when the file is active in VSCode editor |
 | Auto-save | Automatically saves when switching files, navigating directories, or closing the view |
 | Restore editing | Restores the editing file when returning from another extension |
-| Settings icon | Quick access to run command configuration |
+| Settings icon | Quick access to command configuration |
 | Focus indicator | Shows a border around the view when focused |
 
-### Terminal
+### Terminal (Claude Code Optimized)
 
-Embedded terminal in the panel using xterm.js with full PTY support.
+The embedded terminal is purpose-built for Claude Code with intelligent automation and context awareness.
 
 | Feature | Description |
 | --- | --- |
-| Multiple tabs | Create up to 5 terminal tabs, each with its own independent session. Click the "+" button to add a new tab, click a tab to switch. Close button (× Close) is located at the right end of the shortcut area |
-| Command type icons | Tab names show command type icons (▶️ for Run, 📝 for Plan, 📑 for Spec) when commands are executed from Editor view |
-| Session persistence | Terminal session and output history are preserved when switching views or extensions |
-| Auto-scroll | Automatically maintains scroll position at the bottom when new output arrives or when view is resized (only if already at the bottom) |
+| **Claude Code Auto-Detection** | Process-based detection (checks every 1.5s) reliably identifies Claude Code sessions independent of prompt changes. Automatically switches UI and shortcuts when Claude Code starts/exits |
+| **Context-Aware Shortcuts** | Smart buttons that change based on state:<br>- Not running: `claude`, `claude -c`, `claude -r`<br>- Running: `/compact`, `/clear`<br>Enter key is omitted for Claude Code commands to prevent unwanted newlines |
+| **Command Type Icons** | Tab names display icons indicating command origin:<br>▶️ Run button<br>📝 Plan button<br>📑 Spec button |
+| **Dynamic Process Names** | Like iTerm2, tab names update automatically to show the currently running process |
+| **Tab-File Association** | Commands from Editor view link the file to the terminal tab. Switching tabs automatically:<br>- Opens the associated file in Editor view<br>- Navigates to the file's directory in Plans view |
+| **Session Persistence** | Terminal sessions and output history survive view switches or extension changes—your work is never lost |
+| Multiple tabs | Create up to 5 independent terminal tabs. Click the "+" button to add a new tab, click a tab to switch. Close button (× Close) is located at the right end of the shortcut area |
+| Auto-scroll | Maintains scroll position at bottom when new output arrives or when view is resized (only if already at the bottom) |
 | Clickable links | URLs open in browser, file paths (e.g., `./src/file.ts:123`) open in editor with line navigation |
-| Unicode support | Full support for CJK characters and other Unicode characters with proper width calculation |
-| Claude Code shortcuts | Quick command buttons for Claude Code: `claude`, `claude -c`, `claude -r` when not running; `/compact`, `/clear` when running |
-| Auto-detect Claude Code | Automatically detects Claude Code start/exit from terminal output and switches shortcut buttons (works even when launched without using shortcut buttons) |
-| Process-based detection | Reliably detects Claude Code sessions by monitoring child processes (checks every 1.5s), independent of prompt patterns. Works across prompt changes and reduces false positives |
-| Smart Enter key | Sends Enter key with shell commands but omits it for Claude Code commands (prevents unwanted newlines) |
-| Tab-File association | When running commands from Editor view, the current file is associated with the active terminal tab |
-| Auto-sync on tab switch | Switching terminal tabs automatically opens the associated file in Editor view and navigates to its directory in Plans view |
+| Unicode support | Full CJK character support with proper width calculation |
 | Configurable | Customize shell path, font size, font family, cursor style, cursor blink, and scrollback lines |
 | WebView header | Tab bar with shell names, shortcut buttons, plus Clear and Kill buttons for the active tab |
 | Settings icon | Quick access to terminal settings in the title bar |
@@ -87,6 +94,34 @@ Quick access to settings and common operations.
 | Templates | Customize templates |
 | Quick shortcuts | Open terminal, Checkout default branch, Git pull, Duplicate workspace in new window |
 
+## Typical Claude Code Workflow
+
+### 1. Create a Task
+1. Click the rocket icon 🚀 in Plans title menu to create a new task directory
+2. A timestamped TASK.md file opens in the Editor view
+3. Write your task description or requirements
+
+### 2. Execute with Claude Code
+1. Press `Cmd+R` / `Ctrl+R` to run the task with Claude Code
+2. The Terminal view automatically activates and sends the command
+3. Claude Code starts processing your request
+
+### 3. Monitor Progress
+1. Watch Claude Code's output in the Terminal view
+2. Tab name shows process status with icons (▶️, 📝, 📑)
+3. Scroll position is preserved when switching views
+
+### 4. Review Results
+1. Claude Code creates implementation plans or spec documents
+2. Files appear automatically in Plans view
+3. Click files to review in Editor view
+4. Terminal tab maintains association with your task file
+
+### 5. Iterate
+1. Switch between terminal tabs to work on multiple tasks
+2. Each tab remembers its associated file and context
+3. Plans/Editor views auto-sync when you switch tabs
+
 ## Usage
 
 ### Keyboard Shortcuts
@@ -100,11 +135,11 @@ Quick access to settings and common operations.
 
 ### Basic actions
 1. Click the "AI Coding Panel" icon in the activity bar (or press `Cmd+Shift+A` / `Ctrl+Shift+A`).
-2. Use Plans to create the folder you use for AI coding.
-3. Create Markdown files from the Plans view.
-4. Click a timestamp-named Markdown file (e.g., `2025_1229_1430_25_PROMPT.md`) in Plans to edit it in the Editor view below. Other Markdown files open in the standard editor.
-5. Write instructions for the AI in the Editor and save with the Save button.
-6. Right-click the Markdown file in Plans and choose "Copy Relative Path," then share it with your AI tool.
+2. Click the rocket icon 🚀 in Plans to create a new task directory with a TASK.md file.
+3. Write your task description or requirements in the Editor view.
+4. Press `Cmd+R` / `Ctrl+R` to execute the task with Claude Code.
+5. Monitor Claude Code's progress in the Terminal view.
+6. Review the results in Plans and Editor views as Claude Code creates files.
 
 ## Template Feature
 
@@ -276,6 +311,14 @@ npm run watch
 
 ## Installation
 
+### Quick Start with Claude Code
+
+1. Install this extension from the [VS Marketplace](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+2. Install [Claude Code CLI](https://docs.anthropic.com/claude/docs/claude-code)
+3. Press `Cmd+Shift+A` / `Ctrl+Shift+A` to open AI Coding Panel
+4. Create a task from Plans view (click the rocket icon 🚀)
+5. Press `Cmd+R` / `Ctrl+R` to start Claude Code
+
 ### Method 1: Development mode (for testing)
 1. Clone or download this repository.
 2. Open it in VS Code.
@@ -351,3 +394,7 @@ code --uninstall-extension ai-coding-sidebar
 
 - VS Code 1.74.0 or later
 - Node.js (development only)
+
+## Compatibility Note
+
+While this extension is optimized for Claude Code, it also works with other AI coding assistants like Cursor and GitHub Copilot. However, some features (like Claude Code auto-detection and context-aware shortcuts) are specifically designed for Claude Code and may not function with other tools.

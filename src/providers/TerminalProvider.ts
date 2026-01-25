@@ -42,6 +42,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         processingTimeout?: NodeJS.Timeout;
     }>();
 
+    // プロセスチェック用のインターバル（タブごと）
+    private _processCheckIntervals = new Map<string, NodeJS.Timeout>();
+
     constructor(
         private readonly _extensionUri: vscode.Uri,
     ) {
@@ -280,6 +283,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
             // 出力監視を設定
             this._setupOutputMonitoring(tab);
 
+            // プロセスベースのClaude Code検知を開始
+            this._startProcessCheck(tab);
+
             // タブ作成を通知
             this._view?.webview.postMessage({
                 type: 'tabCreated',
@@ -340,6 +346,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
 
         const tab = this._tabs[tabIndex];
 
+        // プロセスチェックを停止
+        this._stopProcessCheck(tab);
+
         // 出力リスナーを解除
         const disposable = this._outputDisposables.get(tabId);
         if (disposable) {
@@ -380,6 +389,11 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     }
 
     private _cleanup(): void {
+        // すべてのプロセスチェックを停止
+        this._tabs.forEach(tab => {
+            this._stopProcessCheck(tab);
+        });
+
         // すべての出力リスナーを解除
         this._outputDisposables.forEach(disposable => disposable.dispose());
         this._outputDisposables.clear();
@@ -635,7 +649,6 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
 
         // Claude Code起動中かつ処理中でない場合、処理中にする
         if (tab.isClaudeCodeRunning && !tab.isProcessing) {
-            console.log(`[TerminalProvider] Processing started in tab ${tab.id}`);
             tab.isProcessing = true;
             this._view?.webview.postMessage({
                 type: 'claudeCodeStateChanged',
@@ -655,7 +668,6 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         // 2秒間意味のある出力がなければ処理完了とみなす
         monitor.processingTimeout = setTimeout(() => {
             if (tab.isClaudeCodeRunning && tab.isProcessing) {
-                console.log(`[TerminalProvider] Processing completed in tab ${tab.id}`);
                 tab.isProcessing = false;
 
                 this._view?.webview.postMessage({
@@ -695,7 +707,6 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
 
             for (const pattern of claudeStartPatterns) {
                 if (pattern.test(cleanData)) {
-                    console.log(`[TerminalProvider] Claude Code session started`);
                     tab.isClaudeCodeRunning = true;
                     tab.isProcessing = true;
 
@@ -718,7 +729,6 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
 
             for (const line of recentLines) {
                 if (userPromptPattern.test(line)) {
-                    console.log(`[TerminalProvider] Claude Code session ended`);
                     tab.isClaudeCodeRunning = false;
                     tab.isProcessing = false;
 
@@ -766,6 +776,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
 
             // 出力監視を設定
             this._setupOutputMonitoring(tab);
+
+            // プロセスベースのClaude Code検知を再開
+            this._startProcessCheck(tab);
 
             // Webviewに再接続完了を通知
             this._view?.webview.postMessage({
@@ -840,8 +853,70 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         this._plansProvider = provider;
     }
 
+    /**
+     * プロセスベースのClaude Code検知を開始
+     */
+    private _startProcessCheck(tab: TerminalTab): void {
+        // 既存のチェックを停止
+        this._stopProcessCheck(tab);
+
+        // 1.5秒ごとにプロセスをチェック
+        const interval = setInterval(async () => {
+            await this._checkClaudeCodeProcess(tab);
+        }, 1500);
+
+        this._processCheckIntervals.set(tab.id, interval);
+
+        // 初回チェックを即座に実行
+        this._checkClaudeCodeProcess(tab);
+    }
+
+    /**
+     * プロセスチェックを停止
+     */
+    private _stopProcessCheck(tab: TerminalTab): void {
+        const interval = this._processCheckIntervals.get(tab.id);
+        if (interval) {
+            clearInterval(interval);
+            this._processCheckIntervals.delete(tab.id);
+        }
+    }
+
+    /**
+     * Claude Codeプロセスの状態をチェックして更新
+     */
+    private async _checkClaudeCodeProcess(tab: TerminalTab): Promise<void> {
+        try {
+            const isRunning = await this._terminalService.isClaudeCodeRunning(tab.sessionId);
+
+            // 状態が変わった場合のみ更新
+            if (tab.isClaudeCodeRunning !== isRunning) {
+                tab.isClaudeCodeRunning = isRunning;
+
+                // Claude Codeが終了した場合、処理中状態もリセット
+                if (!isRunning) {
+                    tab.isProcessing = false;
+                }
+
+                // WebViewに状態を通知
+                this._view?.webview.postMessage({
+                    type: 'claudeCodeStateChanged',
+                    tabId: tab.id,
+                    isRunning: isRunning,
+                    isProcessing: tab.isProcessing || false
+                });
+            }
+        } catch (error) {
+            console.error(`[TerminalProvider] Error checking Claude Code process:`, error);
+        }
+    }
+
     dispose(): void {
         this._cleanup();
         this._terminalService.dispose();
+
+        // すべてのプロセスチェックを停止
+        this._processCheckIntervals.forEach(interval => clearInterval(interval));
+        this._processCheckIntervals.clear();
     }
 }

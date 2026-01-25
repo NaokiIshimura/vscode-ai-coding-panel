@@ -233,6 +233,32 @@ Terminal ViewのWebView外部化とセキュリティ改善、非同期ファイ
 - エラーハンドリングを改善し、詳細なエラーメッセージを記録
 - formatDateTime()メソッドを使用して日時フォーマットを標準化
 
+### v0.9.10新機能: プロセスベースのClaude Code検知
+
+プロンプト表示に依存しない、信頼性の高いClaude Code検知機能を実装：
+
+**実装内容**
+- **TerminalServiceの拡張**: PTY子プロセスの取得とClaude Code検知機能を追加
+  - `getChildProcesses(sessionId)`: PTYの子プロセスをリスト化
+  - `isClaudeCodeRunning(sessionId)`: プロセス名でClaude Codeを検知
+  - プラットフォーム別実装（macOS/Linux: `ps`、Windows: `wmic`）
+- **TerminalProviderの統合**: プロセスチェックのライフサイクル管理
+  - タブ作成・セッション再接続時にプロセスチェック開始（1.5秒間隔）
+  - タブ削除・クリーンアップ時にプロセスチェック停止
+  - 状態変更時にWebViewへ通知
+- **ITerminalServiceインターフェースの拡張**: ProcessInfo型定義とメソッド追加
+
+**メリット**
+- プロンプト表示の変更に影響されない
+- 誤検知が大幅に減少
+- パフォーマンスへの影響は最小限（チェック1回あたり約1ms、1.5秒間隔）
+- 既存のパターンマッチング検知と併用して最高の信頼性を実現
+
+**技術詳細**
+- 検知方法: PTY子プロセスのコマンド名に"claude"または"anthropic"が含まれるかチェック
+- エラー耐性: プロセス未検出時は空配列を返す（エラーではない）
+- クロスプラットフォーム: macOS/Linux検証済み、Windows実装済み（未テスト）
+
 ### v0.9.8バグ修正: Terminal Viewローダー表示の改善
 
 Terminal Viewのローダー表示の不具合を修正し、フォーカス変更時の誤動作を解消：

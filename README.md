@@ -1,6 +1,6 @@
 # AI Coding Panel
 
-[![Version](https://img.shields.io/badge/version-0.9.6-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-0.9.10-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 A panel extension that strengthens integration with AI coding tools.
 
@@ -67,6 +67,7 @@ Embedded terminal in the panel using xterm.js with full PTY support.
 | Unicode support | Full support for CJK characters and other Unicode characters with proper width calculation |
 | Claude Code shortcuts | Quick command buttons for Claude Code: `claude`, `claude -c`, `claude -r` when not running; `/compact`, `/clear` when running |
 | Auto-detect Claude Code | Automatically detects Claude Code start/exit from terminal output and switches shortcut buttons (works even when launched without using shortcut buttons) |
+| Process-based detection | Reliably detects Claude Code sessions by monitoring child processes (checks every 1.5s), independent of prompt patterns. Works across prompt changes and reduces false positives |
 | Smart Enter key | Sends Enter key with shell commands but omits it for Claude Code commands (prevents unwanted newlines) |
 | Tab-File association | When running commands from Editor view, the current file is associated with the active terminal tab |
 | Auto-sync on tab switch | Switching terminal tabs automatically opens the associated file in Editor view and navigates to its directory in Plans view |
@@ -287,14 +288,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-0.9.8.vsix
+   code --install-extension ai-coding-sidebar-0.9.10.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-0.9.8.vsix
+code --install-extension releases/ai-coding-sidebar-0.9.10.vsix
 ```
 
 #### Build the package yourself
@@ -308,7 +309,7 @@ code --install-extension releases/ai-coding-sidebar-0.9.8.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-0.9.8.vsix
+   code --install-extension releases/ai-coding-sidebar-0.9.10.vsix
    ```
 4. Restart VS Code.
 

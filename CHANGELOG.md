@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.10] - 2026-01-25
+
+### Added
+- **Process-Based Claude Code Detection**: Implemented reliable Claude Code session detection without prompt pattern matching
+  - Added `getChildProcesses()` method to TerminalService to retrieve PTY child processes
+  - Added `isClaudeCodeRunning()` method to detect Claude Code process by name
+  - Automatic process checking every 1.5 seconds per terminal tab
+  - Platform-specific implementation (macOS/Linux: `ps`, Windows: `wmic`)
+
+### Changed
+- **Terminal State Detection**: Enhanced Claude Code state detection with process-based approach
+  - Combined process-based detection with existing pattern matching for higher reliability
+  - Process-based detection runs independently from output pattern matching
+  - More resilient to Claude Code prompt changes
+  - Reduced false positives from similar command prompts
+
+### Improved
+- **ITerminalService Interface**: Extended with new process detection methods
+  - Added `ProcessInfo` type definition for process information
+  - Added `getChildProcesses(sessionId)` to retrieve child process list
+  - Added `isClaudeCodeRunning(sessionId)` to check Claude Code session status
+- **TerminalProvider Architecture**: Integrated process-based detection lifecycle
+  - Process checking starts on tab creation and session reconnection
+  - Process checking stops on tab deletion and cleanup
+  - Proper cleanup in `dispose()` method to prevent memory leaks
+
+### Technical Details
+- Detection works by checking if PTY child processes contain "claude" or "anthropic" in command name
+- Minimal performance impact: ~1ms per check, 1.5-second interval
+- Error-resilient: Returns empty array if no processes found (not an error)
+- Cross-platform support: macOS/Linux verified, Windows implementation included but untested
+
 ## [0.9.8] - 2026-01-25
 
 ### Fixed

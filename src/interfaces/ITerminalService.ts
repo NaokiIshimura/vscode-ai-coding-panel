@@ -11,6 +11,15 @@ export type TerminalOutputListener = (data: string) => void;
 export type TerminalExitListener = (sessionId: string, exitCode: number, signal?: number) => void;
 
 /**
+ * プロセス情報
+ */
+export interface ProcessInfo {
+    pid: number;
+    ppid: number;
+    command: string;
+}
+
+/**
  * ターミナルサービスのインターフェース
  */
 export interface ITerminalService extends vscode.Disposable {
@@ -67,4 +76,18 @@ export interface ITerminalService extends vscode.Disposable {
      * @returns 登録解除用のDisposable
      */
     onSessionExit(callback: TerminalExitListener): vscode.Disposable;
+
+    /**
+     * 指定されたセッションの子プロセスを取得
+     * @param sessionId セッションID
+     * @returns プロセス情報の配列
+     */
+    getChildProcesses(sessionId: string): Promise<ProcessInfo[]>;
+
+    /**
+     * 指定されたセッションでClaude Codeが起動しているか確認
+     * @param sessionId セッションID
+     * @returns Claude Codeが起動している場合true
+     */
+    isClaudeCodeRunning(sessionId: string): Promise<boolean>;
 }

@@ -34,7 +34,7 @@ suite('EditorProvider Integration Test Suite', () => {
 		editorProvider.dispose();
 
 		if (fs.existsSync(testDir)) {
-			fs.rmSync(testDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+			fs.rmSync(testDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 		}
 	});
 

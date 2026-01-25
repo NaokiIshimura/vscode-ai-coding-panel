@@ -19,7 +19,7 @@ suite('FileOperationService Test Suite', () => {
 	teardown(() => {
 		// テストディレクトリをクリーンアップ
 		if (fs.existsSync(testDir)) {
-			fs.rmSync(testDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+			fs.rmSync(testDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 		}
 	});
 

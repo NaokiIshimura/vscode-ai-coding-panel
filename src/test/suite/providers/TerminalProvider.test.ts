@@ -119,7 +119,12 @@ suite('TerminalProvider Integration Test Suite', () => {
 	});
 
 	suite('insertPaths', () => {
-		test('Should not throw error when inserting paths without WebView', async () => {
+		test('Should not throw error when inserting paths without WebView', async function() {
+			// Windows環境ではシェルが見つからないためスキップ
+			if (process.platform === 'win32') {
+				this.skip();
+			}
+
 			const paths = ['/path/to/file1.md', '/path/to/file2.md'];
 
 			// WebViewが初期化されていない状態でも、エラーは発生しない

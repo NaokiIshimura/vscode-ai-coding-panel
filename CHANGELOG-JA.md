@@ -5,6 +5,22 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [0.9.11] - 2026-01-25
+
+### 修正
+- **Terminal Viewのスクロール位置**: パネル切り替え時にスクロール位置が最上位にリセットされる問題を修正
+  - WebViewの可視性変更時にスクロール位置の保存・復元メカニズムを実装
+  - 非表示前に`saveScrollPositions`メッセージでスクロール状態をキャプチャ
+  - 表示後に`restoreScrollPositions`メッセージでスクロール状態を復元
+  - タブアクティブ化時の`fitAddon.fit()`呼び出し後もスクロール位置を維持
+  - 保存されたスクロール位置を優先して使用することでリセット問題を防止
+
+### 技術的変更
+- **TerminalProvider**: パネル非表示前にスクロール状態を保存する`_onWebviewBecameHidden()`メソッドを追加
+- **TerminalProvider**: `_onWebviewBecameVisible()`メソッドに遅延スクロール復元（50ms）を追加
+- **Terminal WebView**: タブごとのスクロール状態を保存する`savedScrollPositions` Mapを導入
+- **Terminal WebView**: `activateTab()`を修正し、`fitAddon.fit()`後にスクロール位置を復元
+
 ## [0.9.10] - 2026-01-25
 
 ### 追加
@@ -1216,3 +1232,6 @@ v0.8.33以前からアップグレードする場合:
 [0.9.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.5...v0.9.6
 [0.9.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.6...v0.9.7
 [0.9.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.7...v0.9.8
+[0.9.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.8...v0.9.9
+[0.9.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.9...v0.9.10
+[0.9.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.10...v0.9.11

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.11] - 2026-01-25
+
+### Fixed
+- **Terminal View Scroll Position**: Fixed scroll position resetting to top when switching panels
+  - Implemented scroll position save/restore mechanism on WebView visibility changes
+  - Added `saveScrollPositions` message to capture scroll state before hiding
+  - Added `restoreScrollPositions` message to restore scroll state after showing
+  - Scroll position is preserved even when `fitAddon.fit()` is called during tab activation
+  - Saved scroll positions take priority over current state to prevent reset issues
+
+### Technical
+- **TerminalProvider**: Added `_onWebviewBecameHidden()` method to save scroll state before panel hides
+- **TerminalProvider**: Enhanced `_onWebviewBecameVisible()` method with delayed scroll restoration (50ms)
+- **Terminal WebView**: Introduced `savedScrollPositions` Map to store scroll state per tab
+- **Terminal WebView**: Modified `activateTab()` to restore scroll position after `fitAddon.fit()`
+
 ## [0.9.10] - 2026-01-25
 
 ### Added
@@ -1745,3 +1761,6 @@ If you are upgrading from v0.8.33 or earlier:
 [0.9.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.5...v0.9.6
 [0.9.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.6...v0.9.7
 [0.9.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.7...v0.9.8
+[0.9.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.8...v0.9.9
+[0.9.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.9...v0.9.10
+[0.9.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.10...v0.9.11

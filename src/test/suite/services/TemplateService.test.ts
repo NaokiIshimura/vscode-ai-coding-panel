@@ -84,7 +84,7 @@ suite('TemplateService Test Suite', () => {
 		teardown(() => {
 			// クリーンアップ
 			if (fs.existsSync(testFixturesDir)) {
-				fs.rmSync(testFixturesDir, { recursive: true, force: true });
+				fs.rmSync(testFixturesDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
 			}
 		});
 
@@ -147,7 +147,7 @@ suite('TemplateService Test Suite', () => {
 			} finally {
 				// テスト用ディレクトリ全体をクリーンアップ（実際のプロジェクトファイルは保護）
 				if (fs.existsSync(testExtensionPath)) {
-					fs.rmSync(testExtensionPath, { recursive: true, force: true });
+					fs.rmSync(testExtensionPath, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
 				}
 			}
 		});

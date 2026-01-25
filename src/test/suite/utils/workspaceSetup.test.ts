@@ -16,23 +16,23 @@ suite('workspaceSetup Test Suite', () => {
 
 	// 各テスト後にクリーンアップ
 	teardown(() => {
-		// .vscodeディレクトリを削除
+		// .vscodeディレクトリを削除（Windowsでのファイルロック対策としてリトライを追加）
 		const vscodeDir = path.join(testWorkspaceRoot, '.vscode');
 		if (fs.existsSync(vscodeDir)) {
-			fs.rmSync(vscodeDir, { recursive: true, force: true });
+			fs.rmSync(vscodeDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
 		}
 
 		// .claudeディレクトリを削除
 		const claudeDir = path.join(testWorkspaceRoot, '.claude');
 		if (fs.existsSync(claudeDir)) {
-			fs.rmSync(claudeDir, { recursive: true, force: true });
+			fs.rmSync(claudeDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
 		}
 	});
 
 	// テスト後にテストワークスペースを削除
 	suiteTeardown(() => {
 		if (fs.existsSync(testWorkspaceRoot)) {
-			fs.rmSync(testWorkspaceRoot, { recursive: true, force: true });
+			fs.rmSync(testWorkspaceRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
 		}
 	});
 
@@ -128,7 +128,7 @@ suite('workspaceSetup Test Suite', () => {
 			} finally {
 				// テスト用ディレクトリのみをクリーンアップ（実際のプロジェクトファイルは保護）
 				if (fs.existsSync(testExtensionPath)) {
-					fs.rmSync(testExtensionPath, { recursive: true, force: true });
+					fs.rmSync(testExtensionPath, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
 				}
 			}
 		});

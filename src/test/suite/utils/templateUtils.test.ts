@@ -29,7 +29,7 @@ suite('templateUtils Test Suite', () => {
 	suiteTeardown(() => {
 		// テスト用ディレクトリ全体を削除
 		if (fs.existsSync(testFixturesDir)) {
-			fs.rmSync(testFixturesDir, { recursive: true, force: true });
+			fs.rmSync(testFixturesDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
 		}
 	});
 

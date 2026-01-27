@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-01-27
+
+### Added
+- **Command Prefix Setting**: Added `aiCodingSidebar.editor.commandPrefix` setting to customize the command prefix used in editor commands
+  - Default value: `claude --model opus`
+  - Use `${commandPrefix}` placeholder in command templates (runCommand, planCommand, specCommand)
+  - Allows easy switching between models or adding custom options without editing each command individually
+
+### Changed
+- Updated default command templates to use `${commandPrefix}` placeholder
+- Default model changed from `claude` to `claude --model opus`
+
 ## [1.0.1] - 2026-01-27
 
 ### Added

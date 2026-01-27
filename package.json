@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -532,25 +532,30 @@
             "Descending order"
           ]
         },
+        "aiCodingSidebar.editor.commandPrefix": {
+          "type": "string",
+          "default": "claude --model opus",
+          "description": "Command prefix used in editor commands. This is substituted for ${commandPrefix} in command templates."
+        },
         "aiCodingSidebar.editor.runCommand": {
           "type": "string",
-          "default": "claude \"Review the file at ${filePath}\"",
-          "description": "Command template to execute when clicking the Run button in the Editor view. Use ${filePath} as placeholder for the file path."
+          "default": "${commandPrefix} \"Review the file at ${filePath}\"",
+          "description": "Command template to execute when clicking the Run button in the Editor view. Use ${filePath} as placeholder for the file path, ${commandPrefix} for the command prefix."
         },
         "aiCodingSidebar.editor.runCommandWithoutFile": {
           "type": "string",
-          "default": "claude \"${editorContent}\"",
-          "description": "Command template to execute when clicking the Run button without a file open. Use ${editorContent} as placeholder for the editor content."
+          "default": "${commandPrefix} \"${editorContent}\"",
+          "description": "Command template to execute when clicking the Run button without a file open. Use ${editorContent} as placeholder for the editor content, ${commandPrefix} for the command prefix."
         },
         "aiCodingSidebar.editor.planCommand": {
           "type": "string",
-          "default": "claude \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",
-          "description": "Command template to execute when clicking the Plan button. Use ${filePath} as placeholder for the file path."
+          "default": "${commandPrefix} \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",
+          "description": "Command template to execute when clicking the Plan button. Use ${filePath} as placeholder for the file path, ${commandPrefix} for the command prefix."
         },
         "aiCodingSidebar.editor.specCommand": {
           "type": "string",
-          "default": "claude \"Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}.\"",
-          "description": "Command template to execute when clicking the Spec button. Use ${filePath} as placeholder for the file path."
+          "default": "${commandPrefix} \"Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}.\"",
+          "description": "Command template to execute when clicking the Spec button. Use ${filePath} as placeholder for the file path, ${commandPrefix} for the command prefix."
         },
         "aiCodingSidebar.terminal.shell": {
           "type": "string",

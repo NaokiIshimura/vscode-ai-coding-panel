@@ -15,6 +15,13 @@ export class ConfigurationProvider {
     }
 
     /**
+     * コマンドプレフィックスを取得
+     */
+    getCommandPrefix(): string {
+        return this.getConfiguration().get<string>('editor.commandPrefix', 'claude --model opus');
+    }
+
+    /**
      * デフォルト相対パスを取得
      */
     getDefaultRelativePath(): string {

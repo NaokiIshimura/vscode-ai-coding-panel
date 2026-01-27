@@ -414,6 +414,7 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 - `aiCodingSidebar.plans.defaultRelativePath`: デフォルトの相対パス（デフォルト: `.claude/plans`）
 - `aiCodingSidebar.plans.sortBy`: ソート基準（name/created/modified）- ファイルとディレクトリの両方に適用
 - `aiCodingSidebar.plans.sortOrder`: ソート順（ascending/descending）- ファイルとディレクトリの両方に適用
+- `aiCodingSidebar.editor.commandPrefix`: コマンドプレフィックス（デフォルト: `claude --model opus`）
 - `aiCodingSidebar.editor.runCommand`: Runボタン実行コマンド
 - `aiCodingSidebar.editor.runCommandWithoutFile`: ファイルなし時のRunコマンド
 - `aiCodingSidebar.editor.planCommand`: Planボタン実行コマンド

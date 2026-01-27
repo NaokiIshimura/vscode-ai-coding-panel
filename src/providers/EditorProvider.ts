@@ -200,11 +200,13 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
                         // Get the plan command template from settings
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-                        const commandTemplate = config.get<string>('editor.planCommand', 'claude "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."');
+                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude --model opus');
+                        const commandTemplate = config.get<string>('editor.planCommand', '${commandPrefix} "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."');
 
-                        // Replace ${filePath} placeholder with safely escaped file path
+                        // Replace placeholders with safely escaped values
                         const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
-                        const command = commandTemplate.replace(/\$\{filePath\}/g, escapedPath);
+                        let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
+                        command = command.replace(/\$\{filePath\}/g, escapedPath);
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {
@@ -237,11 +239,13 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
                         // Get the spec command template from settings
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-                        const commandTemplate = config.get<string>('editor.specCommand', 'claude "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."');
+                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude --model opus');
+                        const commandTemplate = config.get<string>('editor.specCommand', '${commandPrefix} "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}."');
 
-                        // Replace ${filePath} placeholder with safely escaped file path
+                        // Replace placeholders with safely escaped values
                         const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
-                        const command = commandTemplate.replace(/\$\{filePath\}/g, escapedPath);
+                        let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
+                        command = command.replace(/\$\{filePath\}/g, escapedPath);
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {
@@ -284,11 +288,13 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
                         // Get the run command template from settings
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-                        const commandTemplate = config.get<string>('editor.runCommand', 'claude "${filePath}"');
+                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude --model opus');
+                        const commandTemplate = config.get<string>('editor.runCommand', '${commandPrefix} "Review the file at ${filePath}"');
 
-                        // Replace ${filePath} placeholder with safely escaped file path
+                        // Replace placeholders with safely escaped values
                         const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
-                        const command = commandTemplate.replace(/\$\{filePath\}/g, escapedPath);
+                        let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
+                        command = command.replace(/\$\{filePath\}/g, escapedPath);
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {
@@ -298,11 +304,13 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                     } else if (data.editorContent && data.editorContent.trim()) {
                         // No file open - use the editor content directly
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-                        const commandTemplate = config.get<string>('editor.runCommandWithoutFile', 'claude "${editorContent}"');
+                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude --model opus');
+                        const commandTemplate = config.get<string>('editor.runCommandWithoutFile', '${commandPrefix} "${editorContent}"');
 
-                        // Replace ${editorContent} placeholder with safely escaped editor content
+                        // Replace placeholders with safely escaped values
                         const escapedContent = this._escapeShellArgument(data.editorContent.trim());
-                        const command = commandTemplate.replace(/\$\{editorContent\}/g, escapedContent);
+                        let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
+                        command = command.replace(/\$\{editorContent\}/g, escapedContent);
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {

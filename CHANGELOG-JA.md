@@ -5,6 +5,18 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.2] - 2026-01-27
+
+### 追加
+- **コマンドプレフィックス設定**: エディターコマンドで使用するコマンドプレフィックスをカスタマイズする`aiCodingSidebar.editor.commandPrefix`設定を追加
+  - デフォルト値: `claude --model opus`
+  - コマンドテンプレート（runCommand、planCommand、specCommand）で`${commandPrefix}`プレースホルダーを使用
+  - 各コマンドを個別に編集せずに、モデル切り替えやカスタムオプションの追加が可能
+
+### 変更
+- デフォルトのコマンドテンプレートを`${commandPrefix}`プレースホルダーを使用するように更新
+- デフォルトモデルを`claude`から`claude --model opus`に変更
+
 ## [1.0.1] - 2026-01-27
 
 ### 追加

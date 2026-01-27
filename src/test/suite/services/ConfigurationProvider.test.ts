@@ -2,8 +2,8 @@ import * as assert from 'assert';
 import { ConfigurationProvider } from '../../../services/ConfigurationProvider';
 import { SortField, SortOrder, ViewMode } from '../../../types';
 
-// ConfigurationProviderのテストをスキップ
-// 理由: テスト環境ではワークスペースが開いておらず、また多くの設定がpackage.jsonに登録されていないため
+// Skip ConfigurationProvider tests
+// Reason: Workspace is not open in test environment and many settings are not registered in package.json
 suite.skip('ConfigurationProvider Test Suite', () => {
 	let configProvider: ConfigurationProvider;
 
@@ -12,19 +12,35 @@ suite.skip('ConfigurationProvider Test Suite', () => {
 	});
 
 	teardown(async () => {
-		// テスト後に設定をリセット
+		// Reset settings after each test
 		try {
 			await configProvider.resetAllSettings();
 		} catch (error) {
-			// ワークスペースが開いていない場合はスキップ
+			// Skip if workspace is not open
 		}
+	});
+
+	suite('getCommandPrefix', () => {
+		test('Should return command prefix', () => {
+			const prefix = configProvider.getCommandPrefix();
+
+			// Returns default value or configured value
+			assert.ok(typeof prefix === 'string');
+		});
+
+		test('Should return default value when not configured', () => {
+			const prefix = configProvider.getCommandPrefix();
+
+			// Default value is 'claude --model opus'
+			assert.strictEqual(prefix, 'claude --model opus');
+		});
 	});
 
 	suite('getDefaultRelativePath', () => {
 		test('Should return default relative path', () => {
 			const path = configProvider.getDefaultRelativePath();
 
-			// デフォルト値または設定された値が返される
+			// Returns default value or configured value
 			assert.ok(typeof path === 'string');
 		});
 	});
@@ -161,17 +177,17 @@ suite.skip('ConfigurationProvider Test Suite', () => {
 
 	suite('resetAllSettings', () => {
 		test('Should reset all settings to defaults', async () => {
-			// 設定を変更
+			// Change settings
 			await configProvider.setDefaultRelativePath('.custom/path');
 			await configProvider.setSortBy(SortField.Modified);
 			await configProvider.setSortOrder(SortOrder.Descending);
 			await configProvider.setShowHidden(true);
 
-			// リセット
+			// Reset
 			await configProvider.resetAllSettings();
 
-			// デフォルト値に戻っていることを確認
-			// 注: リセット後の値は拡張機能のデフォルト値に依存する
+			// Verify settings are reset to defaults
+			// Note: Values after reset depend on extension defaults
 			const path = configProvider.getDefaultRelativePath();
 			assert.ok(typeof path === 'string');
 		});
@@ -183,12 +199,12 @@ suite.skip('ConfigurationProvider Test Suite', () => {
 			const testSortBy = SortField.Created;
 			const testSortOrder = SortOrder.Descending;
 
-			// 複数の設定を行う
+			// Set multiple settings
 			await configProvider.setDefaultRelativePath(testPath);
 			await configProvider.setSortBy(testSortBy);
 			await configProvider.setSortOrder(testSortOrder);
 
-			// 設定が保持されていることを確認
+			// Verify settings are persisted
 			assert.strictEqual(configProvider.getDefaultRelativePath(), testPath);
 			assert.strictEqual(configProvider.getSortBy(), testSortBy);
 			assert.strictEqual(configProvider.getSortOrder(), testSortOrder);

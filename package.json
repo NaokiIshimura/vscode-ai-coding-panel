@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {

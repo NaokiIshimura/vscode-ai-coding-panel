@@ -20,6 +20,22 @@ suite.skip('ConfigurationProvider Test Suite', () => {
 		}
 	});
 
+	suite('getCommandPrefix', () => {
+		test('Should return command prefix', () => {
+			const prefix = configProvider.getCommandPrefix();
+
+			// デフォルト値または設定された値が返される
+			assert.ok(typeof prefix === 'string');
+		});
+
+		test('Should return default value when not configured', () => {
+			const prefix = configProvider.getCommandPrefix();
+
+			// デフォルト値は 'claude --model opus'
+			assert.strictEqual(prefix, 'claude --model opus');
+		});
+	});
+
 	suite('getDefaultRelativePath', () => {
 		test('Should return default relative path', () => {
 			const path = configProvider.getDefaultRelativePath();

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-01-27
+
+### Added
+- **Model Switching Shortcuts**: Added `/model sonnet` and `/model opus` shortcut buttons to Terminal View
+  - Buttons appear in the Claude Code running shortcut bar
+  - Placed to the left of `/compact` for quick model changes
+  - Enables rapid switching between Sonnet and Opus models during Claude Code sessions
+
 ## [1.0.0] - 2026-01-26
 
 ### Overview

@@ -5,6 +5,14 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.1] - 2026-01-27
+
+### 追加
+- **モデル切り替えショートカット**: Terminal Viewに`/model sonnet`と`/model opus`ショートカットボタンを追加
+  - Claude Code実行中のショートカットバーにボタンを表示
+  - `/compact`の左側に配置し、素早いモデル変更を可能に
+  - Claude Codeセッション中にSonnetとOpusモデルを素早く切り替え可能
+
 ## [1.0.0] - 2026-01-26
 
 ### 概要

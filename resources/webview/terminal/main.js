@@ -665,6 +665,8 @@
     document.getElementById('btn-claude')?.addEventListener('click', () => sendShortcut('claude', true));
     document.getElementById('btn-claude-c')?.addEventListener('click', () => sendShortcut('claude -c', true));
     document.getElementById('btn-claude-r')?.addEventListener('click', () => sendShortcut('claude -r', true));
+    document.getElementById('btn-model-sonnet')?.addEventListener('click', () => sendShortcut('/model sonnet', false));
+    document.getElementById('btn-model-opus')?.addEventListener('click', () => sendShortcut('/model opus', false));
     document.getElementById('btn-compact')?.addEventListener('click', () => sendShortcut('/compact', false));
     document.getElementById('btn-clear')?.addEventListener('click', () => sendShortcut('/clear', false));
 

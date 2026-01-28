@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-01-28
+
+### Fixed
+- **Terminal Shortcut Command Execution**: Fixed issue where Claude Code shortcut buttons (e.g., `/clear`, `/model`, `/compact`) did not execute commands on click
+  - Implemented bracketed paste mode (`\x1b[200~...\x1b[201~`) with 20ms delay before sending Enter
+  - Commands now execute immediately with a single click during Claude Code sessions
+  - Resolved previous issue where commands required multiple clicks or only displayed without executing
+
+### Improved
+- **Editor Command Execution**: Applied the same bracketed paste mode improvement to Editor View's Run/Plan/Spec buttons
+  - Ensures consistent command execution behavior across Terminal shortcuts and Editor buttons
+  - Commands sent from Editor View now execute reliably during Claude Code sessions
+
+### Technical
+- Updated `TerminalProvider.sendCommand()` method to use bracketed paste mode for Claude Code sessions
+- Updated shortcut button handler in Terminal View to use the same mechanism
+- Both implementations use 20ms delay between paste sequence and Enter key for reliable command processing
+
 ## [1.0.3] - 2026-01-27
 
 ### Changed

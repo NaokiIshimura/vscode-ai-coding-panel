@@ -170,8 +170,13 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                             const tab = this._tabs.find(t => t.id === this._activeTabId);
                             if (tab) {
                                 if (tab.isClaudeCodeRunning) {
-                                    // Claude Code起動中: コマンドのみ送信（Enterなし）
-                                    this._terminalService.write(tab.sessionId, command);
+                                    // Claude Code起動中: ペーストモードでコマンドを送信
+                                    // \x1b[200~ = ペースト開始、\x1b[201~ = ペースト終了
+                                    this._terminalService.write(tab.sessionId, '\x1b[200~' + command + '\x1b[201~');
+                                    // 短い遅延の後にEnterを送信して実行
+                                    setTimeout(() => {
+                                        this._terminalService.write(tab.sessionId, '\r');
+                                    }, 20);
                                 } else {
                                     // シェル: コマンド + 改行を送信
                                     this._terminalService.write(tab.sessionId, command + '\n');
@@ -495,10 +500,20 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         if (this._activeTabId) {
             const tab = this._tabs.find(t => t.id === this._activeTabId);
             if (tab) {
-                // Claude Code起動中は改行を追加しない
-                const shouldAddNewline = addNewline && !tab.isClaudeCodeRunning;
-                const commandToSend = shouldAddNewline ? command + '\n' : command;
-                this._terminalService.write(tab.sessionId, commandToSend);
+                // Claude Code起動中はペーストモードで送信して実行
+                if (tab.isClaudeCodeRunning) {
+                    // ペーストモードでコマンドを送信
+                    // \x1b[200~ = ペースト開始、\x1b[201~ = ペースト終了
+                    this._terminalService.write(tab.sessionId, '\x1b[200~' + command + '\x1b[201~');
+                    // 短い遅延の後にEnterを送信して実行
+                    setTimeout(() => {
+                        this._terminalService.write(tab.sessionId, '\r');
+                    }, 20);
+                } else {
+                    // シェル状態: コマンド + 改行を送信
+                    const commandToSend = addNewline ? command + '\n' : command;
+                    this._terminalService.write(tab.sessionId, commandToSend);
+                }
 
                 // Claude Codeコマンドの場合、即座に処理中状態にする
                 if (command.trim().startsWith('claude')) {

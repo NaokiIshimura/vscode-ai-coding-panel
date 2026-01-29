@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { promises as fs } from 'fs';
 import { TerminalService } from '../services/TerminalService';
+import { ITerminalService } from '../interfaces/ITerminalService';
 
 // Forward declaration for EditorProvider to avoid circular dependency
 export interface IEditorProvider {
@@ -27,7 +28,7 @@ export interface TerminalTab {
 export class TerminalProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'terminalView';
     private _view?: vscode.WebviewView;
-    private _terminalService: TerminalService;
+    private _terminalService: ITerminalService;
     private _tabs: TerminalTab[] = [];
     private _activeTabId?: string;
     private _outputDisposables: Map<string, vscode.Disposable> = new Map();
@@ -50,8 +51,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
+        terminalService?: ITerminalService,
     ) {
-        this._terminalService = new TerminalService();
+        this._terminalService = terminalService ?? new TerminalService();
         this._setupSessionExitHandler();
     }
 
@@ -158,45 +160,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                     this.killTerminal();
                     break;
                 case 'sendShortcut':
-                    {
-                        const command = data.command as string;
-                        const startsClaudeCode = data.startsClaudeCode as boolean;
-
-                        if (!command) {
-                            break;
-                        }
-
-                        if (this._activeTabId) {
-                            const tab = this._tabs.find(t => t.id === this._activeTabId);
-                            if (tab) {
-                                if (tab.isClaudeCodeRunning) {
-                                    // Claude Code起動中: ペーストモードでコマンドを送信
-                                    // \x1b[200~ = ペースト開始、\x1b[201~ = ペースト終了
-                                    this._terminalService.write(tab.sessionId, '\x1b[200~' + command + '\x1b[201~');
-                                    // 短い遅延の後にEnterを送信して実行
-                                    setTimeout(() => {
-                                        this._terminalService.write(tab.sessionId, '\r');
-                                    }, 20);
-                                } else {
-                                    // シェル: コマンド + 改行を送信
-                                    this._terminalService.write(tab.sessionId, command + '\n');
-
-                                    // 状態を更新
-                                    if (startsClaudeCode) {
-                                        tab.isClaudeCodeRunning = true;
-                                        tab.isProcessing = true;
-                                        // WebViewに状態を通知
-                                        this._view?.webview.postMessage({
-                                            type: 'claudeCodeStateChanged',
-                                            tabId: tab.id,
-                                            isRunning: true,
-                                            isProcessing: true
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    this.handleShortcut(data.command as string, data.startsClaudeCode as boolean);
                     break;
                 case 'resetClaudeCodeState':
                     if (this._activeTabId) {
@@ -540,6 +504,48 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                         tabId: this._activeTabId,
                         commandType: commandType
                     });
+                }
+            }
+        }
+    }
+
+    /**
+     * ショートカットコマンドを処理
+     * @param command 実行するコマンド
+     * @param startsClaudeCode Claude Codeを起動するコマンドかどうか
+     */
+    public handleShortcut(command: string, startsClaudeCode: boolean): void {
+        if (!command) {
+            return;
+        }
+
+        if (this._activeTabId) {
+            const tab = this._tabs.find(t => t.id === this._activeTabId);
+            if (tab) {
+                if (tab.isClaudeCodeRunning) {
+                    // Claude Code起動中: ペーストモードでコマンドを送信
+                    // \x1b[200~ = ペースト開始、\x1b[201~ = ペースト終了
+                    this._terminalService.write(tab.sessionId, '\x1b[200~' + command + '\x1b[201~');
+                    // 短い遅延の後にEnterを送信して実行
+                    setTimeout(() => {
+                        this._terminalService.write(tab.sessionId, '\r');
+                    }, 20);
+                } else {
+                    // シェル: コマンド + 改行を送信
+                    this._terminalService.write(tab.sessionId, command + '\n');
+
+                    // 状態を更新
+                    if (startsClaudeCode) {
+                        tab.isClaudeCodeRunning = true;
+                        tab.isProcessing = true;
+                        // WebViewに状態を通知
+                        this._view?.webview.postMessage({
+                            type: 'claudeCodeStateChanged',
+                            tabId: tab.id,
+                            isRunning: true,
+                            isProcessing: true
+                        });
+                    }
                 }
             }
         }

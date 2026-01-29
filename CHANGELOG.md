@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-01-29
+
+### Added
+- **Plans View Date/Time Display**: Added date/time prefix to files and directories in root directory
+  - Today's items show time: `[HH:MM] filename` (e.g., `[09:54] 2026_0129_0954_07_TASK.md`)
+  - Older items show date: `[MM/DD] filename` (e.g., `[01/28] 2026_0128_1430_25_TASK.md`)
+  - Fixed-width prefix (7 characters) ensures aligned display
+  - Only applies to root directory; subdirectory items remain unchanged
+
+### Improved
+- **TerminalProvider Testability**: Improved testability with dependency injection pattern
+  - Constructor now accepts optional `ITerminalService` for mock injection in tests
+  - Extracted `handleShortcut()` as a public method for direct testing
+  - Added comprehensive TerminalProvider test suite
+
+### Technical
+- Replaced `formatCreatedDate()` (YYYY-MM-DD description) with `formatDateTimePrefix()` (label prefix)
+- Uses TreeItemLabel highlights only for editing files; other items use plain string labels
+- Improved test runner CLI path resolution for VS Code test-electron
+
 ## [1.0.4] - 2026-01-28
 
 ### Fixed
@@ -1933,3 +1953,9 @@ If you are upgrading from v0.8.33 or earlier:
 [0.9.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.11...v0.9.12
 [0.9.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.12...v0.9.13
 [0.9.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.13...v0.9.14
+[1.0.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.14...v1.0.0
+[1.0.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.0...v1.0.1
+[1.0.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.1...v1.0.2
+[1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
+[1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
+[1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5

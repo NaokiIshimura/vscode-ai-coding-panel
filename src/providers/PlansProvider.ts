@@ -514,9 +514,10 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
 
                 // ディレクトリの場合、クリックでディレクトリ移動
                 if (isDirectory) {
-                    // ルートパスのディレクトリの場合、作成日を右側に表示
+                    // ルートパスのディレクトリの場合、日付/時間をファイル名の前に表示
                     if (currentPath === this.rootPath) {
-                        item.description = this.formatCreatedDate(file.created);
+                        const prefix = this.formatDateTimePrefix(file.created);
+                        (item as vscode.TreeItem).label = `${prefix} ${file.name}`;
                     }
                     item.command = {
                         command: 'aiCodingSidebar.navigateToDirectory',
@@ -524,14 +525,30 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
                         arguments: [file.path]
                     };
                 } else {
-                    // 現在Markdown Editorで編集中のファイルに「editing」表記を追加し、ファイル名を太字で表示
-                    if (currentFilePath && file.path === currentFilePath) {
-                        item.description = 'editing';
-                        // TreeItemLabelのhighlightsを使用してファイル名全体を太字にする
-                        (item as vscode.TreeItem).label = {
-                            label: file.name,
-                            highlights: [[0, file.name.length]]
-                        };
+                    if (currentPath === this.rootPath) {
+                        // ルートパスのファイルの場合、日付/時間をファイル名の前に表示
+                        const prefix = this.formatDateTimePrefix(file.created);
+                        const fullLabel = `${prefix} ${file.name}`;
+                        const nameStart = prefix.length + 1;
+
+                        if (currentFilePath && file.path === currentFilePath) {
+                            item.description = 'editing';
+                            (item as vscode.TreeItem).label = {
+                                label: fullLabel,
+                                highlights: [[nameStart, fullLabel.length]]
+                            };
+                        } else {
+                            (item as vscode.TreeItem).label = fullLabel;
+                        }
+                    } else {
+                        // サブディレクトリ内のファイル（従来通り）
+                        if (currentFilePath && file.path === currentFilePath) {
+                            item.description = 'editing';
+                            (item as vscode.TreeItem).label = {
+                                label: file.name,
+                                highlights: [[0, file.name.length]]
+                            };
+                        }
                     }
                 }
 
@@ -747,11 +764,25 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         }
     }
 
-    private formatCreatedDate(date: Date): string {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+    /**
+     * Format date/time prefix for root directory display
+     * Today: [HH:MM], otherwise: [MM/DD]
+     */
+    private formatDateTimePrefix(date: Date): string {
+        const now = new Date();
+        const isToday = date.getFullYear() === now.getFullYear()
+            && date.getMonth() === now.getMonth()
+            && date.getDate() === now.getDate();
+
+        if (isToday) {
+            const hour = String(date.getHours()).padStart(2, '0');
+            const minute = String(date.getMinutes()).padStart(2, '0');
+            return `[${hour}:${minute}]`;
+        } else {
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `[${month}/${day}]`;
+        }
     }
 
     private async getFilesInDirectory(dirPath: string): Promise<FileInfo[]> {

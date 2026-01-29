@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { runTests } from '@vscode/test-electron';
+import { downloadAndUnzipVSCode, resolveCliPathFromVSCodeExecutablePath, runTests } from '@vscode/test-electron';
 
 async function main() {
 	try {
@@ -13,7 +13,19 @@ async function main() {
 
 		// Download VS Code, unzip it and run the integration test
 		console.log('Starting test run...');
+
+		// VS Code 1.85.0以降のmacOSではバイナリ構造が変更されているため、
+		// CLIパスを使用してテストを実行
+		const vscodeExecutablePath = await downloadAndUnzipVSCode();
+		let executablePath = vscodeExecutablePath;
+		try {
+			executablePath = resolveCliPathFromVSCodeExecutablePath(vscodeExecutablePath);
+		} catch {
+			// resolveCliPathが失敗した場合はデフォルトパスを使用
+		}
+
 		await runTests({
+			vscodeExecutablePath: executablePath,
 			extensionDevelopmentPath,
 			extensionTestsPath
 		});

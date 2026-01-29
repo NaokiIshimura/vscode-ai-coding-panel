@@ -5,6 +5,26 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.5] - 2026-01-29
+
+### 追加
+- **Plans View日付/時間表示**: ルートディレクトリのファイル/ディレクトリに日付/時間プレフィックスを追加
+  - 当日のアイテムは時間を表示: `[HH:MM] ファイル名`（例: `[09:54] 2026_0129_0954_07_TASK.md`）
+  - 当日以外のアイテムは日付を表示: `[MM/DD] ファイル名`（例: `[01/28] 2026_0128_1430_25_TASK.md`）
+  - 固定幅プレフィックス（7文字）により整列された表示を実現
+  - ルートディレクトリのみに適用、サブディレクトリ内のアイテムは変更なし
+
+### 改善
+- **TerminalProviderのテスタビリティ向上**: 依存性注入パターンによりテスタビリティを改善
+  - コンストラクタでオプショナルな`ITerminalService`を受け取り、テスト時にモック注入が可能
+  - `handleShortcut()`をpublicメソッドとして切り出し、直接テスト可能に
+  - TerminalProviderの包括的なテストスイートを追加
+
+### 技術的変更
+- `formatCreatedDate()`（YYYY-MM-DD description方式）を`formatDateTimePrefix()`（labelプレフィックス方式）に置換
+- TreeItemLabelのhighlightsはediting中のファイルのみに適用、その他は文字列ラベルを使用
+- VS Code test-electronのテストランナーCLIパス解決を改善
+
 ## [1.0.4] - 2026-01-28
 
 ### 修正
@@ -1404,3 +1424,9 @@ v0.8.33以前からアップグレードする場合:
 [0.9.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.11...v0.9.12
 [0.9.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.12...v0.9.13
 [0.9.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.13...v0.9.14
+[1.0.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v0.9.14...v1.0.0
+[1.0.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.0...v1.0.1
+[1.0.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.1...v1.0.2
+[1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
+[1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
+[1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5

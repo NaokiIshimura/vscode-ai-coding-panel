@@ -103,8 +103,8 @@ suite('PlansProvider Integration Test Suite', () => {
 			// パス表示アイテム + ファイル + ディレクトリ
 			assert.ok(children.length >= 3);
 
-			const fileItem = children.find(item => item.label === 'test.md');
-			const dirItem = children.find(item => item.label === 'testDir');
+			const fileItem = children.find(item => item.filePath === path.join(testDir, 'test.md'));
+			const dirItem = children.find(item => item.filePath === path.join(testDir, 'testDir'));
 
 			assert.ok(fileItem);
 			assert.ok(dirItem);
@@ -189,7 +189,7 @@ suite('PlansProvider Integration Test Suite', () => {
 
 			// キャッシュがクリアされているので新しいファイルが表示される
 			const children = await plansProvider.getChildren();
-			const newFile = children.find(item => item.label === 'new.md');
+			const newFile = children.find(item => item.filePath === path.join(testDir, 'new.md'));
 			assert.ok(newFile);
 		});
 	});
@@ -242,6 +242,85 @@ suite('PlansProvider Integration Test Suite', () => {
 
 			const selectedItem = plansProvider.getSelectedItem();
 			assert.strictEqual(selectedItem, undefined);
+		});
+	});
+
+	suite('formatDateTimePrefix', () => {
+		test('Should return [HH:MM] for today', () => {
+			const today = new Date();
+			const result = (plansProvider as any).formatDateTimePrefix(today);
+			const hour = String(today.getHours()).padStart(2, '0');
+			const minute = String(today.getMinutes()).padStart(2, '0');
+			assert.strictEqual(result, `[${hour}:${minute}]`);
+		});
+
+		test('Should return [MM/DD] for non-today', () => {
+			const yesterday = new Date();
+			yesterday.setDate(yesterday.getDate() - 1);
+			const result = (plansProvider as any).formatDateTimePrefix(yesterday);
+			const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+			const day = String(yesterday.getDate()).padStart(2, '0');
+			assert.strictEqual(result, `[${month}/${day}]`);
+		});
+
+		test('Should return [MM/DD] for date in different year', () => {
+			const lastYear = new Date();
+			lastYear.setFullYear(lastYear.getFullYear() - 1);
+			const result = (plansProvider as any).formatDateTimePrefix(lastYear);
+			const month = String(lastYear.getMonth() + 1).padStart(2, '0');
+			const day = String(lastYear.getDate()).padStart(2, '0');
+			assert.strictEqual(result, `[${month}/${day}]`);
+		});
+	});
+
+	suite('root directory date/time prefix', () => {
+		test('Should display date/time prefix for files in root directory', async () => {
+			fs.writeFileSync(path.join(testDir, 'test.md'), 'content', 'utf8');
+
+			await plansProvider.setRootPath(testDir);
+
+			const children = await plansProvider.getChildren();
+			const fileItem = children.find(item => item.filePath === path.join(testDir, 'test.md'));
+
+			assert.ok(fileItem);
+			// ルートディレクトリの非editingファイルはプレフィックス付き文字列ラベル
+			const label = (fileItem as vscode.TreeItem).label as string;
+			assert.ok(typeof label === 'string');
+			assert.ok(label.endsWith('test.md'));
+			assert.ok(label.startsWith('['));
+		});
+
+		test('Should display date/time prefix for directories in root directory', async () => {
+			fs.mkdirSync(path.join(testDir, 'subdir'), { recursive: true });
+
+			await plansProvider.setRootPath(testDir);
+
+			const children = await plansProvider.getChildren();
+			const dirItem = children.find(item => item.filePath === path.join(testDir, 'subdir'));
+
+			assert.ok(dirItem);
+			// ルートディレクトリのディレクトリもプレフィックス付き文字列ラベル
+			const label = (dirItem as vscode.TreeItem).label as string;
+			assert.ok(typeof label === 'string');
+			assert.ok(label.endsWith('subdir'));
+			assert.ok(label.startsWith('['));
+		});
+
+		test('Should not display date/time prefix for files in subdirectory', async () => {
+			const subDir = path.join(testDir, 'subdir');
+			fs.mkdirSync(subDir, { recursive: true });
+			fs.writeFileSync(path.join(subDir, 'sub.md'), 'content', 'utf8');
+
+			await plansProvider.setRootPath(testDir);
+			plansProvider.setActiveFolder(subDir);
+
+			const children = await plansProvider.getChildren();
+			const fileItem = children.find(item => item.filePath === path.join(subDir, 'sub.md'));
+
+			assert.ok(fileItem);
+			// サブディレクトリのファイルはプレフィックスなし（文字列のまま）
+			const label = (fileItem as vscode.TreeItem).label;
+			assert.strictEqual(label, 'sub.md');
 		});
 	});
 

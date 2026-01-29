@@ -38,6 +38,7 @@ Claude Codeでの生産性を最大化するために設計された、強力な
 | 自動ファイル選択 | ディレクトリに移動した際に、最も古いTASK.md、PROMPT.md、SPEC.mdファイルを自動的に選択して表示 |
 | **初期プロンプト付きディレクトリ作成** | 「Create directory」ボタンで`.claude/plans`ディレクトリと初期プロンプトファイル（`YYYY_MMDD_HHMM_SS_PROMPT.md`）を自動作成。Run/Plan/Specボタンの使い方を説明するテンプレート付き。ファイルは自動的にEditor Viewで開かれる |
 | パス表示 | 現在のパスをリストの先頭アイテムとして表示（New PROMPT.md、New TASK.md、New SPEC.md、Copy、Rename、New Directory、Archiveボタン付き） |
+| **日付/時間プレフィックス** | ルートディレクトリのアイテムは名前の前に日付または時間を表示: 当日は`[HH:MM]`、当日以外は`[MM/DD]` |
 | ソート | ファイルはデフォルトで作成日時の昇順でソート |
 | ドラッグ&ドロップ | ビュー内または外部からのファイルをドラッグしてコピー |
 | 自動更新 | ファイルが作成、変更、削除されたときに自動的に更新 |
@@ -332,14 +333,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.0.4.vsix
+   code --install-extension ai-coding-sidebar-1.0.5.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.0.4.vsix
+code --install-extension releases/ai-coding-sidebar-1.0.5.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -353,7 +354,7 @@ code --install-extension releases/ai-coding-sidebar-1.0.4.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.0.4.vsix
+   code --install-extension releases/ai-coding-sidebar-1.0.5.vsix
    ```
 4. VS Codeを再起動
 

@@ -50,11 +50,11 @@ export class FileItem extends vscode.TreeItem {
     private getFileIcon(fileName: string): vscode.ThemeIcon {
         const ext = path.extname(fileName).toLowerCase();
 
-        // Markdownファイルの場合、タイムスタンプ形式かどうかで分ける
+        // Markdownファイルの場合、Editor View対象ファイルかどうかで分ける
         if (ext === '.md') {
-            const timestampPattern = /^\d{4}\.\d{4}\.\d{2}_PROMPT\.md$/;
-            // タイムスタンプ形式の場合はeditアイコン（Markdown Editorで開く）
-            if (timestampPattern.test(fileName)) {
+            const editorTargetPattern = /(?:TASK|PROMPT|SPEC)\.md$/i;
+            // Editor View対象ファイル（TASK/PROMPT/SPEC）はeditアイコン
+            if (editorTargetPattern.test(fileName)) {
                 return new vscode.ThemeIcon('edit');
             }
             // それ以外はmarkdownアイコン（通常のエディタで開く）

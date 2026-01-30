@@ -5,6 +5,19 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.6] - 2026-01-31
+
+### 変更
+- **Plans Viewファイル表示**: ルートディレクトリのファイルから日付/時間プレフィックス（`[HH:MM]`/`[MM/DD]`）を削除
+  - ディレクトリの日付/時間プレフィックス表示は維持
+  - ファイルはルート・サブディレクトリ共にファイル名のみ表示
+
+### 修正
+- **Editor対象ファイルアイコン**: Editor Viewで開くファイル（TASK.md、PROMPT.md、SPEC.md）がルート・サブディレクトリ両方で`edit`アイコンを表示するように修正
+  - 以前は特定のタイムスタンプパターンのPROMPT.mdのみが対象で、パターンにバグあり（ドット区切りでアンダースコア区切りと不一致）
+  - パターンを`/^\d{4}\.\d{4}\.\d{2}_PROMPT\.md$/`から`/(?:TASK|PROMPT|SPEC)\.md$/i`に更新
+  - `findOldestTargetFile`の対象ファイル判定と統一（大文字小文字を区別しない）
+
 ## [1.0.5] - 2026-01-29
 
 ### 追加
@@ -1430,3 +1443,4 @@ v0.8.33以前からアップグレードする場合:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6

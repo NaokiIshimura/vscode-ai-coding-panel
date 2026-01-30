@@ -525,30 +525,12 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
                         arguments: [file.path]
                     };
                 } else {
-                    if (currentPath === this.rootPath) {
-                        // ルートパスのファイルの場合、日付/時間をファイル名の前に表示
-                        const prefix = this.formatDateTimePrefix(file.created);
-                        const fullLabel = `${prefix} ${file.name}`;
-                        const nameStart = prefix.length + 1;
-
-                        if (currentFilePath && file.path === currentFilePath) {
-                            item.description = 'editing';
-                            (item as vscode.TreeItem).label = {
-                                label: fullLabel,
-                                highlights: [[nameStart, fullLabel.length]]
-                            };
-                        } else {
-                            (item as vscode.TreeItem).label = fullLabel;
-                        }
-                    } else {
-                        // サブディレクトリ内のファイル（従来通り）
-                        if (currentFilePath && file.path === currentFilePath) {
-                            item.description = 'editing';
-                            (item as vscode.TreeItem).label = {
-                                label: file.name,
-                                highlights: [[0, file.name.length]]
-                            };
-                        }
+                    if (currentFilePath && file.path === currentFilePath) {
+                        item.description = 'editing';
+                        (item as vscode.TreeItem).label = {
+                            label: file.name,
+                            highlights: [[0, file.name.length]]
+                        };
                     }
                 }
 

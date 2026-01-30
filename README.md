@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.0.5-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 A powerful VS Code panel extension designed to maximize your productivity with Claude Code.
 
@@ -40,7 +40,8 @@ Browse and manage files in a flat list view with directory navigation.
 | Auto-file selection | Automatically selects and displays the oldest TASK.md, PROMPT.md, or SPEC.md file when navigating to a directory |
 | **Create directory with prompt** | "Create directory" button automatically creates `.claude/plans` and an initial prompt file (`YYYY_MMDD_HHMM_SS_PROMPT.md`) with helpful guidance on using Run/Plan/Spec buttons. File opens automatically in Editor view |
 | Path display | Current path shown as the first item in the list with inline action buttons (New PROMPT.md, New TASK.md, New SPEC.md, Copy, Rename, New Directory, Archive) |
-| **Date/time prefix** | Root directory items display date or time before the name: `[HH:MM]` for today, `[MM/DD]` for other dates |
+| **Date/time prefix** | Root directory displays date or time before directory names: `[HH:MM]` for today, `[MM/DD]` for other dates (files are shown without prefix) |
+| **Editor target file icons** | Files opened in Editor view (TASK.md, PROMPT.md, SPEC.md) display an `edit` icon to distinguish them from regular Markdown files |
 | Sorting | Files are sorted by creation date (ascending) by default |
 | Drag & Drop | Copy files by dragging them within the view or from external sources |
 | Auto-refresh | Automatically updates when files are created, modified, or deleted |
@@ -334,14 +335,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.0.5.vsix
+   code --install-extension ai-coding-sidebar-1.0.6.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.0.5.vsix
+code --install-extension releases/ai-coding-sidebar-1.0.6.vsix
 ```
 
 #### Build the package yourself
@@ -355,7 +356,7 @@ code --install-extension releases/ai-coding-sidebar-1.0.5.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.0.5.vsix
+   code --install-extension releases/ai-coding-sidebar-1.0.6.vsix
    ```
 4. Restart VS Code.
 

@@ -274,7 +274,7 @@ suite('PlansProvider Integration Test Suite', () => {
 	});
 
 	suite('root directory date/time prefix', () => {
-		test('Should display date/time prefix for files in root directory', async () => {
+		test('Should not display date/time prefix for files in root directory', async () => {
 			fs.writeFileSync(path.join(testDir, 'test.md'), 'content', 'utf8');
 
 			await plansProvider.setRootPath(testDir);
@@ -283,11 +283,9 @@ suite('PlansProvider Integration Test Suite', () => {
 			const fileItem = children.find(item => item.filePath === path.join(testDir, 'test.md'));
 
 			assert.ok(fileItem);
-			// ルートディレクトリの非editingファイルはプレフィックス付き文字列ラベル
-			const label = (fileItem as vscode.TreeItem).label as string;
-			assert.ok(typeof label === 'string');
-			assert.ok(label.endsWith('test.md'));
-			assert.ok(label.startsWith('['));
+			// ルートディレクトリのファイルはプレフィックスなし
+			const label = (fileItem as vscode.TreeItem).label;
+			assert.strictEqual(label, 'test.md');
 		});
 
 		test('Should display date/time prefix for directories in root directory', async () => {

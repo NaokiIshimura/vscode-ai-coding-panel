@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2026-01-31
+
+### Changed
+- **Plans View File Display**: Removed date/time prefix (`[HH:MM]`/`[MM/DD]`) from files in root directory
+  - Directories continue to display the date/time prefix
+  - Files now show only their filename in both root and subdirectories
+
+### Fixed
+- **Editor Target File Icons**: Files opened in Editor view (TASK.md, PROMPT.md, SPEC.md) now display an `edit` icon in both root and subdirectories
+  - Previously only PROMPT.md with a specific timestamp pattern was targeted, and the pattern had a bug (dots instead of underscores)
+  - Updated pattern from `/^\d{4}\.\d{4}\.\d{2}_PROMPT\.md$/` to `/(?:TASK|PROMPT|SPEC)\.md$/i`
+  - Now consistent with `findOldestTargetFile` target file detection (case-insensitive)
+
 ## [1.0.5] - 2026-01-29
 
 ### Added
@@ -1959,3 +1972,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6

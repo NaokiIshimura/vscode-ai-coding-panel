@@ -349,6 +349,25 @@ TerminalProviderのテスタビリティを向上させるリファクタリン�
   - WebViewメッセージハンドラから分離し、直接テスト可能に
   - メソッドの責務を明確化
 
+### v1.0.7新機能: Terminal Viewショートカットに「claude update」を追加
+
+Terminal ViewのClaude Code未起動時のショートカットバーに `claude update` ボタンを追加：
+
+**実装内容**
+- **HTMLボタン追加**: `resources/webview/terminal/index.html` の `shortcuts-not-running` グループにボタンを追加
+  - トグルボタン（⇆）の直前（一番右側）に配置
+- **イベントリスナー追加**: `resources/webview/terminal/main.js` にクリックイベントリスナーを追加
+  - `startsClaudeCode: false` — Claude CLIのアップデートコマンドでインタラクティブセッションを起動しない
+
+**変更後のClaude Code未起動時ショートカット**
+```
+[claude] [claude -c] [claude -r] [claude update] [⇆]
+```
+
+**メリット**
+- ターミナルショートカットから直接Claude CLIのアップデートが可能
+- 既存の `handleShortcut` メソッドでシェルコマンドとして送信されるため、バックエンド変更不要
+
 ### v1.0.6改善: Plans Viewファイル表示の改善
 
 Plans Viewのファイル表示に関する2つの改善を実施：

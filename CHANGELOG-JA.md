@@ -5,6 +5,14 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.7] - 2026-01-31
+
+### 追加
+- **Terminalショートカット: claude update**: Claude Code未起動時のTerminal Viewショートカットバーに`claude update`ボタンを追加
+  - トグルボタンの直前（一番右側）に配置
+  - ターミナルショートカットから直接Claude CLIのアップデートコマンドを実行
+  - インタラクティブなClaude Codeセッションは起動しない（`startsClaudeCode: false`）
+
 ## [1.0.6] - 2026-01-31
 
 ### 変更
@@ -1443,4 +1451,5 @@ v0.8.33以前からアップグレードする場合:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6

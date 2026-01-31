@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.0.6-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 A powerful VS Code panel extension designed to maximize your productivity with Claude Code.
 
@@ -72,7 +72,7 @@ The embedded terminal is purpose-built for Claude Code with intelligent automati
 | Feature | Description |
 | --- | --- |
 | **Claude Code Auto-Detection** | Process-based detection (checks every 1.5s) reliably identifies Claude Code sessions independent of prompt changes. Automatically switches UI and shortcuts when Claude Code starts/exits |
-| **Context-Aware Shortcuts** | Smart buttons that change based on state:<br>- Not running: `claude`, `claude -c`, `claude -r`<br>- Running: `/model sonnet`, `/model opus`, `/compact`, `/clear`<br>Enables quick model switching and common commands during Claude Code sessions |
+| **Context-Aware Shortcuts** | Smart buttons that change based on state:<br>- Not running: `claude`, `claude -c`, `claude -r`, `claude update`<br>- Running: `/model sonnet`, `/model opus`, `/compact`, `/clear`<br>Enables quick model switching and common commands during Claude Code sessions |
 | **Command Type Icons** | Tab names display icons indicating command origin:<br>▶️ Run button<br>📝 Plan button<br>📑 Spec button |
 | **Dynamic Process Names** | Like iTerm2, tab names update automatically to show the currently running process |
 | **Tab-File Association** | Commands from Editor view link the file to the terminal tab. Switching tabs automatically:<br>- Opens the associated file in Editor view<br>- Navigates to the file's directory in Plans view |
@@ -335,14 +335,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.0.6.vsix
+   code --install-extension ai-coding-sidebar-1.0.7.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.0.6.vsix
+code --install-extension releases/ai-coding-sidebar-1.0.7.vsix
 ```
 
 #### Build the package yourself
@@ -356,7 +356,7 @@ code --install-extension releases/ai-coding-sidebar-1.0.6.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.0.6.vsix
+   code --install-extension releases/ai-coding-sidebar-1.0.7.vsix
    ```
 4. Restart VS Code.
 

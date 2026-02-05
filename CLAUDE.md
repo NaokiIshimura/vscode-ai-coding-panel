@@ -349,6 +349,27 @@ TerminalProviderのテスタビリティを向上させるリファクタリン�
   - WebViewメッセージハンドラから分離し、直接テスト可能に
   - メソッドの責務を明確化
 
+### v1.0.8更新: xterm.js v5 → v6（@xterm/xterm）アップデート
+
+Terminal Viewで使用しているxterm.jsおよび関連アドオンを、非推奨パッケージから新パッケージ（@xtermスコープ）に移行：
+
+**パッケージ移行**
+- `xterm@5.3.0` → `@xterm/xterm@6.0.0`
+- `xterm-addon-fit@0.8.0` → `@xterm/addon-fit@0.11.0`
+- `xterm-addon-web-links@0.9.0` → `@xterm/addon-web-links@0.12.0`
+- `xterm-addon-unicode11`（手動配置）→ `@xterm/addon-unicode11@0.9.0`（package.jsonで管理）
+
+**ビルドシステム改善**
+- `copy-xterm`スクリプトを新パッケージパスに対応
+- 全アドオン（fit, web-links, unicode11）を`copy-xterm`スクリプトに含め、`npm run copy-xterm`で全5ファイルが自動コピーされるように改善
+- `media/xterm/`内のファイル名は既存名を維持し、TerminalProvider.tsの変更を不要に
+
+**API互換性**
+- グローバル変数名（`Terminal`, `FitAddon`, `WebLinksAddon`, `Unicode11Addon`）は全て互換
+- `.xterm-viewport`、`.xterm-screen`クラスはv6でも存在
+- `allowProposedApi`オプションはv6でも認識される
+- main.js、style.css、TerminalProvider.ts、TerminalService.tsの変更は不要
+
 ### v1.0.7新機能: Terminal Viewショートカットに「claude update」を追加
 
 Terminal ViewのClaude Code未起動時のショートカットバーに `claude update` ボタンを追加：

@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -603,7 +603,7 @@
     "vscode:prepublish": "npm run compile && npm run copy-xterm",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "copy-xterm": "mkdir -p media/xterm && cp node_modules/xterm/css/xterm.css media/xterm/ && cp node_modules/xterm/lib/xterm.js media/xterm/ && cp node_modules/xterm-addon-fit/lib/xterm-addon-fit.js media/xterm/",
+    "copy-xterm": "mkdir -p media/xterm && cp node_modules/@xterm/xterm/css/xterm.css media/xterm/ && cp node_modules/@xterm/xterm/lib/xterm.js media/xterm/ && cp node_modules/@xterm/addon-fit/lib/addon-fit.js media/xterm/xterm-addon-fit.js && cp node_modules/@xterm/addon-web-links/lib/addon-web-links.js media/xterm/xterm-addon-web-links.js && cp node_modules/@xterm/addon-unicode11/lib/addon-unicode11.js media/xterm/xterm-addon-unicode11.js",
     "package": "npx vsce package --out releases/ --allow-missing-repository --no-dependencies",
     "version:patch": "npm version patch --no-git-tag-version",
     "version:minor": "npm version minor --no-git-tag-version",
@@ -630,9 +630,10 @@
     "typescript": "^4.9.4"
   },
   "dependencies": {
-    "ps-tree": "^1.2.0",
-    "xterm": "^5.3.0",
-    "xterm-addon-fit": "^0.8.0",
-    "xterm-addon-web-links": "^0.9.0"
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-unicode11": "^0.9.0",
+    "@xterm/addon-web-links": "^0.12.0",
+    "@xterm/xterm": "^6.0.0",
+    "ps-tree": "^1.2.0"
   }
 }

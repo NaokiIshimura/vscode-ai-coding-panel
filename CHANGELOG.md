@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2026-02-05
+
+### Changed
+- **xterm.js v5 → v6 Update**: Migrated all xterm.js packages from deprecated `xterm` scope to new `@xterm` scope
+  - `xterm@5.3.0` → `@xterm/xterm@6.0.0`
+  - `xterm-addon-fit@0.8.0` → `@xterm/addon-fit@0.11.0`
+  - `xterm-addon-web-links@0.9.0` → `@xterm/addon-web-links@0.12.0`
+  - `xterm-addon-unicode11` (manually placed) → `@xterm/addon-unicode11@0.9.0` (managed in package.json)
+
+### Improved
+- **Build System**: Updated `copy-xterm` script to include all addons (fit, web-links, unicode11)
+  - Previously web-links and unicode11 were not included in the copy script
+  - All 5 xterm files are now automatically copied via `npm run copy-xterm`
+
 ## [1.0.7] - 2026-01-31
 
 ### Added
@@ -1980,5 +1994,6 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6

@@ -5,6 +5,20 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.8] - 2026-02-05
+
+### 変更
+- **xterm.js v5 → v6 アップデート**: 全てのxterm.jsパッケージを非推奨の`xterm`スコープから新しい`@xterm`スコープに移行
+  - `xterm@5.3.0` → `@xterm/xterm@6.0.0`
+  - `xterm-addon-fit@0.8.0` → `@xterm/addon-fit@0.11.0`
+  - `xterm-addon-web-links@0.9.0` → `@xterm/addon-web-links@0.12.0`
+  - `xterm-addon-unicode11`（手動配置）→ `@xterm/addon-unicode11@0.9.0`（package.jsonで管理）
+
+### 改善
+- **ビルドシステム**: `copy-xterm`スクリプトを全アドオン（fit, web-links, unicode11）を含むように更新
+  - 以前はweb-linksとunicode11がコピースクリプトに含まれていなかった
+  - `npm run copy-xterm`で全5ファイルが自動コピーされるように改善
+
 ## [1.0.7] - 2026-01-31
 
 ### 追加
@@ -1451,5 +1465,6 @@ v0.8.33以前からアップグレードする場合:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6

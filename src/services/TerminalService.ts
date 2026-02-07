@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { ITerminalService, TerminalOutputListener, TerminalExitListener, ProcessInfo } from '../interfaces/ITerminalService';
+import { ITerminalService, TerminalOutputListener, TerminalExitListener, ProcessInfo, ProcessTreeResult } from '../interfaces/ITerminalService';
 
 const execPromise = promisify(exec);
 
@@ -567,6 +567,225 @@ export class TerminalService implements ITerminalService {
             console.error('Error getting foreground process:', error);
             return null;
         }
+    }
+
+    /**
+     * 1回のpsコマンドでプロセスツリーを取得し、
+     * Claude Code検知とフォアグラウンドプロセス名の両方を算出する
+     */
+    async getProcessTree(sessionId: string): Promise<ProcessTreeResult> {
+        const session = this.sessions.get(sessionId);
+        if (!session) {
+            return { isClaudeCodeRunning: false, foregroundProcess: null };
+        }
+
+        const ptyPid = session.pty.pid;
+        const platform = os.platform();
+
+        try {
+            if (platform === 'win32') {
+                return await this._getProcessTreeWindows(ptyPid);
+            } else {
+                return await this._getProcessTreeUnix(ptyPid);
+            }
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('Command failed')) {
+                return { isClaudeCodeRunning: false, foregroundProcess: null };
+            }
+            console.error('Error getting process tree:', error);
+            return { isClaudeCodeRunning: false, foregroundProcess: null };
+        }
+    }
+
+    /**
+     * macOS/Linux用: 1回のpsコマンドで全プロセス情報を取得し、メモリ上でフィルタリング
+     */
+    private async _getProcessTreeUnix(ptyPid: number): Promise<ProcessTreeResult> {
+        // grepなしで全プロセス情報を1回で取得
+        const { stdout } = await execPromise('ps -eo pid,ppid,comm');
+
+        // プロセス一覧をパースしてMapに格納（pid -> {ppid, command}）
+        const processMap = new Map<number, { ppid: number; command: string }>();
+        const lines = stdout.trim().split('\n');
+
+        // ヘッダー行をスキップ
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) {
+                continue;
+            }
+            const parts = line.split(/\s+/);
+            if (parts.length >= 3) {
+                const pid = parseInt(parts[0]);
+                const ppid = parseInt(parts[1]);
+                const command = parts.slice(2).join(' ');
+                if (pid > 0) {
+                    processMap.set(pid, { ppid, command });
+                }
+            }
+        }
+
+        // PTYの直接の子プロセス（シェル）を検索
+        const children: { pid: number; command: string }[] = [];
+        for (const [pid, proc] of processMap) {
+            if (proc.ppid === ptyPid) {
+                children.push({ pid, command: proc.command });
+            }
+        }
+
+        if (children.length === 0) {
+            return { isClaudeCodeRunning: false, foregroundProcess: null };
+        }
+
+        // Claude Code検知: 全子孫プロセスを走査
+        let isClaudeCodeRunning = false;
+        const allDescendants = this._getAllDescendants(ptyPid, processMap);
+        for (const desc of allDescendants) {
+            const lowerCommand = desc.command.toLowerCase();
+            if (lowerCommand.includes('claude') || lowerCommand.includes('anthropic')) {
+                isClaudeCodeRunning = true;
+                break;
+            }
+        }
+
+        // フォアグラウンドプロセス名を取得（プロセスツリーの最も深い子プロセスを探索）
+        const foregroundProcess = this._findForegroundProcess(children[0].pid, children[0].command, processMap);
+
+        return { isClaudeCodeRunning, foregroundProcess };
+    }
+
+    /**
+     * Windows用: 1回のwmicコマンドで全プロセス情報を取得し、メモリ上でフィルタリング
+     */
+    private async _getProcessTreeWindows(ptyPid: number): Promise<ProcessTreeResult> {
+        // 全プロセスのPID, PPID, Name, CommandLineを1回で取得
+        const { stdout } = await execPromise(
+            'wmic process get ProcessId,ParentProcessId,Name,CommandLine /format:csv'
+        );
+
+        // プロセス一覧をパースしてMapに格納
+        const processMap = new Map<number, { ppid: number; command: string }>();
+        const lines = stdout.trim().split('\n');
+
+        // ヘッダー行をスキップ
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) {
+                continue;
+            }
+            const parts = line.split(',');
+            if (parts.length >= 4) {
+                const commandLine = parts[1] || '';
+                const name = parts[2] || '';
+                const ppid = parseInt(parts[3]) || 0;
+                const pid = parseInt(parts[4]) || 0;
+                if (pid > 0) {
+                    processMap.set(pid, { ppid, command: commandLine || name });
+                }
+            }
+        }
+
+        // PTYの直接の子プロセス（シェル）を検索
+        const children: { pid: number; command: string }[] = [];
+        for (const [pid, proc] of processMap) {
+            if (proc.ppid === ptyPid) {
+                children.push({ pid, command: proc.command });
+            }
+        }
+
+        if (children.length === 0) {
+            return { isClaudeCodeRunning: false, foregroundProcess: null };
+        }
+
+        // Claude Code検知: 全子孫プロセスを走査
+        let isClaudeCodeRunning = false;
+        const allDescendants = this._getAllDescendants(ptyPid, processMap);
+        for (const desc of allDescendants) {
+            const lowerCommand = desc.command.toLowerCase();
+            if (lowerCommand.includes('claude') || lowerCommand.includes('anthropic')) {
+                isClaudeCodeRunning = true;
+                break;
+            }
+        }
+
+        // フォアグラウンドプロセス名を取得
+        const foregroundProcess = this._findForegroundProcess(children[0].pid, children[0].command, processMap);
+
+        return { isClaudeCodeRunning, foregroundProcess };
+    }
+
+    /**
+     * 指定されたPIDの全子孫プロセスを再帰的に取得
+     */
+    private _getAllDescendants(
+        parentPid: number,
+        processMap: Map<number, { ppid: number; command: string }>
+    ): { pid: number; command: string }[] {
+        const descendants: { pid: number; command: string }[] = [];
+        for (const [pid, proc] of processMap) {
+            if (proc.ppid === parentPid) {
+                descendants.push({ pid, command: proc.command });
+                descendants.push(...this._getAllDescendants(pid, processMap));
+            }
+        }
+        return descendants;
+    }
+
+    /**
+     * プロセスツリーの最も深い子プロセスを探索してフォアグラウンドプロセス名を決定
+     * 既存のgetForegroundProcess()と同じ3階層探索ロジックをメモリ上で実行
+     */
+    private _findForegroundProcess(
+        shellPid: number,
+        shellCommand: string,
+        processMap: Map<number, { ppid: number; command: string }>
+    ): string | null {
+        const shellName = this._extractProcessName(shellCommand);
+
+        // シェルの子プロセスを検索（第2階層）
+        let childPid: number | null = null;
+        let childName: string | null = null;
+        for (const [pid, proc] of processMap) {
+            if (proc.ppid === shellPid) {
+                childPid = pid;
+                childName = this._extractProcessName(proc.command);
+                break;
+            }
+        }
+
+        if (childPid === null || childName === null) {
+            return shellName || null;
+        }
+
+        // 第2階層の子プロセスを検索（第3階層）
+        let grandchildName: string | null = null;
+        for (const [_pid, proc] of processMap) {
+            if (proc.ppid === childPid) {
+                grandchildName = this._extractProcessName(proc.command);
+                break;
+            }
+        }
+
+        if (grandchildName) {
+            // 同じ名前の場合は重複を避ける
+            if (childName === grandchildName) {
+                return childName;
+            }
+            // 親プロセスと子プロセスの両方を表示: "claude(caffeinate)"
+            return `${childName}(${grandchildName})`;
+        }
+
+        // 第2階層があるが第3階層がない場合
+        // 特定のプロセス（claude, anthropic等）の場合のみ親子を組み合わせて表示
+        if (this._shouldShowParentProcess(shellName)) {
+            if (shellName === childName) {
+                return childName;
+            }
+            return `${shellName}(${childName})`;
+        }
+
+        // 通常のシェルの場合は子プロセスのみ表示
+        return childName || shellName || null;
     }
 
     /**

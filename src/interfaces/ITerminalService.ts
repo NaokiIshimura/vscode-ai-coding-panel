@@ -22,6 +22,15 @@ export interface ProcessInfo {
 }
 
 /**
+ * プロセスツリーの解析結果
+ * 1回のpsコマンド実行でClaude Code検知とフォアグラウンドプロセス名の両方を取得する
+ */
+export interface ProcessTreeResult {
+    isClaudeCodeRunning: boolean;
+    foregroundProcess: string | null;
+}
+
+/**
  * ターミナルサービスのインターフェース
  */
 export interface ITerminalService extends vscode.Disposable {
@@ -99,4 +108,12 @@ export interface ITerminalService extends vscode.Disposable {
      * @returns フォアグラウンドプロセス名（存在しない場合はnull）
      */
     getForegroundProcess(sessionId: string): Promise<string | null>;
+
+    /**
+     * 指定されたセッションのプロセスツリーを1回のpsコマンドで取得し、
+     * Claude Code検知とフォアグラウンドプロセス名の両方を算出する
+     * @param sessionId セッションID
+     * @returns プロセスツリーの解析結果
+     */
+    getProcessTree(sessionId: string): Promise<ProcessTreeResult>;
 }

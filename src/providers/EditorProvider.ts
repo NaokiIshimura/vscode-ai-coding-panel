@@ -413,39 +413,41 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         );
 
         // Listen to visibility changes
-        webviewView.onDidChangeVisibility(async () => {
-            if (webviewView.visible && this._currentFilePath) {
-                // Restore current file when view becomes visible
-                try {
-                    // Re-read the file content to ensure we have the latest version
-                    const content = await fs.promises.readFile(this._currentFilePath, 'utf8');
-                    this._currentContent = content;
-                    this._pendingContent = undefined;
-                    this._isDirty = false;
+        this._disposables.push(
+            webviewView.onDidChangeVisibility(async () => {
+                if (webviewView.visible && this._currentFilePath) {
+                    // Restore current file when view becomes visible
+                    try {
+                        // Re-read the file content to ensure we have the latest version
+                        const content = await fs.promises.readFile(this._currentFilePath, 'utf8');
+                        this._currentContent = content;
+                        this._pendingContent = undefined;
+                        this._isDirty = false;
 
-                    const displayPath = path.basename(this._currentFilePath);
-                    const isOpenInEditor = this._isFileOpenInTab(this._currentFilePath);
+                        const displayPath = path.basename(this._currentFilePath);
+                        const isOpenInEditor = this._isFileOpenInTab(this._currentFilePath);
 
-                    this._view?.webview.postMessage({
-                        type: 'showContent',
-                        filePath: displayPath,
-                        content: content,
-                        isReadOnly: isOpenInEditor
-                    });
-                } catch (error) {
-                    console.error(`Failed to restore file: ${error}`);
+                        this._view?.webview.postMessage({
+                            type: 'showContent',
+                            filePath: displayPath,
+                            content: content,
+                            isReadOnly: isOpenInEditor
+                        });
+                    } catch (error) {
+                        console.error(`Failed to restore file: ${error}`);
+                    }
+                } else if (!webviewView.visible && this._currentFilePath && this._isDirty && this._pendingContent) {
+                    // Save changes when view becomes hidden
+                    try {
+                        await fs.promises.writeFile(this._currentFilePath, this._pendingContent, 'utf8');
+                        this._currentContent = this._pendingContent;
+                        this._isDirty = false;
+                    } catch (error) {
+                        console.error(`Failed to auto-save file: ${error}`);
+                    }
                 }
-            } else if (!webviewView.visible && this._currentFilePath && this._isDirty && this._pendingContent) {
-                // Save changes when view becomes hidden
-                try {
-                    await fs.promises.writeFile(this._currentFilePath, this._pendingContent, 'utf8');
-                    this._currentContent = this._pendingContent;
-                    this._isDirty = false;
-                } catch (error) {
-                    console.error(`Failed to auto-save file: ${error}`);
-                }
-            }
-        });
+            })
+        );
     }
 
     public async showFile(filePath: string) {

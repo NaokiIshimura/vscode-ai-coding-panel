@@ -34,7 +34,7 @@ suite('templateUtils Test Suite', () => {
 	});
 
 	suite('loadTemplate', () => {
-		test('Should load prompt template and replace variables', () => {
+		test('Should load prompt template and replace variables', async () => {
 			// testFixturesDirの親ディレクトリをextensionPathとして設定
 			// loadTemplateは extensionPath/templates を探す
 			const mockExtensionPath = path.join(testFixturesDir, '..');
@@ -47,14 +47,14 @@ suite('templateUtils Test Suite', () => {
 				content: 'Test Content'
 			};
 
-			const result = loadTemplate(context, variables, 'prompt');
+			const result = await loadTemplate(context, variables, 'prompt');
 			assert.ok(result.includes('Test Title'));
 			assert.ok(result.includes('Test Content'));
 			assert.ok(!result.includes('{{title}}'));
 			assert.ok(!result.includes('{{content}}'));
 		});
 
-		test('Should load task template and replace variables', () => {
+		test('Should load task template and replace variables', async () => {
 			const mockExtensionPath = path.join(testFixturesDir, '..');
 			const context = {
 				extensionPath: mockExtensionPath
@@ -65,14 +65,14 @@ suite('templateUtils Test Suite', () => {
 				description: 'Test Description'
 			};
 
-			const result = loadTemplate(context, variables, 'task');
+			const result = await loadTemplate(context, variables, 'task');
 			assert.ok(result.includes('Test Task'));
 			assert.ok(result.includes('Test Description'));
 			assert.ok(!result.includes('{{taskName}}'));
 			assert.ok(!result.includes('{{description}}'));
 		});
 
-		test('Should load spec template and replace variables', () => {
+		test('Should load spec template and replace variables', async () => {
 			const mockExtensionPath = path.join(testFixturesDir, '..');
 			const context = {
 				extensionPath: mockExtensionPath
@@ -83,27 +83,27 @@ suite('templateUtils Test Suite', () => {
 				details: 'Test Details'
 			};
 
-			const result = loadTemplate(context, variables, 'spec');
+			const result = await loadTemplate(context, variables, 'spec');
 			assert.ok(result.includes('Test Spec'));
 			assert.ok(result.includes('Test Details'));
 			assert.ok(!result.includes('{{specName}}'));
 			assert.ok(!result.includes('{{details}}'));
 		});
 
-		test('Should throw error if template file not found', () => {
+		test('Should throw error if template file not found', async () => {
 			const context = {
 				extensionPath: '/non/existent/path'
 			} as vscode.ExtensionContext;
 
 			const variables = {};
 
-			assert.throws(
-				() => loadTemplate(context, variables, 'prompt'),
+			await assert.rejects(
+				async () => await loadTemplate(context, variables, 'prompt'),
 				/Template file not found/
 			);
 		});
 
-		test('Should handle empty variables', () => {
+		test('Should handle empty variables', async () => {
 			const mockExtensionPath = path.join(testFixturesDir, '..');
 			const context = {
 				extensionPath: mockExtensionPath
@@ -111,7 +111,7 @@ suite('templateUtils Test Suite', () => {
 
 			const variables = {};
 
-			const result = loadTemplate(context, variables, 'prompt');
+			const result = await loadTemplate(context, variables, 'prompt');
 			// 変数が置換されないため、{{title}}などがそのまま残る
 			assert.ok(result.includes('{{title}}'));
 			assert.ok(result.includes('{{content}}'));

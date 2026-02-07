@@ -1,16 +1,26 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 
 // テンプレート種別
 export type TemplateType = 'prompt' | 'task' | 'spec';
 
+// ファイルが存在するかチェックするヘルパー関数
+async function fileExists(filePath: string): Promise<boolean> {
+    try {
+        await fsPromises.access(filePath);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 // テンプレートを読み込んで変数を置換する関数
-export function loadTemplate(
+export async function loadTemplate(
     context: vscode.ExtensionContext,
     variables: { [key: string]: string },
     templateType: TemplateType = 'prompt'
-): string {
+): Promise<string> {
     let templatePath: string;
     const templateFileName = `${templateType}.md`;
 
@@ -18,7 +28,7 @@ export function loadTemplate(
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (workspaceRoot) {
         const vscodeTemplatePath = path.join(workspaceRoot, '.vscode', 'ai-coding-panel', 'templates', templateFileName);
-        if (fs.existsSync(vscodeTemplatePath)) {
+        if (await fileExists(vscodeTemplatePath)) {
             templatePath = vscodeTemplatePath;
         } else {
             // 2. 拡張機能内の[templateType].mdをフォールバック
@@ -28,11 +38,11 @@ export function loadTemplate(
         templatePath = path.join(context.extensionPath, 'templates', templateFileName);
     }
 
-    if (!fs.existsSync(templatePath)) {
+    if (!await fileExists(templatePath)) {
         throw new Error(`Template file not found: ${templatePath}`);
     }
 
-    let content = fs.readFileSync(templatePath, 'utf8');
+    let content = await fsPromises.readFile(templatePath, 'utf8');
 
     // 変数を置換
     for (const [key, value] of Object.entries(variables)) {

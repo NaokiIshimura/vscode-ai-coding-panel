@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { CommandDependencies } from './types';
 import { FileItem } from '../providers';
@@ -59,7 +59,7 @@ export function registerFilesCommands(
                     dirpath: relativeDirPath
                 };
 
-                const content = loadTemplate(context, variables, 'prompt');
+                const content = await loadTemplate(context, variables, 'prompt');
                 const result = await fileOperationService.createFile(filePath, content);
 
                 if (result.success) {
@@ -121,7 +121,7 @@ export function registerFilesCommands(
                     dirpath: relativeDirPath
                 };
 
-                const content = loadTemplate(context, variables, 'task');
+                const content = await loadTemplate(context, variables, 'task');
                 const result = await fileOperationService.createFile(filePath, content);
 
                 if (result.success) {
@@ -183,7 +183,7 @@ export function registerFilesCommands(
                     dirpath: relativeDirPath
                 };
 
-                const content = loadTemplate(context, variables, 'spec');
+                const content = await loadTemplate(context, variables, 'spec');
                 const result = await fileOperationService.createFile(filePath, content);
 
                 if (result.success) {
@@ -219,7 +219,8 @@ export function registerFilesCommands(
             }
 
             try {
-                if (!fs.existsSync(targetDirectory) || !fs.statSync(targetDirectory).isDirectory()) {
+                const stat = await fsPromises.stat(targetDirectory);
+                if (!stat.isDirectory()) {
                     vscode.window.showErrorMessage('Cannot access target folder');
                     return;
                 }
@@ -231,7 +232,7 @@ export function registerFilesCommands(
             const fileName = await vscode.window.showInputBox({
                 prompt: 'Enter new file name',
                 placeHolder: 'example.txt',
-                validateInput: (value: string) => {
+                validateInput: async (value: string) => {
                     const trimmed = value.trim();
 
                     if (!trimmed) {
@@ -247,8 +248,11 @@ export function registerFilesCommands(
                     }
 
                     const candidatePath = path.join(targetDirectory!, trimmed);
-                    if (fs.existsSync(candidatePath)) {
+                    try {
+                        await fsPromises.access(candidatePath);
                         return `File "${trimmed}" already exists`;
+                    } catch {
+                        // ファイルが存在しない場合は正常
                     }
 
                     return null;
@@ -370,7 +374,14 @@ export function registerFilesCommands(
                                 treeUpdated = true;
                             } else {
                                 const parentPath = path.dirname(item.filePath);
-                                if (parentPath && parentPath.startsWith(rootPath) && fs.existsSync(parentPath)) {
+                                let parentExists = false;
+                                try {
+                                    await fsPromises.access(parentPath);
+                                    parentExists = true;
+                                } catch {
+                                    // 親ディレクトリが存在しない
+                                }
+                                if (parentPath && parentPath.startsWith(rootPath) && parentExists) {
                                     plansProvider.setActiveFolder(parentPath, true);
                                     treeUpdated = true;
                                 } else {
@@ -530,7 +541,7 @@ export function registerFilesCommands(
             const folderName = await vscode.window.showInputBox({
                 prompt: 'Enter new folder name',
                 placeHolder: 'Folder name',
-                validateInput: (value) => {
+                validateInput: async (value) => {
                     if (!value || value.trim() === '') {
                         return 'Please enter a folder name';
                     }
@@ -538,8 +549,11 @@ export function registerFilesCommands(
                         return 'Contains invalid characters: < > : " | ? * / \\';
                     }
                     const folderPath = path.join(targetPath, value.trim());
-                    if (fs.existsSync(folderPath)) {
+                    try {
+                        await fsPromises.access(folderPath);
                         return `Folder "${value.trim()}" already exists`;
+                    } catch {
+                        // フォルダが存在しない場合は正常
                     }
                     return null;
                 }
@@ -553,7 +567,7 @@ export function registerFilesCommands(
             const folderPath = path.join(targetPath, trimmedFolderName);
 
             try {
-                fs.mkdirSync(folderPath, { recursive: true });
+                await fsPromises.mkdir(folderPath, { recursive: true });
                 vscode.window.showInformationMessage(`Created folder "${trimmedFolderName}"`);
 
                 plansProvider.navigateToDirectory(folderPath);
@@ -581,7 +595,7 @@ export function registerFilesCommands(
                     dirpath: relativeDirPath
                 };
 
-                const content = loadTemplate(context, variables, 'spec');
+                const content = await loadTemplate(context, variables, 'spec');
                 const result = await fileOperationService.createFile(filePath, content);
 
                 if (result.success) {

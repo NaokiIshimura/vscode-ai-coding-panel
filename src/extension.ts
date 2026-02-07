@@ -99,9 +99,11 @@ export function activate(context: vscode.ExtensionContext) {
     plansProvider.handleVisibilityChange(treeView.visible);
 
     // ビューの可視性変更を監視
-    treeView.onDidChangeVisibility(() => {
-        plansProvider.handleVisibilityChange(treeView.visible);
-    });
+    context.subscriptions.push(
+        treeView.onDidChangeVisibility(() => {
+            plansProvider.handleVisibilityChange(treeView.visible);
+        })
+    );
 
     // Markdown Editor Viewを登録
     context.subscriptions.push(
@@ -139,28 +141,30 @@ export function activate(context: vscode.ExtensionContext) {
     }, 500);
 
     // フォルダ/ファイル選択時の処理
-    treeView.onDidChangeSelection(async (e) => {
-        if (e.selection.length > 0) {
-            const selectedItem = e.selection[0];
-            plansProvider.setSelectedItem(selectedItem);
+    context.subscriptions.push(
+        treeView.onDidChangeSelection(async (e) => {
+            if (e.selection.length > 0) {
+                const selectedItem = e.selection[0];
+                plansProvider.setSelectedItem(selectedItem);
 
-            // ファイルの場合（Markdownファイル）
-            if (!selectedItem.isDirectory && selectedItem.filePath.endsWith('.md')) {
-                // ファイル名がYYYY_MMDD_HHMM_SS_(PROMPT|TASK|SPEC).md形式の場合はMarkdown Editorで開く
-                const fileName = path.basename(selectedItem.filePath);
-                const timestampPattern = /^\d{4}_\d{4}_\d{4}_\d{2}_(PROMPT|TASK|SPEC)\.md$/;
+                // ファイルの場合（Markdownファイル）
+                if (!selectedItem.isDirectory && selectedItem.filePath.endsWith('.md')) {
+                    // ファイル名がYYYY_MMDD_HHMM_SS_(PROMPT|TASK|SPEC).md形式の場合はMarkdown Editorで開く
+                    const fileName = path.basename(selectedItem.filePath);
+                    const timestampPattern = /^\d{4}_\d{4}_\d{4}_\d{2}_(PROMPT|TASK|SPEC)\.md$/;
 
-                if (timestampPattern.test(fileName)) {
-                    // タイムスタンプ形式の場合はMarkdown Editorで開く
-                    await editorProvider.showFile(selectedItem.filePath);
-                } else {
-                    // それ以外は通常のエディタで開く
-                    const fileUri = vscode.Uri.file(selectedItem.filePath);
-                    await vscode.commands.executeCommand('vscode.open', fileUri);
+                    if (timestampPattern.test(fileName)) {
+                        // タイムスタンプ形式の場合はMarkdown Editorで開く
+                        await editorProvider.showFile(selectedItem.filePath);
+                    } else {
+                        // それ以外は通常のエディタで開く
+                        const fileUri = vscode.Uri.file(selectedItem.filePath);
+                        await vscode.commands.executeCommand('vscode.open', fileUri);
+                    }
                 }
             }
-        }
-    });
+        })
+    );
 
     // ビューを有効化
     vscode.commands.executeCommand('setContext', 'aiCodingSidebarView:enabled', true);

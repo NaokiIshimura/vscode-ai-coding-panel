@@ -349,6 +349,34 @@ TerminalProviderのテスタビリティを向上させるリファクタリン�
   - WebViewメッセージハンドラから分離し、直接テスト可能に
   - メソッドの責務を明確化
 
+### v1.0.9改善: マシン負荷の大幅削減
+
+プロセス監視、ファイル監視、リソース管理の最適化により、マシン負荷を大幅に削減：
+
+**プロセス監視の最適化**
+- `getProcessTree(sessionId)` メソッドを新設し、1回のpsコマンドでClaude Code検知とフォアグラウンドプロセス名取得を統合
+- タブごとのsetIntervalを単一のsetIntervalに統合（5タブ時: 最大20回/1.5秒 → 1回/1.5秒、95%削減）
+- WebView非表示時にプロセスチェックを完全停止
+- 適応的な間隔調整: Claude Code起動中は1.5秒、未起動時は3秒
+
+**ファイル監視の最適化**
+- FileWatcherServiceの監視パターンを`**/*`（全体）から`.claude/plans/**/*`（設定値に基づく）に限定
+- 設定変更時にウォッチャーを動的に再作成
+
+**正規表現処理の最適化**
+- エスケープシーケンス除去処理を`_stripEscapeSequences()`に共通化（2回→1回/出力）
+- 正規表現をstatic readonlyプロパティとして事前コンパイル
+
+**リソースクリーンアップの完全化**
+- `_closeTab()`に`_cleanupOutputMonitoring()`と`_lastProcessNames.delete()`を追加
+- `_cleanup()`に`_outputMonitor.clear()`と`_lastProcessNames.clear()`を追加
+- ResizeObserverのdisconnect()をcloseTab()に追加
+- 5箇所のDisposable管理漏れを修正（extension.ts、TerminalProvider.ts、EditorProvider.ts）
+
+**同期I/Oの非同期化**
+- PlansProvider、commands/plans.ts、commands/files.ts、workspaceSetup.ts、templateUtils.tsの全同期I/Oを非同期化
+- `getFilesInDirectory()`のstat呼び出しをPromise.allで並列化
+
 ### v1.0.8更新: xterm.js v5 → v6（@xterm/xterm）アップデート
 
 Terminal Viewで使用しているxterm.jsおよび関連アドオンを、非推奨パッケージから新パッケージ（@xtermスコープ）に移行：

@@ -146,7 +146,9 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
 
         try {
             // ファイルが存在するか確認
-            if (!fs.existsSync(filePath)) {
+            try {
+                await fsPromises.access(filePath);
+            } catch {
                 return;
             }
 
@@ -598,7 +600,13 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
      * 指定されたディレクトリに移動する（フラットリスト表示用）
      */
     async navigateToDirectory(targetPath: string): Promise<void> {
-        if (!targetPath || !fs.existsSync(targetPath)) {
+        if (!targetPath) {
+            return;
+        }
+
+        try {
+            await fsPromises.access(targetPath);
+        } catch {
             return;
         }
 
@@ -667,7 +675,7 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         }
 
         try {
-            const stat = fs.statSync(parentPath);
+            const stat = await fsPromises.stat(parentPath);
             return new FileItem(
                 path.basename(parentPath),
                 vscode.TreeItemCollapsibleState.Collapsed,
@@ -691,7 +699,7 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         }
 
         try {
-            const stat = fs.statSync(this.activeFolderPath);
+            const stat = await fsPromises.stat(this.activeFolderPath);
             const item = new FileItem(
                 path.basename(this.activeFolderPath),
                 this.activeFolderPath === this.rootPath
@@ -725,7 +733,7 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         }
 
         try {
-            const stat = fs.statSync(directoryPath);
+            const stat = await fsPromises.stat(directoryPath);
             if (!stat.isDirectory()) {
                 return;
             }
@@ -774,28 +782,48 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         try {
             const entries = await fsPromises.readdir(dirPath, { withFileTypes: true });
 
-            for (const entry of entries) {
-                const fullPath = path.join(dirPath, entry.name);
-                const stat = await fsPromises.stat(fullPath);
+            // stat呼び出しを並列化
+            const fileInfoResults = await Promise.all(
+                entries.map(async (entry): Promise<FileInfo | null> => {
+                    const fullPath = path.join(dirPath, entry.name);
+                    try {
+                        const stat = await fsPromises.stat(fullPath);
 
-                if (entry.isDirectory()) {
-                    directories.push({
-                        name: entry.name,
-                        path: fullPath,
-                        isDirectory: true,
-                        size: 0,
-                        modified: stat.mtime,
-                        created: stat.birthtime
-                    });
+                        if (entry.isDirectory()) {
+                            return {
+                                name: entry.name,
+                                path: fullPath,
+                                isDirectory: true,
+                                size: 0,
+                                modified: stat.mtime,
+                                created: stat.birthtime
+                            };
+                        } else {
+                            return {
+                                name: entry.name,
+                                path: fullPath,
+                                isDirectory: false,
+                                size: stat.size,
+                                modified: stat.mtime,
+                                created: stat.birthtime
+                            };
+                        }
+                    } catch {
+                        // stat失敗時はスキップ
+                        return null;
+                    }
+                })
+            );
+
+            // null（stat失敗）を除外し、ディレクトリとファイルに分類
+            for (const info of fileInfoResults) {
+                if (info === null) {
+                    continue;
+                }
+                if (info.isDirectory) {
+                    directories.push(info);
                 } else {
-                    files.push({
-                        name: entry.name,
-                        path: fullPath,
-                        isDirectory: false,
-                        size: stat.size,
-                        modified: stat.mtime,
-                        created: stat.birthtime
-                    });
+                    files.push(info);
                 }
             }
 

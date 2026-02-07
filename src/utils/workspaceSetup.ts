@@ -1,6 +1,16 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import * as path from 'path';
+
+// ファイルが存在するかチェックするヘルパー関数
+async function fileExists(filePath: string): Promise<boolean> {
+    try {
+        await fsPromises.access(filePath);
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 // settings.jsonを設定するヘルパー関数
 export async function setupSettingsJson(workspaceRoot: string): Promise<void> {
@@ -9,16 +19,16 @@ export async function setupSettingsJson(workspaceRoot: string): Promise<void> {
 
     try {
         // .vscodeディレクトリを作成（存在しない場合）
-        if (!fs.existsSync(vscodeDir)) {
-            fs.mkdirSync(vscodeDir, { recursive: true });
+        if (!await fileExists(vscodeDir)) {
+            await fsPromises.mkdir(vscodeDir, { recursive: true });
         }
 
         let settings: any = {};
 
         // 既存のsettings.jsonを読み込み
-        if (fs.existsSync(settingsPath)) {
+        if (await fileExists(settingsPath)) {
             try {
-                const content = fs.readFileSync(settingsPath, 'utf8');
+                const content = await fsPromises.readFile(settingsPath, 'utf8');
                 settings = JSON.parse(content);
             } catch (error) {
                 console.error('Failed to parse settings.json:', error);
@@ -32,7 +42,7 @@ export async function setupSettingsJson(workspaceRoot: string): Promise<void> {
 
         // settings.jsonに書き込み
         const settingsContent = JSON.stringify(settings, null, 2);
-        fs.writeFileSync(settingsPath, settingsContent, 'utf8');
+        await fsPromises.writeFile(settingsPath, settingsContent, 'utf8');
 
         // ファイルを開く
         const document = await vscode.workspace.openTextDocument(settingsPath);
@@ -51,21 +61,21 @@ export async function setupTemplate(context: vscode.ExtensionContext, workspaceR
 
     try {
         // .vscode/ai-coding-panel/templatesディレクトリを作成（存在しない場合）
-        if (!fs.existsSync(templatesDir)) {
-            fs.mkdirSync(templatesDir, { recursive: true });
+        if (!await fileExists(templatesDir)) {
+            await fsPromises.mkdir(templatesDir, { recursive: true });
         }
 
         // 各テンプレートファイルを作成（存在しない場合のみ）
         for (const templateFile of templateFiles) {
             const templatePath = path.join(templatesDir, templateFile);
-            if (!fs.existsSync(templatePath)) {
+            if (!await fileExists(templatePath)) {
                 // 拡張機能内のtemplatesから読み込む
                 const extensionTemplatePath = path.join(context.extensionPath, 'templates', templateFile);
-                if (!fs.existsSync(extensionTemplatePath)) {
+                if (!await fileExists(extensionTemplatePath)) {
                     throw new Error(`Template file not found: ${extensionTemplatePath}`);
                 }
-                const templateContent = fs.readFileSync(extensionTemplatePath, 'utf8');
-                fs.writeFileSync(templatePath, templateContent, 'utf8');
+                const templateContent = await fsPromises.readFile(extensionTemplatePath, 'utf8');
+                await fsPromises.writeFile(templatePath, templateContent, 'utf8');
             }
         }
 
@@ -88,8 +98,8 @@ export async function setupClaudeFolder(workspaceRoot: string): Promise<void> {
     try {
         // .claudeフォルダを作成（存在しない場合）
         const claudeDir = path.join(workspaceRoot, '.claude');
-        if (!fs.existsSync(claudeDir)) {
-            fs.mkdirSync(claudeDir, { recursive: true });
+        if (!await fileExists(claudeDir)) {
+            await fsPromises.mkdir(claudeDir, { recursive: true });
         }
 
         // settings.jsonも更新

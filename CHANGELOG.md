@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2026-02-07
+
+### Improved
+- **Process Monitoring Optimization**: Unified process checking into a single `getProcessTree()` method that retrieves Claude Code detection and foreground process name in one `ps` command
+  - Reduced external process spawning from up to 20 times/1.5s (5 tabs) to 1 time/1.5s (95% reduction)
+  - Consolidated per-tab setInterval into a single timer for all tabs
+  - Process checks now pause completely when the panel is hidden
+  - Adaptive check intervals: 1.5s when Claude Code is running, 3s when idle
+
+- **File Watcher Optimization**: Limited FileWatcherService watch pattern from `**/*` (entire workspace) to `.claude/plans/**/*` (configurable via settings)
+  - Watcher is dynamically recreated when the `defaultRelativePath` setting changes
+  - Eliminates unnecessary events from `node_modules`, `.git`, build outputs, etc.
+
+- **Regex Processing Optimization**: Extracted escape sequence removal into a shared `_stripEscapeSequences()` method
+  - Reduced duplicate processing from 2x to 1x per terminal output
+  - Pre-compiled regex patterns as static readonly class properties
+
+- **Async File I/O Migration**: Converted all synchronous file I/O to async across multiple files
+  - PlansProvider: 5 sync calls → async (statSync, existsSync)
+  - commands/plans.ts: 9 sync calls → async (statSync, mkdirSync, existsSync)
+  - commands/files.ts: sync calls → async
+  - utils/workspaceSetup.ts: all sync I/O → async
+  - utils/templateUtils.ts: loadTemplate → async
+  - PlansProvider.getFilesInDirectory: sequential stat → parallel via Promise.all
+
+### Fixed
+- **Resource Cleanup**: Fixed multiple resource leak issues
+  - `_closeTab()` now properly cleans up `_outputMonitor` and `_lastProcessNames` entries
+  - `_cleanup()` now clears `_outputMonitor` and `_lastProcessNames` maps
+  - WebView ResizeObserver is now properly disconnected on tab close
+  - Fixed 5 Disposable management leaks in extension.ts, TerminalProvider.ts, and EditorProvider.ts
+
 ## [1.0.8] - 2026-02-05
 
 ### Changed
@@ -1994,6 +2026,7 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6

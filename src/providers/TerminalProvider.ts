@@ -43,11 +43,18 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         processingTimeout?: NodeJS.Timeout;
     }>();
 
-    // プロセスチェック用のインターバル（タブごと）
-    private _processCheckIntervals = new Map<string, NodeJS.Timeout>();
+    // プロセスチェック用の単一インターバル（全タブ共通）
+    private _processCheckInterval?: NodeJS.Timeout;
+    // 現在のプロセスチェック間隔（ms）
+    private _currentCheckIntervalMs: number = TerminalProvider.PROCESS_CHECK_INTERVAL_ACTIVE;
+    // WebViewの可視性状態
+    private _isWebviewVisible: boolean = true;
 
     // プロセス名追跡（タブごと）
     private _lastProcessNames = new Map<string, string>();
+
+    // Disposable管理
+    private _disposables: vscode.Disposable[] = [];
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -77,15 +84,17 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
 
         // WebViewの可視性変更イベントを監視
-        webviewView.onDidChangeVisibility(() => {
-            if (!webviewView.visible) {
-                // 非表示になる前にスクロール状態を保存
-                this._onWebviewBecameHidden();
-            } else {
-                // 表示時にスクロール位置を復元
-                this._onWebviewBecameVisible();
-            }
-        });
+        this._disposables.push(
+            webviewView.onDidChangeVisibility(() => {
+                if (!webviewView.visible) {
+                    // 非表示になる前にスクロール状態を保存
+                    this._onWebviewBecameHidden();
+                } else {
+                    // 表示時にスクロール位置を復元
+                    this._onWebviewBecameVisible();
+                }
+            })
+        );
 
         // Webviewからのメッセージを受信
         webviewView.webview.onDidReceiveMessage(async (data) => {
@@ -201,16 +210,24 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         });
 
         // WebViewが破棄されたときにセッションを終了
-        webviewView.onDidDispose(() => {
-            this._cleanup();
-        });
+        this._disposables.push(
+            webviewView.onDidDispose(() => {
+                this._cleanup();
+            })
+        );
     }
 
     /**
      * WebViewが非表示になる前の処理
      * - 現在のスクロール状態を保存
+     * - プロセスチェックを停止
      */
     private _onWebviewBecameHidden(): void {
+        this._isWebviewVisible = false;
+
+        // プロセスチェックを停止
+        this._stopAllProcessChecks();
+
         if (!this._view) {
             return;
         }
@@ -225,8 +242,16 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
      * WebViewが表示状態になった時の処理
      * - スクロール位置を復元
      * - アクティブタブにフォーカス
+     * - プロセスチェックを再開
      */
     private _onWebviewBecameVisible(): void {
+        this._isWebviewVisible = true;
+
+        // プロセスチェックを再開（タブが存在する場合）
+        if (this._tabs.length > 0) {
+            this._restartProcessCheckInterval();
+        }
+
         if (!this._view) {
             return;
         }
@@ -247,6 +272,15 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     }
 
     private static readonly MAX_TABS = 5;
+
+    // プロセスチェック間隔の定数
+    private static readonly PROCESS_CHECK_INTERVAL_ACTIVE = 1500;  // Claude Code起動中: 1.5秒
+    private static readonly PROCESS_CHECK_INTERVAL_IDLE = 3000;    // 全タブ未起動: 3秒
+
+    // エスケープシーケンス除去用の事前コンパイル済み正規表現
+    private static readonly RE_CSI = /\x1b\[[\?0-9;]*[a-zA-Z]/g;
+    private static readonly RE_OSC = /\x1b\].*?(\x07|\x1b\\)/g;
+    private static readonly RE_CONTROL = /[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g;
 
     private async _createTab(): Promise<void> {
         if (!this._terminalService.isAvailable()) {
@@ -372,12 +406,18 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         // プロセスチェックを停止
         this._stopProcessCheck(tab);
 
+        // 出力監視をクリーンアップ（processingTimeoutのクリアとMapエントリ削除）
+        this._cleanupOutputMonitoring(tabId);
+
         // 出力リスナーを解除
         const disposable = this._outputDisposables.get(tabId);
         if (disposable) {
             disposable.dispose();
             this._outputDisposables.delete(tabId);
         }
+
+        // プロセス名追跡エントリを削除
+        this._lastProcessNames.delete(tabId);
 
         // セッションを終了
         this._terminalService.killSession(tab.sessionId);
@@ -412,14 +452,21 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     }
 
     private _cleanup(): void {
-        // すべてのプロセスチェックを停止
-        this._tabs.forEach(tab => {
-            this._stopProcessCheck(tab);
-        });
+        // プロセスチェックを停止
+        this._stopAllProcessChecks();
 
         // すべての出力リスナーを解除
         this._outputDisposables.forEach(disposable => disposable.dispose());
         this._outputDisposables.clear();
+
+        // 出力監視のクリーンアップ
+        this._tabs.forEach(tab => {
+            this._cleanupOutputMonitoring(tab.id);
+        });
+        this._outputMonitor.clear();
+
+        // プロセス名追跡をクリア
+        this._lastProcessNames.clear();
 
         // すべてのセッションを終了
         this._tabs.forEach(tab => {
@@ -668,6 +715,16 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     }
 
     /**
+     * エスケープシーケンスと制御文字を除去する
+     */
+    private _stripEscapeSequences(data: string): string {
+        return data
+            .replace(TerminalProvider.RE_CSI, '')
+            .replace(TerminalProvider.RE_OSC, '')
+            .replace(TerminalProvider.RE_CONTROL, '');
+    }
+
+    /**
      * セッションの出力リスナーを設定
      */
     private _setupSessionOutput(tab: TerminalTab): void {
@@ -679,11 +736,14 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                 data: data
             });
 
+            // エスケープシーケンスを1回だけ除去し、クリーン済みデータを渡す
+            const cleanData = this._stripEscapeSequences(data);
+
             // Claude Code状態検知
-            this._detectClaudeCodeState(tab, data);
+            this._detectClaudeCodeState(tab, cleanData);
 
             // 処理完了検知（タイムアウトベース）
-            this._handleProcessingTimeout(tab, data);
+            this._handleProcessingTimeout(tab, cleanData);
         });
 
         this._outputDisposables.set(tab.id, disposable);
@@ -691,21 +751,13 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
 
     /**
      * 出力の処理（Codexの指摘P2に対応: 適応的タイムアウト）
+     * @param cleanData エスケープシーケンス除去済みのデータ
      */
-    private _handleProcessingTimeout(tab: TerminalTab, data: string): void {
+    private _handleProcessingTimeout(tab: TerminalTab, cleanData: string): void {
         const monitor = this._outputMonitor.get(tab.id);
         if (!monitor) {
             return;
         }
-
-        // より包括的なエスケープシーケンス除去
-        let cleanData = data;
-        // CSI sequences: ESC [ ... letter
-        cleanData = cleanData.replace(/\x1b\[[\?0-9;]*[a-zA-Z]/g, '');
-        // OSC sequences: ESC ] ... BEL or ESC ] ... ESC \
-        cleanData = cleanData.replace(/\x1b\].*?(\x07|\x1b\\)/g, '');
-        // 制御文字（ただしタブ、改行、キャリッジリターンは残す）
-        cleanData = cleanData.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
 
         const trimmedData = cleanData.trim();
 
@@ -757,17 +809,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
 
     /**
      * フォールバック: パターンマッチングによる検知
+     * @param cleanData エスケープシーケンス除去済みのデータ
      */
-    private _detectClaudeCodeState(tab: TerminalTab, data: string): void {
-        // より包括的なエスケープシーケンス除去
-        let cleanData = data;
-        // CSI sequences: ESC [ ... letter
-        cleanData = cleanData.replace(/\x1b\[[\?0-9;]*[a-zA-Z]/g, '');
-        // OSC sequences: ESC ] ... BEL or ESC ] ... ESC \
-        cleanData = cleanData.replace(/\x1b\].*?(\x07|\x1b\\)/g, '');
-        // 制御文字（ただしタブ、改行、キャリッジリターンは残す）
-        cleanData = cleanData.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '');
-
+    private _detectClaudeCodeState(tab: TerminalTab, cleanData: string): void {
         // Claude Code起動検知
         if (!tab.isClaudeCodeRunning) {
             const claudeStartPatterns = [
@@ -928,47 +972,120 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     }
 
     /**
-     * プロセスベースのClaude Code検知を開始
+     * プロセスチェックを開始（単一インターバルで全タブをチェック）
+     * タブが追加された時に呼び出される
      */
-    private _startProcessCheck(tab: TerminalTab): void {
-        // 既存のチェックを停止
-        this._stopProcessCheck(tab);
+    private _startProcessCheck(_tab: TerminalTab): void {
+        // 既にインターバルが動作中で、WebViewが表示中なら初回チェックのみ実行
+        if (this._processCheckInterval && this._isWebviewVisible) {
+            this._checkClaudeCodeProcess(_tab);
+            return;
+        }
 
-        // 1.5秒ごとにプロセスをチェック
-        const interval = setInterval(async () => {
-            await this._checkClaudeCodeProcess(tab);
-        }, 1500);
+        // WebViewが非表示の場合はインターバルを開始しない
+        if (!this._isWebviewVisible) {
+            return;
+        }
 
-        this._processCheckIntervals.set(tab.id, interval);
+        // インターバルを開始
+        this._restartProcessCheckInterval();
 
         // 初回チェックを即座に実行
-        this._checkClaudeCodeProcess(tab);
+        this._checkClaudeCodeProcess(_tab);
     }
 
     /**
-     * プロセスチェックを停止
+     * プロセスチェックのインターバルを（再）起動
      */
-    private _stopProcessCheck(tab: TerminalTab): void {
-        const interval = this._processCheckIntervals.get(tab.id);
-        if (interval) {
-            clearInterval(interval);
-            this._processCheckIntervals.delete(tab.id);
+    private _restartProcessCheckInterval(): void {
+        // 既存のインターバルを停止
+        this._stopAllProcessChecks();
+
+        // タブが0件の場合はインターバルを開始しない
+        if (this._tabs.length === 0) {
+            return;
+        }
+
+        // WebViewが非表示の場合はインターバルを開始しない
+        if (!this._isWebviewVisible) {
+            return;
+        }
+
+        // 適応的な間隔を決定
+        const interval = this._determineCheckInterval();
+        this._currentCheckIntervalMs = interval;
+
+        // 全タブを一括チェックするインターバルを設定
+        this._processCheckInterval = setInterval(async () => {
+            await this._checkAllTabsProcess();
+        }, interval);
+    }
+
+    /**
+     * 適応的なチェック間隔を決定
+     * Claude Codeが起動中のタブがある場合: 1.5秒
+     * 全タブで未起動の場合: 3秒
+     */
+    private _determineCheckInterval(): number {
+        const hasClaudeCodeRunning = this._tabs.some(tab => tab.isClaudeCodeRunning);
+        return hasClaudeCodeRunning
+            ? TerminalProvider.PROCESS_CHECK_INTERVAL_ACTIVE
+            : TerminalProvider.PROCESS_CHECK_INTERVAL_IDLE;
+    }
+
+    /**
+     * 全タブのプロセスチェックを実行
+     */
+    private async _checkAllTabsProcess(): Promise<void> {
+        for (const tab of this._tabs) {
+            if (!tab.isClosed) {
+                await this._checkClaudeCodeProcess(tab);
+            }
+        }
+
+        // チェック後に間隔を再評価（状態が変化した場合のみ再起動）
+        const newInterval = this._determineCheckInterval();
+        if (newInterval !== this._currentCheckIntervalMs) {
+            this._restartProcessCheckInterval();
+        }
+    }
+
+    /**
+     * プロセスチェックを停止（タブ削除時の互換性のために残す）
+     */
+    private _stopProcessCheck(_tab: TerminalTab): void {
+        // タブが残っていない場合のみインターバルを停止
+        // （_closeTab内で呼ばれるが、タブ削除前なのでlength-1で判定）
+        if (this._tabs.length <= 1) {
+            this._stopAllProcessChecks();
+        }
+    }
+
+    /**
+     * 全プロセスチェックのインターバルを停止
+     */
+    private _stopAllProcessChecks(): void {
+        if (this._processCheckInterval) {
+            clearInterval(this._processCheckInterval);
+            this._processCheckInterval = undefined;
         }
     }
 
     /**
      * Claude Codeプロセスの状態をチェックして更新
+     * getProcessTree()を使用して1回のpsコマンドでClaude Code検知とフォアグラウンドプロセス名の両方を取得
      */
     private async _checkClaudeCodeProcess(tab: TerminalTab): Promise<void> {
         try {
-            const isRunning = await this._terminalService.isClaudeCodeRunning(tab.sessionId);
+            // 1回のpsコマンドでClaude Code検知とフォアグラウンドプロセス名の両方を取得
+            const result = await this._terminalService.getProcessTree(tab.sessionId);
 
-            // 状態が変わった場合のみ更新
-            if (tab.isClaudeCodeRunning !== isRunning) {
-                tab.isClaudeCodeRunning = isRunning;
+            // Claude Code状態が変わった場合のみ更新
+            if (tab.isClaudeCodeRunning !== result.isClaudeCodeRunning) {
+                tab.isClaudeCodeRunning = result.isClaudeCodeRunning;
 
                 // Claude Codeが終了した場合、処理中状態もリセット
-                if (!isRunning) {
+                if (!result.isClaudeCodeRunning) {
                     tab.isProcessing = false;
                 }
 
@@ -976,38 +1093,30 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                 this._view?.webview.postMessage({
                     type: 'claudeCodeStateChanged',
                     tabId: tab.id,
-                    isRunning: isRunning,
+                    isRunning: result.isClaudeCodeRunning,
                     isProcessing: tab.isProcessing || false
                 });
             }
 
             // フォアグラウンドプロセス名を取得してタブ名を更新
-            await this._checkProcessAndUpdateTab(tab);
+            this._updateTabNameFromProcessTree(tab, result.foregroundProcess);
         } catch (error) {
             console.error(`[TerminalProvider] Error checking Claude Code process:`, error);
         }
     }
 
     /**
-     * プロセス名を取得してタブ名を更新
+     * getProcessTree()の結果からタブ名を更新
      */
-    private async _checkProcessAndUpdateTab(tab: TerminalTab): Promise<void> {
-        try {
-            // フォアグラウンドプロセスを取得
-            const processName = await this._terminalService.getForegroundProcess(tab.sessionId);
-
-            // プロセス名が変更された場合、タブ名を更新
-            const lastProcessName = this._lastProcessNames.get(tab.id);
-            if (processName && processName !== lastProcessName) {
-                this._lastProcessNames.set(tab.id, processName);
-                this._updateTabNameWithProcess(tab.id, processName);
-            } else if (!processName && lastProcessName) {
-                // プロセスが終了した場合、シェル名に戻す
-                this._lastProcessNames.delete(tab.id);
-                this._updateTabNameWithProcess(tab.id, tab.shellName);
-            }
-        } catch (error) {
-            console.error(`[TerminalProvider] Error checking process for tab ${tab.id}:`, error);
+    private _updateTabNameFromProcessTree(tab: TerminalTab, processName: string | null): void {
+        const lastProcessName = this._lastProcessNames.get(tab.id);
+        if (processName && processName !== lastProcessName) {
+            this._lastProcessNames.set(tab.id, processName);
+            this._updateTabNameWithProcess(tab.id, processName);
+        } else if (!processName && lastProcessName) {
+            // プロセスが終了した場合、シェル名に戻す
+            this._lastProcessNames.delete(tab.id);
+            this._updateTabNameWithProcess(tab.id, tab.shellName);
         }
     }
 
@@ -1045,11 +1154,16 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         this._cleanup();
         this._terminalService.dispose();
 
-        // すべてのプロセスチェックを停止
-        this._processCheckIntervals.forEach(interval => clearInterval(interval));
-        this._processCheckIntervals.clear();
+        // プロセスチェックを停止（_cleanupでも停止されるが念のため）
+        this._stopAllProcessChecks();
 
         // プロセス名追跡をクリア
         this._lastProcessNames.clear();
+
+        // Disposableを解放
+        for (const disposable of this._disposables) {
+            disposable.dispose();
+        }
+        this._disposables = [];
     }
 }

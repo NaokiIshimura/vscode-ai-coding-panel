@@ -12,27 +12,49 @@ interface ListenerInfo {
 /**
  * ファイルウォッチャーサービスの実装
  * 複数のプロバイダーで共有される単一のファイルウォッチャーを管理
+ * 監視範囲はPlans View管理対象ディレクトリ（defaultRelativePath）に限定
  */
 export class FileWatcherService implements IFileWatcherService {
     private fileWatcher: vscode.FileSystemWatcher | undefined;
     private listeners: Map<string, ListenerInfo> = new Map();
     private disposables: vscode.Disposable[] = [];
+    private configChangeDisposable: vscode.Disposable | undefined;
+    private currentWatchPattern: string | undefined;
 
     constructor() {
         this.initializeWatcher();
+        this.setupConfigurationWatcher();
+    }
+
+    /**
+     * 設定値からウォッチパターンを生成
+     */
+    private getWatchPatternFromConfig(): string {
+        const config = vscode.workspace.getConfiguration('aiCodingSidebar');
+        const defaultRelativePath = config.get<string>('plans.defaultRelativePath', '.claude/plans');
+
+        if (defaultRelativePath && defaultRelativePath.trim()) {
+            return `${defaultRelativePath.trim()}/**/*`;
+        }
+
+        // 設定値が空の場合はフォールバック
+        return '.claude/plans/**/*';
     }
 
     /**
      * ウォッチャーを初期化
      */
-    private async initializeWatcher(): Promise<void> {
+    private initializeWatcher(): void {
         if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
             return;
         }
 
-        // ワークスペース全体を監視
         const workspaceFolder = vscode.workspace.workspaceFolders[0];
-        const watchPattern = new vscode.RelativePattern(workspaceFolder, '**/*');
+        const pattern = this.getWatchPatternFromConfig();
+        this.currentWatchPattern = pattern;
+
+        // Plans View管理対象ディレクトリのみを監視
+        const watchPattern = new vscode.RelativePattern(workspaceFolder, pattern);
         this.fileWatcher = vscode.workspace.createFileSystemWatcher(watchPattern);
 
         // ファイル変更イベントをリスナーに通知
@@ -41,6 +63,36 @@ export class FileWatcherService implements IFileWatcherService {
             this.fileWatcher.onDidCreate((uri) => this.notifyListeners(uri)),
             this.fileWatcher.onDidDelete((uri) => this.notifyListeners(uri))
         );
+    }
+
+    /**
+     * 設定変更を監視し、ウォッチパターンが変わった場合にウォッチャーを再作成
+     */
+    private setupConfigurationWatcher(): void {
+        this.configChangeDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
+            if (e.affectsConfiguration('aiCodingSidebar.plans.defaultRelativePath')) {
+                const newPattern = this.getWatchPatternFromConfig();
+                if (newPattern !== this.currentWatchPattern) {
+                    this.recreateWatcher();
+                }
+            }
+        });
+    }
+
+    /**
+     * ウォッチャーを破棄して再作成
+     */
+    private recreateWatcher(): void {
+        // 既存のウォッチャーとDisposableを破棄
+        if (this.fileWatcher) {
+            this.fileWatcher.dispose();
+            this.fileWatcher = undefined;
+        }
+        this.disposables.forEach(d => d.dispose());
+        this.disposables = [];
+
+        // 新しいウォッチャーを作成
+        this.initializeWatcher();
     }
 
     /**
@@ -124,6 +176,11 @@ export class FileWatcherService implements IFileWatcherService {
         if (this.fileWatcher) {
             this.fileWatcher.dispose();
             this.fileWatcher = undefined;
+        }
+
+        if (this.configChangeDisposable) {
+            this.configChangeDisposable.dispose();
+            this.configChangeDisposable = undefined;
         }
 
         this.disposables.forEach(d => d.dispose());

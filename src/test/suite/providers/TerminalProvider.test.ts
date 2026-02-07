@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { TerminalProvider } from '../../../providers/TerminalProvider';
-import { ITerminalService, TerminalOutputListener, TerminalExitListener, ProcessInfo } from '../../../interfaces/ITerminalService';
+import { ITerminalService, TerminalOutputListener, TerminalExitListener, ProcessInfo, ProcessTreeResult } from '../../../interfaces/ITerminalService';
 
 // Mock EditorProvider interface
 interface IEditorProvider {
@@ -54,6 +54,10 @@ class MockTerminalService implements ITerminalService {
     async isClaudeCodeRunning(sessionId: string): Promise<boolean> { return false; }
 
     async getForegroundProcess(sessionId: string): Promise<string | null> { return null; }
+
+    async getProcessTree(sessionId: string): Promise<ProcessTreeResult> {
+        return { isClaudeCodeRunning: false, foregroundProcess: null };
+    }
 
     dispose(): void {}
 }

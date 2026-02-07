@@ -247,12 +247,13 @@
             vscode.postMessage({ type: 'input', tabId: tabId, data: data });
         });
 
-        // タブ情報を保存
+        // タブ情報を保存（resizeObserverは後で追加）
         const tabInfo = {
             tabEl: tabEl,
             wrapperEl: wrapperEl,
             term: term,
-            fitAddon: fitAddon
+            fitAddon: fitAddon,
+            resizeObserver: null
         };
         tabs.set(tabId, tabInfo);
 
@@ -304,6 +305,7 @@
             }
         });
         resizeObserver.observe(wrapperEl);
+        tabInfo.resizeObserver = resizeObserver;
 
         return tabInfo;
     }
@@ -369,6 +371,18 @@
     function closeTab(tabId) {
         const tabInfo = tabs.get(tabId);
         if (!tabInfo) return;
+
+        // ResizeObserverを切断
+        if (tabInfo.resizeObserver) {
+            tabInfo.resizeObserver.disconnect();
+        }
+
+        // リサイズデバウンスタイマーをクリア
+        const existingTimer = resizeTimers.get(tabId);
+        if (existingTimer) {
+            clearTimeout(existingTimer);
+            resizeTimers.delete(tabId);
+        }
 
         tabInfo.tabEl.remove();
         tabInfo.wrapperEl.remove();

@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { CommandDependencies } from './types';
@@ -97,7 +96,7 @@ export function registerPlansCommands(
                 let isDirectory = false;
 
                 try {
-                    const stat = fs.statSync(targetPath);
+                    const stat = await fsPromises.stat(targetPath);
                     pathExists = true;
                     isDirectory = stat.isDirectory();
                 } catch (error) {
@@ -174,7 +173,7 @@ export function registerPlansCommands(
             const folderName = await vscode.window.showInputBox({
                 prompt: 'Enter new folder name',
                 placeHolder: 'Folder name',
-                validateInput: (value) => {
+                validateInput: async (value) => {
                     if (!value || value.trim() === '') {
                         return 'Please enter a folder name';
                     }
@@ -182,10 +181,12 @@ export function registerPlansCommands(
                         return 'Contains invalid characters: < > : " | ? * / \\';
                     }
                     const folderPath = path.join(targetPath, value.trim());
-                    if (fs.existsSync(folderPath)) {
+                    try {
+                        await fsPromises.access(folderPath);
                         return `Folder "${value.trim()}" already exists`;
+                    } catch {
+                        return null;
                     }
-                    return null;
                 }
             });
 
@@ -235,7 +236,7 @@ export function registerPlansCommands(
             const folderName = await vscode.window.showInputBox({
                 prompt: 'Enter new folder name',
                 placeHolder: 'Folder name',
-                validateInput: (value) => {
+                validateInput: async (value) => {
                     if (!value || value.trim() === '') {
                         return 'Please enter a folder name';
                     }
@@ -243,10 +244,12 @@ export function registerPlansCommands(
                         return 'Contains invalid characters: < > : " | ? * / \\';
                     }
                     const folderPath = path.join(targetPath, value.trim());
-                    if (fs.existsSync(folderPath)) {
+                    try {
+                        await fsPromises.access(folderPath);
                         return `Folder "${value.trim()}" already exists`;
+                    } catch {
+                        return null;
                     }
-                    return null;
                 }
             });
 
@@ -258,7 +261,7 @@ export function registerPlansCommands(
             const folderPath = path.join(targetPath, trimmedFolderName);
 
             try {
-                fs.mkdirSync(folderPath, { recursive: true });
+                await fsPromises.mkdir(folderPath, { recursive: true });
                 vscode.window.showInformationMessage(`Created folder "${trimmedFolderName}"`);
 
                 plansProvider.refresh();
@@ -296,7 +299,7 @@ export function registerPlansCommands(
             const folderName = await vscode.window.showInputBox({
                 prompt: 'Enter new folder name',
                 placeHolder: 'Folder name',
-                validateInput: (value) => {
+                validateInput: async (value) => {
                     if (!value || value.trim() === '') {
                         return 'Please enter a folder name';
                     }
@@ -304,10 +307,12 @@ export function registerPlansCommands(
                         return 'Contains invalid characters: < > : " | ? * / \\';
                     }
                     const folderPath = path.join(targetPath, value.trim());
-                    if (fs.existsSync(folderPath)) {
+                    try {
+                        await fsPromises.access(folderPath);
                         return `Folder "${value.trim()}" already exists`;
+                    } catch {
+                        return null;
                     }
-                    return null;
                 }
             });
 
@@ -319,7 +324,7 @@ export function registerPlansCommands(
             const folderPath = path.join(targetPath, trimmedFolderName);
 
             try {
-                fs.mkdirSync(folderPath, { recursive: true });
+                await fsPromises.mkdir(folderPath, { recursive: true });
                 vscode.window.showInformationMessage(`Created folder "${trimmedFolderName}"`);
 
                 plansProvider.navigateToDirectory(folderPath);
@@ -348,7 +353,7 @@ export function registerPlansCommands(
                     dirpath: relativeDirPath
                 };
 
-                const content = loadTemplate(context, variables, 'task');
+                const content = await loadTemplate(context, variables, 'task');
                 const result = await fileOperationService.createFile(filePath, content);
 
                 if (result.success) {
@@ -426,7 +431,9 @@ export function registerPlansCommands(
             const originalName = path.basename(targetPath);
 
             try {
-                if (!fs.existsSync(archivedDirPath)) {
+                try {
+                    await fsPromises.access(archivedDirPath);
+                } catch {
                     const result = await fileOperationService.createDirectory(archivedDirPath);
                     if (!result.success) {
                         throw result.error || new Error('Failed to create archived directory');
@@ -441,7 +448,15 @@ export function registerPlansCommands(
             let finalName = originalName;
             let hasConflict = false;
 
-            if (fs.existsSync(destPath)) {
+            let destExists = false;
+            try {
+                await fsPromises.access(destPath);
+                destExists = true;
+            } catch {
+                destExists = false;
+            }
+
+            if (destExists) {
                 hasConflict = true;
                 const now = new Date();
                 const year = now.getFullYear();
@@ -497,7 +512,7 @@ export function registerPlansCommands(
 
             try {
                 // ディレクトリ作成
-                fs.mkdirSync(targetPath, { recursive: true });
+                await fsPromises.mkdir(targetPath, { recursive: true });
 
                 const displayPath = relativePath || path.relative(workspaceRoot, targetPath);
                 vscode.window.showInformationMessage(`Created directory: ${displayPath}`);

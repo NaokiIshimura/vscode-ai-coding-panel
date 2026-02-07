@@ -5,6 +5,38 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.9] - 2026-02-07
+
+### 改善
+- **プロセス監視の最適化**: プロセスチェックを統合した`getProcessTree()`メソッドを新設し、1回の`ps`コマンドでClaude Code検知とフォアグラウンドプロセス名取得を実行
+  - 外部プロセス生成を最大20回/1.5秒（5タブ時）から1回/1.5秒に削減（95%削減）
+  - タブごとのsetIntervalを全タブ共通の単一タイマーに統合
+  - パネル非表示時にプロセスチェックを完全停止
+  - 適応的なチェック間隔: Claude Code起動中は1.5秒、未起動時は3秒
+
+- **ファイル監視の最適化**: FileWatcherServiceの監視パターンを`**/*`（ワークスペース全体）から`.claude/plans/**/*`（設定値に基づく）に限定
+  - `defaultRelativePath`設定の変更時にウォッチャーを動的に再作成
+  - `node_modules`、`.git`、ビルド出力等からの不要なイベントを排除
+
+- **正規表現処理の最適化**: エスケープシーケンス除去を共通メソッド`_stripEscapeSequences()`に抽出
+  - ターミナル出力あたりの重複処理を2回から1回に削減
+  - 正規表現パターンをstatic readonlyクラスプロパティとして事前コンパイル
+
+- **ファイルI/Oの非同期化**: 複数ファイルにわたる全同期ファイルI/Oを非同期に変換
+  - PlansProvider: 5箇所の同期呼び出しを非同期化（statSync、existsSync）
+  - commands/plans.ts: 9箇所の同期呼び出しを非同期化（statSync、mkdirSync、existsSync）
+  - commands/files.ts: 同期呼び出しを非同期化
+  - utils/workspaceSetup.ts: 全同期I/Oを非同期化
+  - utils/templateUtils.ts: loadTemplateを非同期化
+  - PlansProvider.getFilesInDirectory: 逐次statをPromise.allによる並列実行に変更
+
+### 修正
+- **リソースクリーンアップ**: 複数のリソースリーク問題を修正
+  - `_closeTab()`で`_outputMonitor`と`_lastProcessNames`のエントリを適切にクリーンアップ
+  - `_cleanup()`で`_outputMonitor`と`_lastProcessNames`マップを確実にクリア
+  - WebViewのResizeObserverをタブ閉鎖時に適切にdisconnect
+  - extension.ts、TerminalProvider.ts、EditorProvider.tsの5箇所のDisposable管理漏れを修正
+
 ## [1.0.8] - 2026-02-05
 
 ### 変更
@@ -1465,6 +1497,7 @@ v0.8.33以前からアップグレードする場合:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6

@@ -5,6 +5,13 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.11] - 2026-02-09
+
+### 変更
+- **コマンドプレフィックスのデフォルト値**: `aiCodingSidebar.editor.commandPrefix`のデフォルト値から`--model opus`を削除
+  - デフォルト値を`claude --model opus`から`claude`に変更
+  - モデル選択をClaude CLIのデフォルトモデル設定に委ね、ユーザーが任意のモデルを柔軟に選択可能に
+
 ## [1.0.10] - 2026-02-09
 
 ### 修正
@@ -1504,6 +1511,7 @@ v0.8.33以前からアップグレードする場合:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.10...v1.0.11
 [1.0.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.9...v1.0.10
 [1.0.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.7...v1.0.8

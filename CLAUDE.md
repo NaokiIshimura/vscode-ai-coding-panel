@@ -349,6 +349,20 @@ TerminalProviderのテスタビリティを向上させるリファクタリン�
   - WebViewメッセージハンドラから分離し、直接テスト可能に
   - メソッドの責務を明確化
 
+### v1.0.11変更: commandPrefixデフォルト値の変更
+
+`aiCodingSidebar.editor.commandPrefix` のデフォルト値から `--model opus` を削除：
+
+**変更内容**
+- デフォルト値: `claude --model opus` → `claude`
+- モデル指定をデフォルトに含めず、Claude CLIのデフォルトモデル設定に委ねる
+- ユーザーが任意のモデルを柔軟に選択可能に
+
+**変更箇所**
+- `package.json`: 設定スキーマのデフォルト値
+- `ConfigurationProvider.ts`: フォールバック値
+- `EditorProvider.ts`: フォールバック値（4箇所）
+
 ### v1.0.10バグ修正: Plans Viewファイル追加の自動反映
 
 Plans Viewで開いているディレクトリにファイルが追加されてもリアルタイムに反映されない問題を修正：
@@ -544,7 +558,7 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 - `aiCodingSidebar.plans.defaultRelativePath`: デフォルトの相対パス（デフォルト: `.claude/plans`）
 - `aiCodingSidebar.plans.sortBy`: ソート基準（name/created/modified）- ファイルとディレクトリの両方に適用
 - `aiCodingSidebar.plans.sortOrder`: ソート順（ascending/descending）- ファイルとディレクトリの両方に適用
-- `aiCodingSidebar.editor.commandPrefix`: コマンドプレフィックス（デフォルト: `claude --model opus`）
+- `aiCodingSidebar.editor.commandPrefix`: コマンドプレフィックス（デフォルト: `claude`）
 - `aiCodingSidebar.editor.runCommand`: Runボタン実行コマンド
 - `aiCodingSidebar.editor.runCommandWithoutFile`: ファイルなし時のRunコマンド
 - `aiCodingSidebar.editor.planCommand`: Planボタン実行コマンド

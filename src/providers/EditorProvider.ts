@@ -200,7 +200,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
                         // Get the plan command template from settings
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude --model opus');
+                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
                         const commandTemplate = config.get<string>('editor.planCommand', '${commandPrefix} "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."');
 
                         // Replace placeholders with safely escaped values
@@ -239,7 +239,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
                         // Get the spec command template from settings
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude --model opus');
+                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
                         const commandTemplate = config.get<string>('editor.specCommand', '${commandPrefix} "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}."');
 
                         // Replace placeholders with safely escaped values
@@ -288,7 +288,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
                         // Get the run command template from settings
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude --model opus');
+                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
                         const commandTemplate = config.get<string>('editor.runCommand', '${commandPrefix} "Review the file at ${filePath}"');
 
                         // Replace placeholders with safely escaped values
@@ -304,7 +304,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                     } else if (data.editorContent && data.editorContent.trim()) {
                         // No file open - use the editor content directly
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude --model opus');
+                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
                         const commandTemplate = config.get<string>('editor.runCommandWithoutFile', '${commandPrefix} "${editorContent}"');
 
                         // Replace placeholders with safely escaped values

@@ -265,7 +265,7 @@ created: {{datetime}}
   "aiCodingSidebar.plans.defaultRelativePath": ".claude/plans",
   "aiCodingSidebar.plans.sortBy": "created",
   "aiCodingSidebar.plans.sortOrder": "ascending",
-  "aiCodingSidebar.editor.commandPrefix": "claude --model opus",
+  "aiCodingSidebar.editor.commandPrefix": "claude",
   "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"Review the file at ${filePath}\"",
   "aiCodingSidebar.editor.runCommandWithoutFile": "${commandPrefix} \"${editorContent}\"",
   "aiCodingSidebar.editor.planCommand": "${commandPrefix} \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",
@@ -334,14 +334,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.0.10.vsix
+   code --install-extension ai-coding-sidebar-1.0.11.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.0.10.vsix
+code --install-extension releases/ai-coding-sidebar-1.0.11.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -355,7 +355,7 @@ code --install-extension releases/ai-coding-sidebar-1.0.10.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.0.10.vsix
+   code --install-extension releases/ai-coding-sidebar-1.0.11.vsix
    ```
 4. VS Codeを再起動
 

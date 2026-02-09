@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.11] - 2026-02-09
+
+### Changed
+- **Command Prefix Default**: Removed `--model opus` from the default value of `aiCodingSidebar.editor.commandPrefix`
+  - Default value changed from `claude --model opus` to `claude`
+  - Delegates model selection to Claude CLI's default model setting, allowing users to flexibly choose any model
+
 ## [1.0.10] - 2026-02-09
 
 ### Fixed
@@ -2033,6 +2040,7 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.10...v1.0.11
 [1.0.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.9...v1.0.10
 [1.0.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.7...v1.0.8

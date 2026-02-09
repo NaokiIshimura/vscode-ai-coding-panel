@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -534,7 +534,7 @@
         },
         "aiCodingSidebar.editor.commandPrefix": {
           "type": "string",
-          "default": "claude --model opus",
+          "default": "claude",
           "description": "Command prefix used in editor commands. This is substituted for ${commandPrefix} in command templates."
         },
         "aiCodingSidebar.editor.runCommand": {

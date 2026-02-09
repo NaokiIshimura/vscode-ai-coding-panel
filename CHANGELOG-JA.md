@@ -5,6 +5,13 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.10] - 2026-02-09
+
+### 修正
+- **Plans View自動更新**: Plans Viewで開いているディレクトリにファイルが追加されても手動リフレッシュまで表示されない問題を修正
+  - FileWatcher通知時のキャッシュクリアを部分的（パスベース）から全クリアに変更し、パス正規化の差異やデバウンスによるイベント統合でキャッシュクリアが漏れる問題を解消
+  - Plans Viewが再表示された際に`refresh()`を呼び出すように変更し、ビュー非表示中に発生したファイル変更が即座に反映されるように改善
+
 ## [1.0.9] - 2026-02-07
 
 ### 改善
@@ -1497,6 +1504,7 @@ v0.8.33以前からアップグレードする場合:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.9...v1.0.10
 [1.0.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.6...v1.0.7

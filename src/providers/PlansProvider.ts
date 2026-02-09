@@ -44,8 +44,9 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         }
         // リスナーを事前に登録
         if (this.fileWatcherService) {
-            this.fileWatcherService.registerListener(this.listenerId, (uri) => {
-                this.debouncedRefresh(uri.fsPath);
+            this.fileWatcherService.registerListener(this.listenerId, () => {
+                // FileWatcherからの通知時はキャッシュを全クリアして確実に反映
+                this.debouncedRefresh();
             });
         }
         // 設定変更を監視してタイトルと表示を更新
@@ -106,6 +107,8 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
 
         if (visible) {
             this.fileWatcherService.enableListener(this.listenerId);
+            // ビュー復帰時にリフレッシュして、非表示中の変更を反映
+            this.refresh();
         } else {
             this.fileWatcherService.disableListener(this.listenerId);
         }

@@ -511,15 +511,12 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         if (this._activeTabId) {
             const tab = this._tabs.find(t => t.id === this._activeTabId);
             if (tab) {
-                // Claude Code起動中はペーストモードで送信して実行
+                // Claude Code起動中はコマンドテキストを送信後、Enterを別送信
                 if (tab.isClaudeCodeRunning) {
-                    // ペーストモードでコマンドを送信
-                    // \x1b[200~ = ペースト開始、\x1b[201~ = ペースト終了
-                    this._terminalService.write(tab.sessionId, '\x1b[200~' + command + '\x1b[201~');
-                    // 短い遅延の後にEnterを送信して実行
+                    this._terminalService.write(tab.sessionId, command);
                     setTimeout(() => {
                         this._terminalService.write(tab.sessionId, '\r');
-                    }, 20);
+                    }, 100);
                 } else {
                     // シェル状態: コマンド + 改行を送信
                     const commandToSend = addNewline ? command + '\n' : command;
@@ -570,13 +567,11 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
             const tab = this._tabs.find(t => t.id === this._activeTabId);
             if (tab) {
                 if (tab.isClaudeCodeRunning) {
-                    // Claude Code起動中: ペーストモードでコマンドを送信
-                    // \x1b[200~ = ペースト開始、\x1b[201~ = ペースト終了
-                    this._terminalService.write(tab.sessionId, '\x1b[200~' + command + '\x1b[201~');
-                    // 短い遅延の後にEnterを送信して実行
+                    // Claude Code起動中: コマンドテキストを送信後、Enterを別送信
+                    this._terminalService.write(tab.sessionId, command);
                     setTimeout(() => {
                         this._terminalService.write(tab.sessionId, '\r');
-                    }, 20);
+                    }, 100);
                 } else {
                     // シェル: コマンド + 改行を送信
                     this._terminalService.write(tab.sessionId, command + '\n');

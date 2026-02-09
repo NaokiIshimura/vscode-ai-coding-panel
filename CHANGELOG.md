@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.12] - 2026-02-09
+
+### Fixed
+- **Terminal Command Execution**: Fixed issue where Run/Plan/Spec commands from Editor View were not executed when Claude Code was running in Terminal View
+  - Root cause: Command text and newline character (\r) were sent together in a single PTY write operation, causing the newline to appear at the end of the command instead of executing it
+  - Solution: Separated command text transmission and Enter key transmission with 100ms delay between them
+  - Removed Bracketed Paste Mode usage to ensure proper command execution
+  - Applied to both `sendCommand()` and `handleShortcut()` methods in TerminalProvider.ts
+
 ## [1.0.11] - 2026-02-09
 
 ### Changed
@@ -2040,6 +2049,7 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.11...v1.0.12
 [1.0.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.10...v1.0.11
 [1.0.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.9...v1.0.10
 [1.0.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.8...v1.0.9

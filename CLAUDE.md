@@ -349,6 +349,24 @@ TerminalProviderのテスタビリティを向上させるリファクタリン�
   - WebViewメッセージハンドラから分離し、直接テスト可能に
   - メソッドの責務を明確化
 
+### v1.0.12バグ修正: Claude Code起動中のコマンド実行問題
+
+Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマンドを送信すると、末尾が改行になってコマンドが実行されない問題を修正：
+
+**問題の原因**
+- コマンドテキストと改行コード（`\r`）が1回のPTY書き込みで送信されると、Claude Code CLIが`\r`を入力テキストの一部として処理してしまい、コマンドが実行されない
+
+**修正内容**
+- `sendCommand()`と`handleShortcut()`メソッドのClaude Code起動中のコマンド送信を修正
+  1. コマンドテキストをPTYに送信
+  2. 100ms遅延後に`\r`を別書き込みで送信
+  3. 手動Enter操作と同じデータフローを再現
+- シェル状態（Claude Code未起動）の場合は従来通り
+
+**削除した機能**
+- Bracketed Paste Mode（ペーストモード）を廃止
+  - `\x1b[200~` ... `\x1b[201~` によるコマンドラップを削除
+
 ### v1.0.11変更: commandPrefixデフォルト値の変更
 
 `aiCodingSidebar.editor.commandPrefix` のデフォルト値から `--model opus` を削除：

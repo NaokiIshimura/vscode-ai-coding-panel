@@ -5,6 +5,15 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.12] - 2026-02-09
+
+### 修正
+- **Terminalコマンド実行**: Claude Code起動中にEditor ViewからRun/Plan/Specコマンドを送信すると実行されない問題を修正
+  - 原因: コマンドテキストと改行文字（\r）が1回のPTY書き込みで送信されていたため、改行がコマンドの末尾に表示されてしまい実行されない
+  - 修正: コマンドテキスト送信とEnter送信を分離し、100msの遅延を設定
+  - Bracketed Paste Modeの使用を廃止してコマンド実行を適切に処理するように改善
+  - TerminalProvider.tsの`sendCommand()`と`handleShortcut()`メソッドに適用
+
 ## [1.0.11] - 2026-02-09
 
 ### 変更
@@ -1511,6 +1520,7 @@ v0.8.33以前からアップグレードする場合:
 [1.0.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.2...v1.0.3
 [1.0.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.3...v1.0.4
 [1.0.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.4...v1.0.5
+[1.0.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.11...v1.0.12
 [1.0.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.10...v1.0.11
 [1.0.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.9...v1.0.10
 [1.0.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.8...v1.0.9

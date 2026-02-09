@@ -31,8 +31,8 @@ suite.skip('ConfigurationProvider Test Suite', () => {
 		test('Should return default value when not configured', () => {
 			const prefix = configProvider.getCommandPrefix();
 
-			// Default value is 'claude --model opus'
-			assert.strictEqual(prefix, 'claude --model opus');
+			// Default value is 'claude'
+			assert.strictEqual(prefix, 'claude');
 		});
 	});
 

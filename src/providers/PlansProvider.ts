@@ -42,12 +42,14 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
             this.projectRootPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
         }
-        // リスナーを事前に登録
+        // リスナーを事前に登録し、即座に有効化
         if (this.fileWatcherService) {
             this.fileWatcherService.registerListener(this.listenerId, () => {
                 // FileWatcherからの通知時はキャッシュを全クリアして確実に反映
                 this.debouncedRefresh();
             });
+            // リスナーを常に有効にする（ビューの可視性に関わらず）
+            this.fileWatcherService.enableListener(this.listenerId);
         }
         // 設定変更を監視してタイトルと表示を更新
         this.configChangeDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
@@ -106,12 +108,12 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         }
 
         if (visible) {
-            this.fileWatcherService.enableListener(this.listenerId);
-            // ビュー復帰時にリフレッシュして、非表示中の変更を反映
+            // リスナーは常に有効なので、enableListener()は不要
+            // ただし、ビュー復帰時にリフレッシュして最新の状態を反映
             this.refresh();
-        } else {
-            this.fileWatcherService.disableListener(this.listenerId);
         }
+        // ビュー非表示時もリスナーは有効のまま（disableListener()を呼ばない）
+        // これにより、非表示中でもファイル変更イベントを受け取り、キャッシュをクリアできる
     }
 
     dispose(): void {

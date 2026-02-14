@@ -5,6 +5,16 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.13] - 2026-02-14
+
+### 修正
+- **Plans View自動更新（完全修正）**: Plans Viewが非表示の状態でディレクトリにファイルが追加されても表示されない問題を完全に解決
+  - 根本原因: ビュー非表示時にFileWatcherのリスナーが無効化されていたため、イベントが失われていた
+  - 修正: リスナーをビューの可視性に関わらず常に有効化
+  - ビュー非表示中でもファイル変更イベントを受け取り、キャッシュをクリア
+  - ビュー復帰時に最新の状態が自動的に反映される
+  - 注記: v1.0.10の部分修正（ビュー非表示時にリスナーを無効化していた）を完全に修正
+
 ## [1.0.12] - 2026-02-09
 
 ### 修正
@@ -1527,3 +1537,4 @@ v0.8.33以前からアップグレードする場合:
 [1.0.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6
+[1.0.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.12...v1.0.13

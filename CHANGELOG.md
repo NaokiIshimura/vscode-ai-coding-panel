@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.13] - 2026-02-14
+
+### Fixed
+- **Plans View Auto-Refresh (Complete Fix)**: Completely resolved the issue where files added to the directory were not displayed when Plans View was hidden
+  - Root cause: FileWatcher listener was disabled when the view was hidden, causing events to be lost
+  - Solution: Listener is now always enabled regardless of view visibility
+  - File change events are received and caches are cleared even when the view is hidden
+  - Latest state is automatically reflected when returning to the view
+  - Note: This completes the partial fix from v1.0.10 where the listener was being disabled during view hide
+
 ## [1.0.12] - 2026-02-09
 
 ### Fixed
@@ -2056,3 +2066,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6
+[1.0.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.12...v1.0.13

@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.0.10-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.0.13-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 A powerful VS Code panel extension designed to maximize your productivity with Claude Code.
 
@@ -44,7 +44,7 @@ Browse and manage files in a flat list view with directory navigation.
 | **Editor target file icons** | Files opened in Editor view (TASK.md, PROMPT.md, SPEC.md) display an `edit` icon to distinguish them from regular Markdown files |
 | Sorting | Files are sorted by creation date (ascending) by default |
 | Drag & Drop | Copy files by dragging them within the view or from external sources |
-| Auto-refresh | Automatically updates when files are created, modified, or deleted |
+| Auto-refresh | Automatically updates when files are created, modified, or deleted (even when the view is hidden) |
 | Settings icon | Quick access to default path and sort configuration |
 
 ### Editor (Claude Code Command Center)

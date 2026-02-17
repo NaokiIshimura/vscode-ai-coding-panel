@@ -209,14 +209,13 @@
                 const text = line.translateToString();
                 const links = [];
 
-                const filePattern = /(?:^|[\s'":([])(\.?\/|\.\.?\/|\/)([a-zA-Z0-9_.\-]+\/)*[a-zA-Z0-9_.\-]+\.[a-zA-Z0-9]+(?::(\d+))?/g;
+                // 絶対パス（/）・相対パス（./、../）・隠しディレクトリ（.claude/など）をマッチ
+                const filePattern = /(?:^|[\s'":([])((?:\.{1,2}\/|\.(?=[a-zA-Z_])|\/)[a-zA-Z0-9_.\-\/]*[a-zA-Z0-9_\-]\.[a-zA-Z0-9]+(?::\d+)?)/g;
                 let match;
 
                 while ((match = filePattern.exec(text)) !== null) {
-                    const fullMatch = match[0];
-                    const delimMatch = fullMatch.match(/^[\s'":([]/);
-                    const startIndex = match.index + (delimMatch ? delimMatch[0].length : 0);
-                    const pathWithLine = delimMatch ? fullMatch.slice(delimMatch[0].length) : fullMatch;
+                    const pathWithLine = match[1];
+                    const startIndex = match.index + (match[0].length - match[1].length);
 
                     const lineMatch = pathWithLine.match(/:(\d+)$/);
                     const filePath = lineMatch ? pathWithLine.replace(/:(\d+)$/, '') : pathWithLine;
@@ -228,6 +227,10 @@
                             end: { x: startIndex + pathWithLine.length + 1, y: bufferLineNumber }
                         },
                         text: pathWithLine,
+                        decorations: {
+                            pointerCursor: true,
+                            underline: true
+                        },
                         activate: () => {
                             vscode.postMessage({
                                 type: 'openFile',

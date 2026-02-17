@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.14] - 2026-02-17
+
+### Fixed
+- **Terminal View File Path Links**: Fixed issue where file paths output in Terminal View were not clickable
+  - Root cause 1: Regular expression pattern did not match paths starting with `.` followed by directory names (e.g., `.claude/plans/...`)
+  - Root cause 2: Missing `decorations` property caused no visual feedback on hover
+  - Fixed regex to support absolute paths (`/path/...`), relative paths (`./`, `../`), and hidden directory paths (`.claude/...`)
+  - Added `decorations` property (`pointerCursor: true`, `underline: true`) to display underline and pointer cursor on hover
+  - Simplified match processing logic using capture groups
+
 ## [1.0.13] - 2026-02-14
 
 ### Fixed
@@ -2067,3 +2077,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6
 [1.0.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.12...v1.0.13
+[1.0.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.13...v1.0.14

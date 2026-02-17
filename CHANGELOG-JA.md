@@ -5,6 +5,16 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.14] - 2026-02-17
+
+### 修正
+- **Terminal Viewファイルパスリンク**: Terminal Viewに出力されたファイルパスがクリッカブルにならない問題を修正
+  - 根本原因1: 正規表現パターンが `.` で始まるディレクトリ名（例: `.claude/plans/...`）にマッチしていなかった
+  - 根本原因2: `decorations` プロパティが未設定のため、ホバー時に視覚的フィードバックがなかった
+  - 正規表現を修正して絶対パス（`/path/...`）・相対パス（`./`・`../`）・隠しディレクトリパス（`.claude/...`）に対応
+  - `decorations` プロパティ（`pointerCursor: true`、`underline: true`）を追加し、ホバー時に下線とポインターカーソルを表示
+  - キャプチャグループを使用してマッチ処理ロジックを簡略化
+
 ## [1.0.13] - 2026-02-14
 
 ### 修正
@@ -1538,3 +1548,4 @@ v0.8.33以前からアップグレードする場合:
 [1.0.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6
 [1.0.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.12...v1.0.13
+[1.0.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.13...v1.0.14

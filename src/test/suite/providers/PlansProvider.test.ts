@@ -336,4 +336,83 @@ suite('PlansProvider Integration Test Suite', () => {
 			disposable.dispose();
 		});
 	});
+
+	suite('polling', () => {
+		test('Should start polling on handleVisibilityChange(true)', () => {
+			plansProvider.handleVisibilityChange(true);
+			const timer = (plansProvider as any)._pollingTimer;
+			assert.ok(timer !== undefined, 'Polling timer should be set when view becomes visible');
+		});
+
+		test('Should stop polling on handleVisibilityChange(false)', () => {
+			plansProvider.handleVisibilityChange(true);
+			plansProvider.handleVisibilityChange(false);
+			const timer = (plansProvider as any)._pollingTimer;
+			assert.strictEqual(timer, undefined, 'Polling timer should be cleared when view is hidden');
+		});
+
+		test('Should stop polling on dispose', () => {
+			plansProvider.handleVisibilityChange(true);
+			plansProvider.dispose();
+			const timer = (plansProvider as any)._pollingTimer;
+			assert.strictEqual(timer, undefined, 'Polling timer should be cleared on dispose');
+		});
+
+		test('Should fire onDidChangeTreeData when directory changes during polling', async () => {
+			await plansProvider.setRootPath(testDir);
+
+			// ポーリングの初期スナップショットを確定させる
+			await (plansProvider as any)._pollDirectory();
+
+			let eventFired = false;
+			const disposable = plansProvider.onDidChangeTreeData(() => {
+				eventFired = true;
+			});
+
+			// ファイルを追加してディレクトリを変化させる
+			fs.writeFileSync(path.join(testDir, 'polling_test.md'), 'content', 'utf8');
+
+			// _pollDirectoryを直接呼び出して変化を検知させる
+			await (plansProvider as any)._pollDirectory();
+
+			disposable.dispose();
+			assert.ok(eventFired, 'onDidChangeTreeData should fire when directory content changes');
+		});
+
+		test('Should not fire onDidChangeTreeData when directory is unchanged', async () => {
+			await plansProvider.setRootPath(testDir);
+			fs.writeFileSync(path.join(testDir, 'stable.md'), 'content', 'utf8');
+
+			// 初回ポーリングでスナップショットを確定させる
+			await (plansProvider as any)._pollDirectory();
+
+			let eventFired = false;
+			const disposable = plansProvider.onDidChangeTreeData(() => {
+				eventFired = true;
+			});
+
+			// 2回目のポーリング（変化なし）
+			await (plansProvider as any)._pollDirectory();
+
+			disposable.dispose();
+			assert.strictEqual(eventFired, false, 'onDidChangeTreeData should not fire when directory is unchanged');
+		});
+
+		test('Should reset snapshot when navigating to directory', async () => {
+			const subDir = path.join(testDir, 'subdir');
+			fs.mkdirSync(subDir, { recursive: true });
+			await plansProvider.setRootPath(testDir);
+
+			// スナップショットを設定
+			(plansProvider as any)._lastDirFileCount = 5;
+			(plansProvider as any)._lastDirModTime = 12345;
+
+			// ディレクトリ移動（navigateToDirectoryの内部処理をシミュレート）
+			await plansProvider.navigateToDirectory(subDir);
+
+			// スナップショットがリセットされているか確認
+			assert.strictEqual((plansProvider as any)._lastDirFileCount, -1, 'File count should be reset after navigation');
+			assert.strictEqual((plansProvider as any)._lastDirModTime, 0, 'Mod time should be reset after navigation');
+		});
+	});
 });

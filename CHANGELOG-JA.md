@@ -5,6 +5,16 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.15] - 2026-02-17
+
+### 修正
+- **Plans View自動更新（ポーリングによる補完）**: v1.0.13の修正後もPlans Viewで開いているフォルダにファイルを追加しても反映されないケースが残っていた問題を解決
+  - 根本原因: `vscode.FileSystemWatcher`が外部プロセス（Claude Codeがターミナル経由でファイルを作成するなど）によるイベントを見逃す場合がある
+  - 改善1: `RelativePattern`のベースを`workspaceFolder`全体から監視対象ディレクトリのURIに変更し、イベント検知精度を向上
+  - 改善2: `workspace.onDidCreateFiles` / `onDidDeleteFiles` / `onDidRenameFiles` を追加監視ソースとして登録し、`FileSystemWatcher`を補完
+  - 改善3: Plans View表示中に3秒ごとにアクティブディレクトリのファイル数とmtimeをチェックする軽量ポーリングを追加。変化があった場合のみ`refresh()`を実行
+  - ビュー非表示時・`dispose()`時はポーリングを停止してリソースを解放
+
 ## [1.0.14] - 2026-02-17
 
 ### 修正
@@ -1549,3 +1559,4 @@ v0.8.33以前からアップグレードする場合:
 [1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6
 [1.0.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.12...v1.0.13
 [1.0.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.13...v1.0.14
+[1.0.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.14...v1.0.15

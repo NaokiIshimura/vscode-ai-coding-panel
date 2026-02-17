@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.15] - 2026-02-17
+
+### Fixed
+- **Plans View Auto-Refresh (Polling Supplement)**: Resolved remaining cases where files added to the open directory in Plans View were not reflected, even after the v1.0.13 fix
+  - Root cause: `vscode.FileSystemWatcher` itself could miss events from external processes (e.g., Claude Code writing files via terminal)
+  - Improvement 1: Changed `RelativePattern` base from `workspaceFolder` to the specific plans directory URI for better event detection accuracy
+  - Improvement 2: Added `workspace.onDidCreateFiles` / `onDidDeleteFiles` / `onDidRenameFiles` as additional event sources to complement `FileSystemWatcher`
+  - Improvement 3: Added lightweight polling (every 3 seconds) that checks file count and mtime of the active directory while Plans View is visible; triggers `refresh()` only when changes are detected
+  - Polling stops when Plans View is hidden or disposed to minimize resource usage
+
 ## [1.0.14] - 2026-02-17
 
 ### Fixed
@@ -2078,3 +2088,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.5...v1.0.6
 [1.0.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.12...v1.0.13
 [1.0.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.13...v1.0.14
+[1.0.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.14...v1.0.15

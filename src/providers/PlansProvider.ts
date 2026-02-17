@@ -31,6 +31,9 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
     private _isInitialLoad: boolean = true;
     private editorProvider: IEditorProvider | undefined;
     private configChangeDisposable: vscode.Disposable | undefined;
+    private _pollingTimer: NodeJS.Timeout | undefined;
+    private _lastDirFileCount: number = -1;
+    private _lastDirModTime: number = 0;
 
     // Drag & Drop support
     readonly dragMimeTypes = ['application/vnd.code.tree.aiCodingSidebarExplorer'];
@@ -100,20 +103,19 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
     }
 
     /**
-     * ビューの可視性に応じてファイルウォッチャーを制御
+     * ビューの可視性に応じてウォッチャーとポーリングを制御
      */
     handleVisibilityChange(visible: boolean): void {
-        if (!this.fileWatcherService) {
-            return;
-        }
-
         if (visible) {
-            // リスナーは常に有効なので、enableListener()は不要
-            // ただし、ビュー復帰時にリフレッシュして最新の状態を反映
+            // ビュー復帰時にリフレッシュして最新の状態を反映
             this.refresh();
+            // ポーリングを開始してFileWatcherが見逃したイベントを補完
+            this._startPolling();
+        } else {
+            // ビュー非表示時はポーリングを停止してリソースを解放
+            // FileWatcherのリスナーは有効のまま維持する
+            this._stopPolling();
         }
-        // ビュー非表示時もリスナーは有効のまま（disableListener()を呼ばない）
-        // これにより、非表示中でもファイル変更イベントを受け取り、キャッシュをクリアできる
     }
 
     dispose(): void {
@@ -127,6 +129,58 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         if (this.configChangeDisposable) {
             this.configChangeDisposable.dispose();
             this.configChangeDisposable = undefined;
+        }
+        this._stopPolling();
+    }
+
+    /**
+     * ポーリングを開始する（Plans View表示中のみ動作）
+     * FileWatcherが見逃したイベントを補完するため、3秒ごとにディレクトリを確認する
+     */
+    private _startPolling(): void {
+        this._stopPolling();
+        // ポーリング開始時にスナップショットをリセット
+        this._lastDirFileCount = -1;
+        this._lastDirModTime = 0;
+        this._pollingTimer = setInterval(() => {
+            void this._pollDirectory();
+        }, 3000);
+    }
+
+    /**
+     * ポーリングを停止する
+     */
+    private _stopPolling(): void {
+        if (this._pollingTimer) {
+            clearInterval(this._pollingTimer);
+            this._pollingTimer = undefined;
+        }
+    }
+
+    /**
+     * ディレクトリの変化を軽量チェックし、変化があればリフレッシュする
+     */
+    private async _pollDirectory(): Promise<void> {
+        const currentPath = this.activeFolderPath || this.rootPath;
+        if (!currentPath) {
+            return;
+        }
+
+        try {
+            const [stat, entries] = await Promise.all([
+                fsPromises.stat(currentPath),
+                fsPromises.readdir(currentPath)
+            ]);
+            const fileCount = entries.length;
+            const modTime = stat.mtime.getTime();
+
+            if (this._lastDirFileCount !== fileCount || this._lastDirModTime !== modTime) {
+                this._lastDirFileCount = fileCount;
+                this._lastDirModTime = modTime;
+                this.refresh();
+            }
+        } catch {
+            // ディレクトリが削除された場合などはスキップ
         }
     }
 
@@ -626,6 +680,9 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         this.activeFolderPath = targetPath;
         this.updateTitle();
         this.refresh();
+        // 移動先ディレクトリのスナップショットをリセット（次のポーリングで正しく比較できるようにする）
+        this._lastDirFileCount = -1;
+        this._lastDirModTime = 0;
 
         // 対象ファイル（TASK.md、PROMPT.md、SPEC.md）を検索して自動選択
         if (this.editorProvider) {

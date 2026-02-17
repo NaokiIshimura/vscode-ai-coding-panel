@@ -27,18 +27,12 @@ export class FileWatcherService implements IFileWatcherService {
     }
 
     /**
-     * 設定値からウォッチパターンを生成
+     * 設定値から監視対象の相対パスを取得
      */
-    private getWatchPatternFromConfig(): string {
+    private getDefaultRelativePath(): string {
         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
         const defaultRelativePath = config.get<string>('plans.defaultRelativePath', '.claude/plans');
-
-        if (defaultRelativePath && defaultRelativePath.trim()) {
-            return `${defaultRelativePath.trim()}/**/*`;
-        }
-
-        // 設定値が空の場合はフォールバック
-        return '.claude/plans/**/*';
+        return (defaultRelativePath && defaultRelativePath.trim()) ? defaultRelativePath.trim() : '.claude/plans';
     }
 
     /**
@@ -50,29 +44,56 @@ export class FileWatcherService implements IFileWatcherService {
         }
 
         const workspaceFolder = vscode.workspace.workspaceFolders[0];
-        const pattern = this.getWatchPatternFromConfig();
-        this.currentWatchPattern = pattern;
+        const defaultRelativePath = this.getDefaultRelativePath();
+        this.currentWatchPattern = defaultRelativePath;
 
-        // Plans View管理対象ディレクトリのみを監視
-        const watchPattern = new vscode.RelativePattern(workspaceFolder, pattern);
+        // 監視対象ディレクトリのURIをベースに指定し、イベント検知の精度を高める
+        const plansUri = vscode.Uri.joinPath(workspaceFolder.uri, defaultRelativePath);
+        const watchPattern = new vscode.RelativePattern(plansUri, '**/*');
         this.fileWatcher = vscode.workspace.createFileSystemWatcher(watchPattern);
 
-        // ファイル変更イベントをリスナーに通知
+        // FileSystemWatcher: OSネイティブのファイルシステムイベント
         this.disposables.push(
             this.fileWatcher.onDidChange((uri) => this.notifyListeners(uri)),
             this.fileWatcher.onDidCreate((uri) => this.notifyListeners(uri)),
             this.fileWatcher.onDidDelete((uri) => this.notifyListeners(uri))
         );
+
+        // workspace API: VS Code のファイルイベント（FileSystemWatcherの補完）
+        const plansPath = plansUri.fsPath;
+        this.disposables.push(
+            vscode.workspace.onDidCreateFiles((e) => {
+                e.files.forEach(uri => {
+                    if (uri.fsPath.startsWith(plansPath)) {
+                        this.notifyListeners(uri);
+                    }
+                });
+            }),
+            vscode.workspace.onDidDeleteFiles((e) => {
+                e.files.forEach(uri => {
+                    if (uri.fsPath.startsWith(plansPath)) {
+                        this.notifyListeners(uri);
+                    }
+                });
+            }),
+            vscode.workspace.onDidRenameFiles((e) => {
+                e.files.forEach(({ oldUri, newUri }) => {
+                    if (oldUri.fsPath.startsWith(plansPath) || newUri.fsPath.startsWith(plansPath)) {
+                        this.notifyListeners(newUri);
+                    }
+                });
+            })
+        );
     }
 
     /**
-     * 設定変更を監視し、ウォッチパターンが変わった場合にウォッチャーを再作成
+     * 設定変更を監視し、監視パスが変わった場合にウォッチャーを再作成
      */
     private setupConfigurationWatcher(): void {
         this.configChangeDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
             if (e.affectsConfiguration('aiCodingSidebar.plans.defaultRelativePath')) {
-                const newPattern = this.getWatchPatternFromConfig();
-                if (newPattern !== this.currentWatchPattern) {
+                const newPath = this.getDefaultRelativePath();
+                if (newPath !== this.currentWatchPattern) {
                     this.recreateWatcher();
                 }
             }

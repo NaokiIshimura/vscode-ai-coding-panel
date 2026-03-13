@@ -5,6 +5,14 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.17] - 2026-03-13
+
+### 変更
+- **コマンドプレフィックスのデフォルト値**: `commandPrefix` 設定のデフォルト値に `--enable-auto-mode` オプションを追加
+  - デフォルト値を `claude` から `claude --enable-auto-mode` に変更
+  - Run/Plan/Specコマンド実行時にauto modeがデフォルトで有効化
+  - 設定で `commandPrefix` を `claude` に変更することで従来の動作に戻すことが可能
+
 ## [1.0.16] - 2026-03-08
 
 ### 変更
@@ -1568,4 +1576,5 @@ v0.8.33以前からアップグレードする場合:
 [1.0.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.12...v1.0.13
 [1.0.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.13...v1.0.14
 [1.0.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.14...v1.0.15
+[1.0.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.16...v1.0.17
 [1.0.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.15...v1.0.16

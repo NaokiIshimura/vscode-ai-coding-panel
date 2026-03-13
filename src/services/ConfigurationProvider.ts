@@ -18,7 +18,7 @@ export class ConfigurationProvider {
      * コマンドプレフィックスを取得
      */
     getCommandPrefix(): string {
-        return this.getConfiguration().get<string>('editor.commandPrefix', 'claude');
+        return this.getConfiguration().get<string>('editor.commandPrefix', 'claude --enable-auto-mode');
     }
 
     /**

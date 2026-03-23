@@ -5,6 +5,16 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.18] - 2026-03-23
+
+### 変更
+- **Terminal Viewショートカットバーの再設計**: ボタン増加による横幅拡大を解消するためショートカットボタンを再構成
+  - デフォルト（Claude Code未起動）: `claude`, `claude --enable-auto-mode`, `claude -c`, `claude -r`, `↑`
+  - `↑` 押下後（updateコマンド）: `claude update`, `brew upgrade claude-code`, `←`
+  - Claude Code起動中: `/model sonnet`, `/model opus`, `/compact`, `/clear`, `←`
+  - `claude update` と `brew upgrade claude-code` を `↑` ボタンでアクセスできるサブグループに移動
+  - `⇆` トグルボタンを `↑`（updateコマンドを開く）と `←`（戻る）に置換
+
 ## [1.0.17] - 2026-03-13
 
 ### 変更
@@ -1576,5 +1586,6 @@ v0.8.33以前からアップグレードする場合:
 [1.0.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.12...v1.0.13
 [1.0.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.13...v1.0.14
 [1.0.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.14...v1.0.15
+[1.0.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.17...v1.0.18
 [1.0.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.16...v1.0.17
 [1.0.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.15...v1.0.16

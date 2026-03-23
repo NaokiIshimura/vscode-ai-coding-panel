@@ -381,6 +381,26 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.0.18変更: Terminal Viewショートカットバーの再設計
+
+ボタン増加による横幅拡大を解消するため、ショートカットバーを3グループ構成に再設計：
+
+**変更後の構成**
+```
+Claude Code未起動時（デフォルト）:
+[claude] [claude --enable-auto-mode] [claude -c] [claude -r] [↑]
+
+updateコマンド表示時（↑ 押下後）:
+[claude update] [brew upgrade claude-code] [←]
+
+Claude Code起動中:
+[/model sonnet] [/model opus] [/compact] [/clear] [←]
+```
+
+**変更箇所**
+- `resources/webview/terminal/index.html`: `shortcuts-update` グループ追加、`⇆` を `↑`/`←` に置換
+- `resources/webview/terminal/main.js`: `updateShortcutBar()` 更新、`toggleShortcuts()` を個別ハンドラに置換
+
 ### v1.0.17変更: commandPrefixデフォルト値の変更（--enable-auto-mode追加）
 
 `aiCodingSidebar.editor.commandPrefix` のデフォルト値に `--enable-auto-mode` オプションを追加：

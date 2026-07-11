@@ -5,6 +5,14 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.17] - 2026-07-11
+
+### 追加
+- **Terminal Viewショートカットバー**: Claude Code未起動時のショートカットバーに `claude --permission-mode auto` ボタンを追加
+  - Claude CLIで廃止された `--enable-auto-mode` オプションに代わる新しいAuto起動ボタン
+  - `claude` と `claude -c` の間に配置
+  - ショートカットバーの順序: `[claude] [claude --permission-mode auto] [claude -c] [claude -r] [claude update] [⇆]`
+
 ## [1.0.16] - 2026-03-08
 
 ### 変更
@@ -1568,4 +1576,5 @@ v0.8.33以前からアップグレードする場合:
 [1.0.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.12...v1.0.13
 [1.0.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.13...v1.0.14
 [1.0.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.14...v1.0.15
+[1.0.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.16...v1.0.17
 [1.0.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.15...v1.0.16

@@ -381,6 +381,25 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.0.17追加: Terminal Viewショートカットに「claude --permission-mode auto」を追加
+
+Terminal ViewのClaude Code未起動時のショートカットバーに `claude --permission-mode auto` ボタンを追加：
+
+**実装内容**
+- **HTMLボタン追加**: `resources/webview/terminal/index.html` の `shortcuts-not-running` グループにボタンを追加
+  - `claude` ボタンの直後（`claude -c` の前）に配置
+- **イベントリスナー追加**: `resources/webview/terminal/main.js` にクリックイベントリスナーを追加
+  - `startsClaudeCode: true` — Claude Codeをautoモードで起動
+
+**変更後のClaude Code未起動時ショートカット**
+```
+[claude] [claude --permission-mode auto] [claude -c] [claude -r] [claude update] [⇆]
+```
+
+**背景**
+- Claude CLIの `--enable-auto-mode` オプションは廃止され、`--permission-mode auto` に置き換えられた
+- 全操作を自動承認するAutoモードをショートカットから直接起動可能に
+
 ### v1.0.16変更: テンプレートファイルのメタデータセクション更新
 
 組み込みテンプレートファイル（`templates/prompt.md`、`templates/spec.md`、`templates/task.md`）のメタデータセクションを更新：

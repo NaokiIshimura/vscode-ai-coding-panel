@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.17] - 2026-07-11
+
+### Added
+- **Terminal View Shortcut Bar**: Added `claude --permission-mode auto` button to the shortcut bar shown when Claude Code is not running
+  - Replaces the deprecated `--enable-auto-mode` option which is no longer available in the Claude CLI
+  - Button is placed between `claude` and `claude -c` for easy access
+  - Shortcut bar order: `[claude] [claude --permission-mode auto] [claude -c] [claude -r] [claude update] [⇆]`
+
 ## [1.0.16] - 2026-03-08
 
 ### Changed
@@ -2097,4 +2105,5 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.12...v1.0.13
 [1.0.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.13...v1.0.14
 [1.0.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.14...v1.0.15
+[1.0.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.16...v1.0.17
 [1.0.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.15...v1.0.16

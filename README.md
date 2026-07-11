@@ -72,7 +72,7 @@ The embedded terminal is purpose-built for Claude Code with intelligent automati
 | Feature | Description |
 | --- | --- |
 | **Claude Code Auto-Detection** | Process-based detection (checks every 1.5s) reliably identifies Claude Code sessions independent of prompt changes. Automatically switches UI and shortcuts when Claude Code starts/exits |
-| **Context-Aware Shortcuts** | Smart buttons that change based on state:<br>- Not running: `claude`, `claude -c`, `claude -r`, `claude update`<br>- Running: `/model sonnet`, `/model opus`, `/compact`, `/clear`<br>Enables quick model switching and common commands during Claude Code sessions |
+| **Context-Aware Shortcuts** | Smart buttons that change based on state:<br>- Not running: `claude`, `claude --permission-mode auto`, `claude -c`, `claude -r`, `claude update`<br>- Running: `/model sonnet`, `/model opus`, `/compact`, `/clear`<br>Enables quick model switching and common commands during Claude Code sessions |
 | **Command Type Icons** | Tab names display icons indicating command origin:<br>▶️ Run button<br>📝 Plan button<br>📑 Spec button |
 | **Dynamic Process Names** | Like iTerm2, tab names update automatically to show the currently running process |
 | **Tab-File Association** | Commands from Editor view link the file to the terminal tab. Switching tabs automatically:<br>- Opens the associated file in Editor view<br>- Navigates to the file's directory in Plans view |

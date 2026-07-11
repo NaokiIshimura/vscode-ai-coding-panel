@@ -5,6 +5,14 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.19] - 2026-07-11
+
+### 変更
+- **`--enable-auto-mode` → `--permission-mode auto`**: 廃止されたClaude CLIオプションへの参照をすべて更新
+  - `aiCodingSidebar.editor.commandPrefix` デフォルト値: `claude --enable-auto-mode` → `claude --permission-mode auto`
+  - Terminal Viewショートカットバーのボタンラベルも同様に更新
+  - `--enable-auto-mode` はClaude CLIで廃止済み。`--permission-mode auto` が後継オプション
+
 ## [1.0.18] - 2026-03-23
 
 ### 変更
@@ -1586,6 +1594,7 @@ v0.8.33以前からアップグレードする場合:
 [1.0.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.12...v1.0.13
 [1.0.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.13...v1.0.14
 [1.0.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.14...v1.0.15
+[1.0.19]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.18...v1.0.19
 [1.0.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.17...v1.0.18
 [1.0.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.16...v1.0.17
 [1.0.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.15...v1.0.16

@@ -70,7 +70,7 @@ Claude Code向けに設計された、インテリジェントな自動化とコ
 | 機能 | 説明 |
 | --- | --- |
 | **Claude Code自動検知** | プロセスベースの検知（1.5秒ごとにチェック）により、プロンプト変更に影響されずClaude Codeセッションを確実に識別。Claude Codeの起動・終了時にUIとショートカットを自動切り替え |
-| **コンテキスト対応ショートカット** | 状態に応じて変化するスマートボタン：<br>- 未起動時: `claude`, `claude --enable-auto-mode`, `claude -c`, `claude -r`, `↑`<br>- `↑` 押下後（updateコマンド）: `claude update`, `brew upgrade claude-code`, `←`<br>- 起動中: `/model sonnet`, `/model opus`, `/compact`, `/clear`, `←`<br>Claude Codeセッション中に素早いモデル切り替えとupdateコマンドが実行可能 |
+| **コンテキスト対応ショートカット** | 状態に応じて変化するスマートボタン：<br>- 未起動時: `claude`, `claude --permission-mode auto`, `claude -c`, `claude -r`, `↑`<br>- `↑` 押下後（updateコマンド）: `claude update`, `brew upgrade claude-code`, `←`<br>- 起動中: `/model sonnet`, `/model opus`, `/compact`, `/clear`, `←`<br>Claude Codeセッション中に素早いモデル切り替えとupdateコマンドが実行可能 |
 | **コマンド種別アイコン** | タブ名にコマンド種別を示すアイコンを表示：<br>▶️ Runボタン<br>📝 Planボタン<br>📑 Specボタン |
 | **動的プロセス名** | iTerm2のように、タブ名が現在実行中のプロセスを自動的に表示 |
 | **タブ-ファイル関連付け** | Editor viewからのコマンドはファイルをターミナルタブにリンク。タブ切り替え時に自動的に：<br>- 関連付けられたファイルをEditor viewで開く<br>- Plans viewをそのファイルのディレクトリに移動 |
@@ -265,7 +265,7 @@ created: {{datetime}}
   "aiCodingSidebar.plans.defaultRelativePath": ".claude/plans",
   "aiCodingSidebar.plans.sortBy": "created",
   "aiCodingSidebar.plans.sortOrder": "ascending",
-  "aiCodingSidebar.editor.commandPrefix": "claude --enable-auto-mode",
+  "aiCodingSidebar.editor.commandPrefix": "claude --permission-mode auto",
   "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"Review the file at ${filePath}\"",
   "aiCodingSidebar.editor.runCommandWithoutFile": "${commandPrefix} \"${editorContent}\"",
   "aiCodingSidebar.editor.planCommand": "${commandPrefix} \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",

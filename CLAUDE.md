@@ -381,6 +381,21 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.0.19変更: `--enable-auto-mode` → `--permission-mode auto` への置き換え
+
+廃止されたClaude CLIオプション `--enable-auto-mode` を `--permission-mode auto` に全面置き換え：
+
+**変更内容**
+- `aiCodingSidebar.editor.commandPrefix` デフォルト値: `claude --enable-auto-mode` → `claude --permission-mode auto`
+- Terminal Viewショートカットバーのボタンラベルを更新
+
+**変更箇所**
+- `package.json`: 設定スキーマのデフォルト値
+- `ConfigurationProvider.ts`: フォールバック値
+- `EditorProvider.ts`: フォールバック値（4箇所）
+- `resources/webview/terminal/index.html`: ボタンラベルとID
+- `resources/webview/terminal/main.js`: イベントリスナー
+
 ### v1.0.18変更: Terminal Viewショートカットバーの再設計
 
 ボタン増加による横幅拡大を解消するため、ショートカットバーを3グループ構成に再設計：
@@ -388,7 +403,7 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 **変更後の構成**
 ```
 Claude Code未起動時（デフォルト）:
-[claude] [claude --enable-auto-mode] [claude -c] [claude -r] [↑]
+[claude] [claude --permission-mode auto] [claude -c] [claude -r] [↑]
 
 updateコマンド表示時（↑ 押下後）:
 [claude update] [brew upgrade claude-code] [←]

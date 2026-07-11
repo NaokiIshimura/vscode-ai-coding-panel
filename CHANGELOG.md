@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Terminal View Shortcut Bar**: Added `claude --permission-mode auto` button to the shortcut bar shown when Claude Code is not running
   - Replaces the deprecated `--enable-auto-mode` option which is no longer available in the Claude CLI
   - Button is placed between `claude` and `claude -c` for easy access
-  - Shortcut bar order: `[claude] [claude --permission-mode auto] [claude -c] [claude -r] [claude update] [⇆]`
+  - Shortcut bar order: `[claude] [claude -c] [claude -r] [claude --permission-mode auto] [claude update] [⇆]`
 
 ## [1.0.16] - 2026-03-08
 

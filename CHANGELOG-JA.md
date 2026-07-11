@@ -11,7 +11,7 @@
 - **Terminal Viewショートカットバー**: Claude Code未起動時のショートカットバーに `claude --permission-mode auto` ボタンを追加
   - Claude CLIで廃止された `--enable-auto-mode` オプションに代わる新しいAuto起動ボタン
   - `claude` と `claude -c` の間に配置
-  - ショートカットバーの順序: `[claude] [claude --permission-mode auto] [claude -c] [claude -r] [claude update] [⇆]`
+  - ショートカットバーの順序: `[claude] [claude -c] [claude -r] [claude --permission-mode auto] [claude update] [⇆]`
 
 ## [1.0.16] - 2026-03-08
 

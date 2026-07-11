@@ -393,7 +393,7 @@ Terminal ViewのClaude Code未起動時のショートカットバーに `claude
 
 **変更後のClaude Code未起動時ショートカット**
 ```
-[claude] [claude --permission-mode auto] [claude -c] [claude -r] [claude update] [⇆]
+[claude] [claude -c] [claude -r] [claude --permission-mode auto] [claude update] [⇆]
 ```
 
 **背景**

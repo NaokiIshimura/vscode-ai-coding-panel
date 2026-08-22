@@ -381,6 +381,70 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.0.20バグ修正: Editor View「Run」ボタンのコマンド文言修正
+
+Quick Start機能（後述）で作成したファイルに対して「Run」ボタンを押下した際、ファイル内のタスクが実行されず、内容の要約・報告に留まる問題を修正：
+
+**問題の原因**
+- 「Run」ボタンの既定コマンド（`aiCodingSidebar.editor.runCommand`）が `Review the file at ${filePath}` という受動的な文言だった
+- Claude Codeがこれを「ファイルをレビューするだけ」の指示と解釈し、ファイル内のタスクを直接実行しなかった
+- ファイル内に埋め込まれた自己指示的な文言（ディレクトリ名変更指示等）も、プロンプトインジェクションの可能性を疑われて実行されなかった
+
+**修正内容**
+- `aiCodingSidebar.editor.runCommand` の既定値を `Execute the instructions described in the file at ${filePath}` に変更（能動的な文言に修正）
+- 「Plan」「Spec」ボタンは「レビューして計画書/仕様書を新規作成する」という意図的に異なる振る舞いのため、文言は変更していない
+
+**変更箇所**
+- `package.json`: `editor.runCommand` 設定スキーマのデフォルト値
+- `EditorProvider.ts`: `editor.runCommand` 読み込み時のフォールバック値
+
+### v1.0.20新機能: Plans View「Quick Start」機能の追加
+
+Plans Viewでタスク名（フォルダ名）を指定しなくても、ワンクリックでディレクトリと初期ファイルを作成できる「Quick Start」機能を追加：
+
+**実装内容**
+- ツールバーに⚡アイコンの「Quick Start」ボタンを追加（`aiCodingSidebar.quickStart`）
+- クリックすると、フォルダ名の入力を求めずにタイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリを自動作成
+  - 同一秒内の連打等で同名ディレクトリが既に存在する場合は、連番サフィックス（`_2`, `_3`, ...）を付与して衝突を回避（`TemplateService.generateUniqueDirectoryPath()`）
+- ディレクトリ内に専用テンプレート `QUICK_START.md`（`${timestamp}_QUICK_START.md`）を自動作成し、Editor Viewで開いてPlans Viewで選択状態にする
+- `QUICK_START.md` は「対象ファイル」（TASK/PROMPT/SPEC.md）と同様に扱われるよう、`FileItem`のアイコン判定・`PlansProvider.findOldestTargetFile()`の自動検出対象に追加
+
+**QUICK_START.mdのテンプレート内容**
+```
+# task
+
+
+# update dir name
+- Rename the directory containing this file to a short, descriptive English name that reflects the task. Replace the existing timestamp-based name entirely instead of appending to it.
+- Update the directory name recorded in this file accordingly
+
+---
+
+memory  : {{dirpath}}
+prompt  : {{filename}}
+datetime: {{datetime}}
+```
+- 1つ目の `# task` セクション: タスク内容を記入する領域
+- 2つ目の `# update dir name` セクション: タイムスタンプ名で自動作成されたディレクトリを、AIエージェントがタスク内容に適した名前へリネームする際の指示（リネーム処理自体はAIエージェントの実行時タスクであり、拡張機能側では実装していない）。既存のタイムスタンプ名を残したまま末尾に追記されると名前が冗長になるため、「置き換える」ことを明示している
+
+**変更箇所**
+- `templates/quick_start.md`（新規）: Quick Start専用テンプレート
+- `src/utils/templateUtils.ts`: `TemplateType` に `'quick_start'` を追加
+- `src/services/TemplateService.ts`: `generateQuickStartFileName()`、`generateUniqueDirectoryPath()` を追加
+- `src/commands/plans.ts`: `aiCodingSidebar.quickStart` コマンドを追加
+- `package.json`: コマンド定義・view/titleメニュー定義
+- `src/providers/items/FileItem.ts`、`src/providers/PlansProvider.ts`: 対象ファイル判定への `QUICK_START.md` 追加
+
+**動作確認で判明した追加の問題と対応**
+- QUICK_START.mdの指示に従ってAIエージェントがディレクトリをリネームすると、Plans Viewが移動前のパス（`activeFolderPath`）を参照し続け、ディレクトリ内が閲覧できなくなる問題が判明
+  - `PlansProvider.getChildren()` で表示中のディレクトリが存在しない場合、リネーム後のディレクトリを自動追跡して表示するよう修正
+  - `resolveRenamedDirectory()`: 消失したディレクトリ名（タイムスタンプ）で始まるファイルを持つ兄弟ディレクトリを探索し、リネーム後のディレクトリとして特定（ファイル名は変更されずディレクトリのみリネームされるという命名規則を利用）
+  - リネーム先が特定できない場合のフォールバックとして、存在する祖先ディレクトリまで遡って表示する `resolveExistingAncestor()` も維持
+- リネーム後のディレクトリ名に元のタイムスタンプが残り名前が冗長になる問題が判明
+  - `templates/quick_start.md` の指示文言を「既存のタイムスタンプ名を完全に置き換える」旨に明確化
+- Plans ViewでQUICK_START.mdを選択すると、TASK.md/PROMPT.md/SPEC.mdとは異なりVS Code標準エディタで開いてしまう問題が判明
+  - `extension.ts` のTreeView選択ハンドラにあるファイル種別判定の正規表現（`^\d{4}_\d{4}_\d{4}_\d{2}_(PROMPT|TASK|SPEC)\.md$`）に `QUICK_START` が未対応だったため追加し、Markdown Editor（Editor View）で開くよう修正
+
 ### v1.0.19変更: `--enable-auto-mode` → `--permission-mode auto` への置き換え
 
 廃止されたClaude CLIオプション `--enable-auto-mode` を `--permission-mode auto` に全面置き換え：

@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.20] - 2026-08-22
+
+### Added
+- **Plans View Quick Start**: New ⚡ button in the Plans View title bar creates a timestamp-named directory (`YYYY_MMDD_HHMM_SS`) and a `QUICK_START.md` file without asking for a folder name
+  - `QUICK_START.md` includes a built-in instruction section asking the AI agent to rename the directory to a short, descriptive name that reflects the task once it understands the task content
+  - If a directory with the same name already exists, a numeric suffix (`_2`, `_3`, ...) is automatically appended to avoid conflicts
+  - `QUICK_START.md` is treated the same as `TASK.md`/`PROMPT.md`/`SPEC.md`: it gets an `edit` icon in Plans View, opens automatically in Editor View instead of the standard text editor, and is picked up by the auto-file-selection logic when navigating directories
+
+### Changed
+- **Run Button Command Wording**: Changed the default `editor.runCommand` template from `Review the file at ${filePath}` to `Execute the instructions described in the file at ${filePath}`
+  - The previous passive wording caused Claude Code to summarize file contents instead of acting on them, and to treat embedded instructions (such as the Quick Start directory rename instruction) as a potential prompt injection instead of executing them
+  - `Plan` and `Spec` button wording is unchanged, since those buttons are intentionally designed to review a file and produce a new plan/spec document rather than execute it directly
+
+### Fixed
+- **Plans View Following Renamed Directories**: When the directory currently open in Plans View is renamed or removed externally (for example, by an AI agent acting on `QUICK_START.md`'s embedded rename instruction), Plans View now automatically follows the rename instead of showing an empty, broken listing
+  - Detects the renamed directory by matching a sibling directory that contains a file whose name starts with the missing directory's name (directories are renamed but the files inside keep their original names)
+  - Falls back to the nearest existing ancestor directory when the renamed directory cannot be identified
+
 ## [1.0.19] - 2026-07-11
 
 ### Changed
@@ -2127,3 +2145,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.17...v1.0.18
 [1.0.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.16...v1.0.17
 [1.0.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.15...v1.0.16
+[1.0.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.19...v1.0.20

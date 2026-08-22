@@ -149,9 +149,9 @@ export function activate(context: vscode.ExtensionContext) {
 
                 // ファイルの場合（Markdownファイル）
                 if (!selectedItem.isDirectory && selectedItem.filePath.endsWith('.md')) {
-                    // ファイル名がYYYY_MMDD_HHMM_SS_(PROMPT|TASK|SPEC).md形式の場合はMarkdown Editorで開く
+                    // ファイル名がYYYY_MMDD_HHMM_SS_(PROMPT|TASK|SPEC|QUICK_START).md形式の場合はMarkdown Editorで開く
                     const fileName = path.basename(selectedItem.filePath);
-                    const timestampPattern = /^\d{4}_\d{4}_\d{4}_\d{2}_(PROMPT|TASK|SPEC)\.md$/;
+                    const timestampPattern = /^\d{4}_\d{4}_\d{4}_\d{2}_(PROMPT|TASK|SPEC|QUICK_START)\.md$/;
 
                     if (timestampPattern.test(fileName)) {
                         // タイムスタンプ形式の場合はMarkdown Editorで開く

@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -130,6 +130,11 @@
         "command": "aiCodingSidebar.addDirectory",
         "title": "New Directory",
         "icon": "$(new-folder)"
+      },
+      {
+        "command": "aiCodingSidebar.quickStart",
+        "title": "Quick Start",
+        "icon": "$(zap)"
       },
       {
         "command": "aiCodingSidebar.newDirectory",
@@ -297,24 +302,29 @@
     "menus": {
       "view/title": [
         {
-          "command": "aiCodingSidebar.newDirectory",
+          "command": "aiCodingSidebar.quickStart",
           "when": "view == aiCodingSidebarExplorer",
           "group": "navigation@1"
         },
         {
-          "command": "aiCodingSidebar.newSpec",
+          "command": "aiCodingSidebar.newDirectory",
           "when": "view == aiCodingSidebarExplorer",
           "group": "navigation@2"
         },
         {
-          "command": "aiCodingSidebar.refresh",
+          "command": "aiCodingSidebar.newSpec",
           "when": "view == aiCodingSidebarExplorer",
           "group": "navigation@3"
         },
         {
-          "command": "aiCodingSidebar.openPlansSettings",
+          "command": "aiCodingSidebar.refresh",
           "when": "view == aiCodingSidebarExplorer",
           "group": "navigation@4"
+        },
+        {
+          "command": "aiCodingSidebar.openPlansSettings",
+          "when": "view == aiCodingSidebarExplorer",
+          "group": "navigation@5"
         },
         {
           "command": "aiCodingSidebar.createMarkdownFile",
@@ -539,7 +549,7 @@
         },
         "aiCodingSidebar.editor.runCommand": {
           "type": "string",
-          "default": "${commandPrefix} \"Review the file at ${filePath}\"",
+          "default": "${commandPrefix} \"Execute the instructions described in the file at ${filePath}\"",
           "description": "Command template to execute when clicking the Run button in the Editor view. Use ${filePath} as placeholder for the file path, ${commandPrefix} for the command prefix."
         },
         "aiCodingSidebar.editor.runCommandWithoutFile": {

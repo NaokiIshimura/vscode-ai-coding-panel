@@ -5,6 +5,24 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.20] - 2026-08-22
+
+### 追加
+- **Plans View「Quick Start」**: Plans Viewタイトルバーに⚡ボタンを追加。フォルダ名の入力を求めずに、タイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成
+  - `QUICK_START.md`には、AIエージェントがタスク内容を理解した上でディレクトリ名をタスクに適した短い名前にリネームするよう依頼する指示セクションを組み込み済み
+  - 同名ディレクトリが既に存在する場合は、連番サフィックス（`_2`, `_3`, ...）を自動的に付与して衝突を回避
+  - `QUICK_START.md`は`TASK.md`/`PROMPT.md`/`SPEC.md`と同様に扱われる: Plans Viewで`edit`アイコンが表示され、通常のテキストエディタではなくEditor Viewで自動的に開き、ディレクトリ移動時の自動ファイル選択の対象にもなる
+
+### 変更
+- **Runボタンのコマンド文言**: デフォルトの`editor.runCommand`テンプレートを`Review the file at ${filePath}`から`Execute the instructions described in the file at ${filePath}`に変更
+  - 従来の受動的な文言では、Claude Codeがファイル内容を実行せず要約するだけになったり、埋め込まれた指示（Quick Startのディレクトリリネーム指示など）をプロンプトインジェクションの可能性と判断して実行しないことがあった
+  - 「Plan」「Spec」ボタンの文言は変更なし。これらはファイルをレビューして新規に計画書・仕様書を作成することを意図したボタンであり、直接実行するボタンとは役割が異なるため
+
+### 修正
+- **Plans Viewがリネームされたディレクトリを追跡するように修正**: Plans Viewで表示中のディレクトリが外部要因（例: `QUICK_START.md`の埋め込み指示に従ってAIエージェントがリネームした場合）でリネーム・削除されると、Plans Viewが空の壊れた表示になっていた問題を修正。リネーム後のディレクトリを自動的に追跡して表示するように変更
+  - 消失したディレクトリ名で始まるファイルを含む兄弟ディレクトリを探索してリネーム先を特定（ディレクトリ名は変わってもファイル名は変わらないという命名規則を利用）
+  - リネーム先が特定できない場合は、存在する最も近い祖先ディレクトリまで遡って表示
+
 ## [1.0.19] - 2026-07-11
 
 ### 変更
@@ -1598,3 +1616,4 @@ v0.8.33以前からアップグレードする場合:
 [1.0.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.17...v1.0.18
 [1.0.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.16...v1.0.17
 [1.0.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.15...v1.0.16
+[1.0.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.19...v1.0.20

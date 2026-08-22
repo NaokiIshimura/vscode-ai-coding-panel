@@ -35,11 +35,12 @@ Claude Codeでの生産性を最大化するために設計された、強力な
 | --- | --- |
 | フラットリスト表示 | 現在のディレクトリの内容のみを表示（ツリー構造ではない） |
 | ディレクトリナビゲーション | ディレクトリをクリックでそのディレクトリに移動。".."で親ディレクトリに戻る |
-| 自動ファイル選択 | ディレクトリに移動した際に、最も古いTASK.md、PROMPT.md、SPEC.mdファイルを自動的に選択して表示 |
+| 自動ファイル選択 | ディレクトリに移動した際に、最も古いTASK.md、PROMPT.md、SPEC.md、QUICK_START.mdファイルを自動的に選択して表示 |
 | **初期プロンプト付きディレクトリ作成** | 「Create directory」ボタンで`.claude/plans`ディレクトリと初期プロンプトファイル（`YYYY_MMDD_HHMM_SS_PROMPT.md`）を自動作成。Run/Plan/Specボタンの使い方を説明するテンプレート付き。ファイルは自動的にEditor Viewで開かれる |
+| **Quick Start** | タイトルバーの⚡ボタンで、フォルダ名を入力せずにタイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成。すぐにタスクを書き始めたいときに便利 |
 | パス表示 | 現在のパスをリストの先頭アイテムとして表示（New PROMPT.md、New TASK.md、New SPEC.md、Copy、Rename、New Directory、Archiveボタン付き） |
 | **日付/時間プレフィックス** | ルートディレクトリのディレクトリ名の前に日付または時間を表示: 当日は`[HH:MM]`、当日以外は`[MM/DD]`（ファイルはプレフィックスなし） |
-| **Editor対象ファイルアイコン** | Editor Viewで開くファイル（TASK.md、PROMPT.md、SPEC.md）は`edit`アイコンで表示し、通常のMarkdownファイルと区別 |
+| **Editor対象ファイルアイコン** | Editor Viewで開くファイル（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）は`edit`アイコンで表示し、通常のMarkdownファイルと区別 |
 | ソート | ファイルはデフォルトで作成日時の昇順でソート |
 | ドラッグ&ドロップ | ビュー内または外部からのファイルをドラッグしてコピー |
 | 自動更新 | ファイルが作成、変更、削除されたときに自動的に更新（ビュー非表示中でも反映） |
@@ -51,9 +52,9 @@ Markdownプロンプトファイルを編集し、パネルから直接Claude Co
 
 | 機能 | 説明 |
 | --- | --- |
-| **Run/Plan/Specコマンド** | 事前設定されたコマンドでClaude Codeを実行：<br>- **Run** (`Cmd+R` / `Ctrl+R`): `claude "Review the file at ${filePath}"`<br>- **Plan**: `claude --permission-mode plan "Review ... create an implementation plan ..."`<br>- **Spec**: `claude --permission-mode plan "Review ... create specification documents ..."`<br>実行前に自動保存、ファイル未開でも実行可能 |
+| **Run/Plan/Specコマンド** | 事前設定されたコマンドでClaude Codeを実行：<br>- **Run** (`Cmd+R` / `Ctrl+R`): `claude "Execute the instructions described in the file at ${filePath}"`<br>- **Plan**: `claude --permission-mode plan "Review ... create an implementation plan ..."`<br>- **Spec**: `claude --permission-mode plan "Review ... create specification documents ..."`<br>実行前に自動保存、ファイル未開でも実行可能 |
 | **自動ターミナル統合** | コマンドはTerminalビューに送信され、シームレスなワークフローのためにファイル-タブの自動関連付けが行われる |
-| 自動表示 | タイムスタンプ形式のMarkdownファイル（形式: `YYYY_MMDD_HHMM_SS_PROMPT.md`）を選択すると自動的に表示。その他のMarkdownファイルは通常のエディタで開く |
+| 自動表示 | タイムスタンプ形式のMarkdownファイル（形式: `YYYY_MMDD_HHMM_SS_PROMPT.md`、`..._TASK.md`、`..._SPEC.md`、`..._QUICK_START.md`）を選択すると自動的に表示。その他のMarkdownファイルは通常のエディタで開く |
 | Saveボタン | ヘッダーに表示され、未保存の変更がある場合は色が変わる。ファイル未開時は現在のPlansディレクトリに新規作成 |
 | 新規ファイルボタン | ヘッダーからPROMPT.md、TASK.md、SPEC.mdファイルを作成。PROMPT.mdは`Cmd+M` / `Ctrl+M`でも作成可能 |
 | カスタマイズ可能なコマンド | ワークフローに合わせてRun、Plan、Specコマンドを設定で変更可能 |
@@ -207,6 +208,7 @@ created: {{datetime}}
 
 | 項目 | 手順 |
 | --- | --- |
+| Quick Start | Plansのタイトルメニューにある⚡アイコンをクリック<br>フォルダ名の入力を求めずに、タイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成します<br>作成されたファイルはEditor Viewで開かれ、Plansで選択状態になります。同名ディレクトリが既に存在する場合は連番サフィックス（`_2`, `_3`, ...）が付与されます |
 | New Task | Plansのタイトルメニューにあるロケットアイコンをクリック<br>Plans Viewで現在開いているディレクトリ配下に新しいディレクトリを作成し、タイムスタンプ付きのMarkdownファイルを自動生成します<br>作成されたファイルはPlansで「editing」ラベルとともに選択され、Editor Viewで開かれます<br>現在のパスが取得できない場合は、デフォルトパス配下に作成されます |
 | 新規ディレクトリ | パス表示行のフォルダアイコンをクリック<br>現在開いているディレクトリ配下に新しいディレクトリを作成します（Markdownファイルは作成しない） |
 | PROMPT.md作成 | パス表示行またはEditorヘッダーのファイルアイコンをクリック<br>タイムスタンプ付きのMarkdownファイルが作成され、Editor Viewで開かれます（例: `2025_1229_1430_25_PROMPT.md`） |
@@ -245,7 +247,7 @@ created: {{datetime}}
 | `plans.defaultRelativePath` | Plansのデフォルト相対パス | string | `".claude/plans"` | `"src"`, `".claude/plans"`, `"docs/api"` |
 | `plans.sortBy` | Plansのファイル・ディレクトリのソート基準 | string | `"created"` | `"name"`: ファイル名<br>`"created"`: 作成日時<br>`"modified"`: 更新日時 |
 | `plans.sortOrder` | Plansのファイル・ディレクトリのソート順序 | string | `"ascending"` | `"ascending"`: 昇順<br>`"descending"`: 降順 |
-| `editor.runCommand` | Editorビューのrunボタンで実行されるコマンドテンプレート | string | `claude "Review the file at ${filePath}"` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
+| `editor.runCommand` | Editorビューのrunボタンで実行されるコマンドテンプレート | string | `claude "Execute the instructions described in the file at ${filePath}"` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
 | `editor.runCommandWithoutFile` | ファイル未開時にrunボタンで実行されるコマンドテンプレート | string | `claude "${editorContent}"` | `${editorContent}`をエディタ内容のプレースホルダーとして使用 |
 | `editor.planCommand` | Planボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
 | `editor.specCommand` | Specボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
@@ -266,7 +268,7 @@ created: {{datetime}}
   "aiCodingSidebar.plans.sortBy": "created",
   "aiCodingSidebar.plans.sortOrder": "ascending",
   "aiCodingSidebar.editor.commandPrefix": "claude --permission-mode auto",
-  "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"Review the file at ${filePath}\"",
+  "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"Execute the instructions described in the file at ${filePath}\"",
   "aiCodingSidebar.editor.runCommandWithoutFile": "${commandPrefix} \"${editorContent}\"",
   "aiCodingSidebar.editor.planCommand": "${commandPrefix} \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",
   "aiCodingSidebar.editor.specCommand": "${commandPrefix} \"Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}.\"",

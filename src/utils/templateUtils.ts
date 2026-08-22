@@ -3,7 +3,7 @@ import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 
 // テンプレート種別
-export type TemplateType = 'prompt' | 'task' | 'spec';
+export type TemplateType = 'prompt' | 'task' | 'spec' | 'quick_start';
 
 // ファイルが存在するかチェックするヘルパー関数
 async function fileExists(filePath: string): Promise<boolean> {

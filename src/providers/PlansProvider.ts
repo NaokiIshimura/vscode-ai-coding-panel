@@ -501,7 +501,19 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         }
 
         // 現在表示するディレクトリパス
-        const currentPath = this.activeFolderPath || this.rootPath;
+        let currentPath = this.activeFolderPath || this.rootPath;
+
+        // 表示中のディレクトリが外部要因（AIエージェントによるリネーム等）で
+        // 削除・移動されている場合、リネーム後のディレクトリを追跡して表示する
+        // （リネーム先が特定できない場合は、存在する祖先ディレクトリまで遡って表示する）
+        if (currentPath !== this.rootPath && !(await this.pathExists(currentPath))) {
+            this.itemCache.delete(currentPath);
+            const renamedPath = await this.resolveRenamedDirectory(currentPath);
+            const fallbackPath = renamedPath ?? await this.resolveExistingAncestor(currentPath);
+            this.activeFolderPath = fallbackPath === this.rootPath ? undefined : fallbackPath;
+            currentPath = fallbackPath;
+        }
+
         const items: FileItem[] = [];
 
         // パス表示アイテム（最上部に表示）
@@ -622,7 +634,78 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
     }
 
     /**
-     * 指定されたディレクトリ内から対象ファイル（TASK.md、PROMPT.md、SPEC.md）を検索し、
+     * パスが存在するかどうかを確認
+     */
+    private async pathExists(targetPath: string): Promise<boolean> {
+        try {
+            await fsPromises.access(targetPath);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * 指定されたパスが存在しない場合、存在する祖先ディレクトリ（rootPathを下限とする）を返す
+     */
+    private async resolveExistingAncestor(targetPath: string): Promise<string> {
+        if (!this.rootPath) {
+            return targetPath;
+        }
+
+        let candidate = targetPath;
+        while (candidate !== this.rootPath && candidate.length >= this.rootPath.length) {
+            const parent = path.dirname(candidate);
+            if (parent === candidate) {
+                break;
+            }
+            candidate = parent;
+            if (candidate === this.rootPath || await this.pathExists(candidate)) {
+                return candidate;
+            }
+        }
+
+        return this.rootPath;
+    }
+
+    /**
+     * 消失したディレクトリ（oldPath）が、同じ親ディレクトリ配下でリネームされたものかどうかを推定する。
+     * このプロジェクトのファイル命名規則（タイムスタンプをディレクトリ名・ファイル名の先頭に付与する）を利用し、
+     * 兄弟ディレクトリの中に「oldPathのディレクトリ名で始まるファイル」を含むものがあれば、
+     * リネーム後のディレクトリとみなして返す
+     */
+    private async resolveRenamedDirectory(oldPath: string): Promise<string | undefined> {
+        const parentPath = path.dirname(oldPath);
+        const oldName = path.basename(oldPath);
+
+        let siblingNames: string[];
+        try {
+            siblingNames = await fsPromises.readdir(parentPath);
+        } catch {
+            return undefined;
+        }
+
+        for (const siblingName of siblingNames) {
+            const siblingPath = path.join(parentPath, siblingName);
+            try {
+                const stat = await fsPromises.stat(siblingPath);
+                if (!stat.isDirectory()) {
+                    continue;
+                }
+                const childNames = await fsPromises.readdir(siblingPath);
+                if (childNames.some(name => name.startsWith(oldName))) {
+                    return siblingPath;
+                }
+            } catch {
+                // 読み取れないディレクトリは無視して次を確認
+            }
+        }
+
+        return undefined;
+    }
+
+    /**
+     * 指定されたディレクトリ内から対象ファイル（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）を検索し、
      * 最も古いファイルのパスを返す
      */
     private async findOldestTargetFile(dirPath: string): Promise<string | undefined> {
@@ -630,7 +713,7 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
             const files = await this.getFilesInDirectory(dirPath);
 
             // 対象ファイルのパターン（大文字小文字を区別しない）
-            const targetPatterns = ['TASK.MD', 'PROMPT.MD', 'SPEC.MD'];
+            const targetPatterns = ['TASK.MD', 'PROMPT.MD', 'SPEC.MD', 'QUICK_START.MD'];
 
             // 対象ファイルをフィルタリング
             const targetFiles = files.filter(file => {
@@ -684,7 +767,7 @@ export class PlansProvider implements vscode.TreeDataProvider<FileItem>, vscode.
         this._lastDirFileCount = -1;
         this._lastDirModTime = 0;
 
-        // 対象ファイル（TASK.md、PROMPT.md、SPEC.md）を検索して自動選択
+        // 対象ファイル（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）を検索して自動選択
         if (this.editorProvider) {
             const oldestFile = await this.findOldestTargetFile(targetPath);
             if (oldestFile) {

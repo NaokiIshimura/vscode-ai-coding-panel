@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.0.18-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.0.20-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 A powerful VS Code panel extension designed to maximize your productivity with Claude Code.
 
@@ -37,11 +37,12 @@ Browse and manage files in a flat list view with directory navigation.
 | --- | --- |
 | Flat list display | Shows contents of the current directory only (not a tree structure) |
 | Directory navigation | Click a directory to navigate into it. Use ".." to go back to the parent directory |
-| Auto-file selection | Automatically selects and displays the oldest TASK.md, PROMPT.md, or SPEC.md file when navigating to a directory |
+| Auto-file selection | Automatically selects and displays the oldest TASK.md, PROMPT.md, SPEC.md, or QUICK_START.md file when navigating to a directory |
 | **Create directory with prompt** | "Create directory" button automatically creates `.claude/plans` and an initial prompt file (`YYYY_MMDD_HHMM_SS_PROMPT.md`) with helpful guidance on using Run/Plan/Spec buttons. File opens automatically in Editor view |
+| **Quick Start** | ⚡ button in the title bar creates a timestamp-named directory (`YYYY_MMDD_HHMM_SS`) and a `QUICK_START.md` file without asking for a folder name. Use it when you just want to start writing a task immediately |
 | Path display | Current path shown as the first item in the list with inline action buttons (New PROMPT.md, New TASK.md, New SPEC.md, Copy, Rename, New Directory, Archive) |
 | **Date/time prefix** | Root directory displays date or time before directory names: `[HH:MM]` for today, `[MM/DD]` for other dates (files are shown without prefix) |
-| **Editor target file icons** | Files opened in Editor view (TASK.md, PROMPT.md, SPEC.md) display an `edit` icon to distinguish them from regular Markdown files |
+| **Editor target file icons** | Files opened in Editor view (TASK.md, PROMPT.md, SPEC.md, QUICK_START.md) display an `edit` icon to distinguish them from regular Markdown files |
 | Sorting | Files are sorted by creation date (ascending) by default |
 | Drag & Drop | Copy files by dragging them within the view or from external sources |
 | Auto-refresh | Automatically updates when files are created, modified, or deleted (even when the view is hidden) |
@@ -53,9 +54,9 @@ Edit Markdown prompt files and execute Claude Code commands directly from the pa
 
 | Feature | Description |
 | --- | --- |
-| **Run/Plan/Spec Commands** | Execute Claude Code with pre-configured commands:<br>- **Run** (`Cmd+R` / `Ctrl+R`): `claude "Review the file at ${filePath}"`<br>- **Plan**: `claude --permission-mode plan "Review ... create an implementation plan ..."`<br>- **Spec**: `claude --permission-mode plan "Review ... create specification documents ..."`<br>Auto-saves before execution and works even without a file open |
+| **Run/Plan/Spec Commands** | Execute Claude Code with pre-configured commands:<br>- **Run** (`Cmd+R` / `Ctrl+R`): `claude "Execute the instructions described in the file at ${filePath}"`<br>- **Plan**: `claude --permission-mode plan "Review ... create an implementation plan ..."`<br>- **Spec**: `claude --permission-mode plan "Review ... create specification documents ..."`<br>Auto-saves before execution and works even without a file open |
 | **Auto-Terminal Integration** | Commands are sent to Terminal view with automatic file-tab association for seamless workflow |
-| Auto-display | Automatically opens when selecting a timestamp-named Markdown file (format: `YYYY_MMDD_HHMM_SS_PROMPT.md`). Other Markdown files open in the standard editor |
+| Auto-display | Automatically opens when selecting a timestamp-named Markdown file (format: `YYYY_MMDD_HHMM_SS_PROMPT.md`, `..._TASK.md`, `..._SPEC.md`, or `..._QUICK_START.md`). Other Markdown files open in the standard editor |
 | Save button | Displays in header with color change indicating unsaved changes. Creates new file if none is open (saves to current Plans directory) |
 | New file buttons | Create PROMPT.md, TASK.md, or SPEC.md files from the header. Also available with `Cmd+M` / `Ctrl+M` for PROMPT.md |
 | Customizable commands | Configure Run, Plan, and Spec commands in settings to match your workflow |
@@ -208,6 +209,7 @@ Use the following variables inside a template:
 
 | Item | Steps |
 | --- | --- |
+| Quick Start | Click the ⚡ icon in Plans title menu.<br>Creates a timestamp-named directory (`YYYY_MMDD_HHMM_SS`) without asking for a folder name, and generates a `QUICK_START.md` file inside it.<br>The file opens in Editor View and is selected in Plans. If a directory with the same name already exists, a numeric suffix (`_2`, `_3`, ...) is appended. |
 | New Task | Click the rocket icon in Plans title menu.<br>Creates a new directory under the currently opened directory in Plans View and automatically generates a timestamped Markdown file.<br>The file is selected in Plans with "editing" label and opens in Editor View.<br>If the current path cannot be retrieved, it falls back to the default path. |
 | New Directory | Click the folder icon in the path display row.<br>Creates a new directory under the currently opened directory (without creating a Markdown file). |
 | Create PROMPT.md | Click the file icon in the path display row or Editor header.<br>A timestamped Markdown file is created (for example, `2025_1229_1430_25_PROMPT.md`) and opens in Editor View. |
@@ -246,7 +248,7 @@ If the default relative path doesn't exist, Plans displays a "Create directory" 
 | `plans.defaultRelativePath` | Default relative path for Plans | string | `".claude/plans"` | `"src"`, `.claude/plans`, `"docs/api"` |
 | `plans.sortBy` | Sort files and directories in Plans by | string | `"created"` | `"name"` (file name)<br>`"created"` (creation date)<br>`"modified"` (modified date) |
 | `plans.sortOrder` | Sort order for files and directories in Plans | string | `"ascending"` | `"ascending"` (ascending)<br>`"descending"` (descending) |
-| `editor.runCommand` | Command template to execute when clicking the Run button in the Editor view | string | `claude "Review the file at ${filePath}"` | Use `${filePath}` as placeholder for the file path |
+| `editor.runCommand` | Command template to execute when clicking the Run button in the Editor view | string | `claude "Execute the instructions described in the file at ${filePath}"` | Use `${filePath}` as placeholder for the file path |
 | `editor.runCommandWithoutFile` | Command template to execute when clicking the Run button without a file open | string | `claude "${editorContent}"` | Use `${editorContent}` as placeholder for the editor content |
 | `editor.planCommand` | Command template to execute when clicking the Plan button | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
 | `editor.specCommand` | Command template to execute when clicking the Spec button | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
@@ -267,7 +269,7 @@ Add the following to `.vscode/settings.json`:
   "aiCodingSidebar.plans.sortBy": "created",
   "aiCodingSidebar.plans.sortOrder": "ascending",
   "aiCodingSidebar.editor.commandPrefix": "claude --permission-mode auto",
-  "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"Review the file at ${filePath}\"",
+  "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"Execute the instructions described in the file at ${filePath}\"",
   "aiCodingSidebar.editor.runCommandWithoutFile": "${commandPrefix} \"${editorContent}\"",
   "aiCodingSidebar.editor.planCommand": "${commandPrefix} \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",
   "aiCodingSidebar.editor.specCommand": "${commandPrefix} \"Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}.\"",

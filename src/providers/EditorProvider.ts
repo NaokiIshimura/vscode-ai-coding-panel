@@ -289,7 +289,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         // Get the run command template from settings
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
                         const commandPrefix = config.get<string>('editor.commandPrefix', 'claude --permission-mode auto');
-                        const commandTemplate = config.get<string>('editor.runCommand', '${commandPrefix} "Review the file at ${filePath}"');
+                        const commandTemplate = config.get<string>('editor.runCommand', '${commandPrefix} "Execute the instructions described in the file at ${filePath}"');
 
                         // Replace placeholders with safely escaped values
                         const escapedPath = this._escapeShellArgument(relativeFilePath.trim());

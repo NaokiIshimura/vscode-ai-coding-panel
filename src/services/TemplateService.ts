@@ -162,4 +162,44 @@ datetime   : ${variables.datetime}
         const timestamp = this.generateTimestamp();
         return `${timestamp}_SPEC.md`;
     }
+
+    /**
+     * QUICK_STARTファイル用のファイル名を生成
+     */
+    generateQuickStartFileName(): string {
+        const timestamp = this.generateTimestamp();
+        return `${timestamp}_QUICK_START.md`;
+    }
+
+    /**
+     * 指定ディレクトリ配下にタイムスタンプ名のディレクトリを作成する際、
+     * 同名ディレクトリが既に存在する場合は連番サフィックス（_2, _3, ...）を付与して
+     * 衝突しないディレクトリパスを生成する
+     */
+    async generateUniqueDirectoryPath(parentPath: string): Promise<{ path: string; name: string }> {
+        const baseName = this.generateTimestamp();
+        let name = baseName;
+        let dirPath = path.join(parentPath, name);
+        let suffix = 2;
+
+        while (await this.pathExists(dirPath)) {
+            name = `${baseName}_${suffix}`;
+            dirPath = path.join(parentPath, name);
+            suffix++;
+        }
+
+        return { path: dirPath, name };
+    }
+
+    /**
+     * パスが存在するかどうかを確認
+     */
+    private async pathExists(targetPath: string): Promise<boolean> {
+        try {
+            await fsPromises.access(targetPath);
+            return true;
+        } catch {
+            return false;
+        }
+    }
 }

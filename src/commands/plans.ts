@@ -570,7 +570,71 @@ export function registerPlansCommands(
         })
     );
 
-    // 13. navigateToDirectory - ディレクトリ移動
+    // 13. quickStart - タスク名を指定せずにディレクトリ＋QUICK_START.mdを作成
+    context.subscriptions.push(
+        vscode.commands.registerCommand('aiCodingSidebar.quickStart', async () => {
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (!workspaceFolders || workspaceFolders.length === 0) {
+                vscode.window.showErrorMessage('No workspace folder is open');
+                return;
+            }
+
+            const workspaceRoot = workspaceFolders[0].uri.fsPath;
+            const currentPath = plansProvider.getCurrentPath();
+            let targetPath: string;
+
+            if (currentPath) {
+                targetPath = currentPath;
+            } else {
+                const defaultRelativePath = configProvider.getDefaultRelativePath();
+                if (!defaultRelativePath || defaultRelativePath.trim() === '') {
+                    vscode.window.showErrorMessage('Default relative path is not configured');
+                    return;
+                }
+                targetPath = path.join(workspaceRoot, defaultRelativePath);
+            }
+
+            const templateService = new TemplateService(context);
+
+            try {
+                const { path: folderPath } = await templateService.generateUniqueDirectoryPath(targetPath);
+                await fsPromises.mkdir(folderPath, { recursive: true });
+
+                plansProvider.navigateToDirectory(folderPath);
+
+                const fileName = templateService.generateQuickStartFileName();
+                const filePath = path.join(folderPath, fileName);
+
+                const relativeFilePath = path.relative(workspaceRoot, filePath);
+                const relativeDirPath = path.relative(workspaceRoot, folderPath);
+
+                const variables = {
+                    datetime: templateService.formatDateTime(),
+                    filename: fileName,
+                    timestamp: templateService.generateTimestamp(),
+                    filepath: relativeFilePath,
+                    dirpath: relativeDirPath
+                };
+
+                const content = await loadTemplate(context, variables, 'quick_start');
+                const result = await fileOperationService.createFile(filePath, content);
+
+                if (result.success) {
+                    plansProvider.refresh();
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    await editorProvider.showFile(filePath);
+                    await plansProvider.revealFile(filePath);
+                    vscode.window.showInformationMessage(`Created quick start file "${fileName}"`);
+                } else {
+                    vscode.window.showWarningMessage(`Directory created but failed to create quick start file: ${result.error}`);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create quick start directory: ${error}`);
+            }
+        })
+    );
+
+    // 14. navigateToDirectory - ディレクトリ移動
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.navigateToDirectory', (targetPath: string) => {
             if (targetPath) {

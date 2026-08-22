@@ -52,8 +52,8 @@ export class FileItem extends vscode.TreeItem {
 
         // Markdownファイルの場合、Editor View対象ファイルかどうかで分ける
         if (ext === '.md') {
-            const editorTargetPattern = /(?:TASK|PROMPT|SPEC)\.md$/i;
-            // Editor View対象ファイル（TASK/PROMPT/SPEC）はeditアイコン
+            const editorTargetPattern = /(?:TASK|PROMPT|SPEC|QUICK_START)\.md$/i;
+            // Editor View対象ファイル（TASK/PROMPT/SPEC/QUICK_START）はeditアイコン
             if (editorTargetPattern.test(fileName)) {
                 return new vscode.ThemeIcon('edit');
             }

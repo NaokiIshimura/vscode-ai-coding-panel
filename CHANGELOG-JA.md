@@ -5,6 +5,13 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.21] - 2026-09-02
+
+### 修正
+- **Plans View「Quick Start」の作成先ディレクトリ**: ⚡ Quick Startボタンが、Plans Viewのrootディレクトリではなく、現在開いているサブディレクトリ内にディレクトリを作成してしまう問題を修正
+  - コマンドが（アクティブなサブディレクトリを参照する）`PlansProvider.getCurrentPath()`を使用していたため
+  - `PlansProvider.getRootPath()`を使用するように変更し、常にPlans Viewのroot直下にディレクトリを作成するように統一（「Create directory」ボタンと同じ挙動）
+
 ## [1.0.20] - 2026-08-22
 
 ### 追加
@@ -1617,3 +1624,4 @@ v0.8.33以前からアップグレードする場合:
 [1.0.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.16...v1.0.17
 [1.0.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.15...v1.0.16
 [1.0.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.19...v1.0.20
+[1.0.21]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.20...v1.0.21

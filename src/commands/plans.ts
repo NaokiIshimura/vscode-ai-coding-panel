@@ -580,11 +580,11 @@ export function registerPlansCommands(
             }
 
             const workspaceRoot = workspaceFolders[0].uri.fsPath;
-            const currentPath = plansProvider.getCurrentPath();
+            const rootPath = plansProvider.getRootPath();
             let targetPath: string;
 
-            if (currentPath) {
-                targetPath = currentPath;
+            if (rootPath) {
+                targetPath = rootPath;
             } else {
                 const defaultRelativePath = configProvider.getDefaultRelativePath();
                 if (!defaultRelativePath || defaultRelativePath.trim() === '') {

@@ -381,6 +381,21 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.0.21バグ修正: Plans View「Quick Start」の作成先ディレクトリ修正
+
+Plans Viewでサブディレクトリを開いた状態で「Quick Start」を実行すると、root ディレクトリ直下ではなく、開いているサブディレクトリ内にディレクトリが作成されてしまう問題を修正：
+
+**問題の原因**
+- `aiCodingSidebar.quickStart` コマンド（`src/commands/plans.ts`）の作成先パス取得に `PlansProvider.getCurrentPath()`（`activeFolderPath || rootPath`）を使用していた
+- Plans Viewでサブディレクトリへ移動すると `activeFolderPath` が更新されるため、Quick Start がそのサブディレクトリ配下にディレクトリを作成してしまっていた
+
+**修正内容**
+- 作成先パス取得を `PlansProvider.getRootPath()`（root ディレクトリのみを返す）に変更
+- 「Create directory」コマンド（`aiCodingSidebar.createDefaultPath`）と同様に、常に Plans View の root ディレクトリ配下にディレクトリを作成するように統一
+
+**変更箇所**
+- `src/commands/plans.ts`: `aiCodingSidebar.quickStart` コマンドの作成先パス取得ロジック
+
 ### v1.0.20バグ修正: Editor View「Run」ボタンのコマンド文言修正
 
 Quick Start機能（後述）で作成したファイルに対して「Run」ボタンを押下した際、ファイル内のタスクが実行されず、内容の要約・報告に留まる問題を修正：

@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import * as path from 'path';
 
 // サービスクラスのインポート
@@ -11,11 +10,7 @@ import { FileWatcherService } from './services/FileWatcherService';
 import { registerAllCommands } from './commands';
 
 // プロバイダーのインポート
-import { PlansProvider, MenuProvider, EditorProvider, TerminalProvider, FileItem } from './providers';
-
-// ユーティリティのインポート
-import { setupSettingsJson, setupTemplate, setupClaudeFolder } from './utils/workspaceSetup';
-import { loadTemplate } from './utils/templateUtils';
+import { PlansProvider, MenuProvider, EditorProvider, TerminalProvider } from './providers';
 
 export function activate(context: vscode.ExtensionContext) {
     // サービスクラスの初期化
@@ -36,7 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // TreeDataProviderを作成
     const menuProvider = new MenuProvider();
-    const plansProvider = new PlansProvider(fileWatcherService);
+    const plansProvider = new PlansProvider(fileWatcherService, context.extensionUri);
     const editorProvider = new EditorProvider(context.extensionUri);
 
     // EditorProviderをPlansProviderに設定
@@ -80,29 +75,25 @@ export function activate(context: vscode.ExtensionContext) {
     };
 
     // ビューを登録
-    const menuView = vscode.window.createTreeView('workspaceSettings', {
-        treeDataProvider: menuProvider,
-        showCollapseAll: false
-    });
-
-    const treeView = vscode.window.createTreeView('aiCodingSidebarExplorer', {
-        treeDataProvider: plansProvider,
-        showCollapseAll: true,
-        canSelectMany: false,
-        dragAndDropController: plansProvider
-    });
-
-    // TreeViewをProviderに設定
-    plansProvider.setTreeView(treeView);
-
-    // 初期状態でリスナーを有効化
-    plansProvider.handleVisibilityChange(treeView.visible);
-
-    // ビューの可視性変更を監視
     context.subscriptions.push(
-        treeView.onDidChangeVisibility(() => {
-            plansProvider.handleVisibilityChange(treeView.visible);
+        vscode.window.createTreeView('workspaceSettings', {
+            treeDataProvider: menuProvider,
+            showCollapseAll: false
         })
+    );
+
+    // Plans Viewを登録
+    // 可視性の監視とクリック時の処理はPlansProvider内部で行う
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+            PlansProvider.viewType,
+            plansProvider,
+            {
+                webviewOptions: {
+                    retainContextWhenHidden: true
+                }
+            }
+        )
     );
 
     // Markdown Editor Viewを登録
@@ -129,43 +120,6 @@ export function activate(context: vscode.ExtensionContext) {
     // 初期化を実行
     initializeWithWorkspaceRoot();
 
-    // 初期化後にルートフォルダを選択状態にする
-    // Note: TreeViewの初期化とDOM構築が完了するまで500ms待機
-    // initializeWithWorkspaceRoot()とTreeViewのセットアップは非同期だが
-    // ツリーの初回レンダリングを待つ必要があるため遅延を設定
-    setTimeout(async () => {
-        const currentRootPath = plansProvider.getRootPath();
-        if (currentRootPath) {
-            await selectInitialFolder(treeView, currentRootPath);
-        }
-    }, 500);
-
-    // フォルダ/ファイル選択時の処理
-    context.subscriptions.push(
-        treeView.onDidChangeSelection(async (e) => {
-            if (e.selection.length > 0) {
-                const selectedItem = e.selection[0];
-                plansProvider.setSelectedItem(selectedItem);
-
-                // ファイルの場合（Markdownファイル）
-                if (!selectedItem.isDirectory && selectedItem.filePath.endsWith('.md')) {
-                    // ファイル名がYYYY_MMDD_HHMM_SS_(PROMPT|TASK|SPEC|QUICK_START).md形式の場合はMarkdown Editorで開く
-                    const fileName = path.basename(selectedItem.filePath);
-                    const timestampPattern = /^\d{4}_\d{4}_\d{4}_\d{2}_(PROMPT|TASK|SPEC|QUICK_START)\.md$/;
-
-                    if (timestampPattern.test(fileName)) {
-                        // タイムスタンプ形式の場合はMarkdown Editorで開く
-                        await editorProvider.showFile(selectedItem.filePath);
-                    } else {
-                        // それ以外は通常のエディタで開く
-                        const fileUri = vscode.Uri.file(selectedItem.filePath);
-                        await vscode.commands.executeCommand('vscode.open', fileUri);
-                    }
-                }
-            }
-        })
-    );
-
     // ビューを有効化
     vscode.commands.executeCommand('setContext', 'aiCodingSidebarView:enabled', true);
 
@@ -175,8 +129,7 @@ export function activate(context: vscode.ExtensionContext) {
         editorProvider,
         terminalProvider,
         fileOperationService,
-        templateService,
-        treeView
+        templateService
     };
     registerAllCommands(context, commandDeps);
 
@@ -187,27 +140,6 @@ export function activate(context: vscode.ExtensionContext) {
             editorProvider.dispose();
         }
     });
-}
-
-// 初期フォルダを選択する関数
-async function selectInitialFolder(treeView: vscode.TreeView<FileItem>, rootPath: string): Promise<void> {
-    try {
-        // プロジェクトルートのFileItemを作成
-        const rootItem = new FileItem(
-            path.basename(rootPath),
-            vscode.TreeItemCollapsibleState.Expanded,
-            rootPath,
-            true,
-            0,
-            new Date(),
-            new Date()
-        );
-
-        // ルートフォルダを選択状態にする
-        await treeView.reveal(rootItem, { select: true, focus: false, expand: true });
-    } catch (error) {
-        console.error('Failed to select initial folder:', error);
-    }
 }
 
 export function deactivate() { }

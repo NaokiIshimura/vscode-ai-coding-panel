@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.0.21-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.0.22-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 A powerful VS Code panel extension designed to maximize your productivity with Claude Code.
 
@@ -39,12 +39,13 @@ Browse and manage files in a flat list view with directory navigation.
 | Directory navigation | Click a directory to navigate into it. Use ".." to go back to the parent directory |
 | Auto-file selection | Automatically selects and displays the oldest TASK.md, PROMPT.md, SPEC.md, or QUICK_START.md file when navigating to a directory |
 | **Create directory with prompt** | "Create directory" button automatically creates `.claude/plans` and an initial prompt file (`YYYY_MMDD_HHMM_SS_PROMPT.md`) with helpful guidance on using Run/Plan/Spec buttons. File opens automatically in Editor view |
-| **Quick Start** | ⚡ button in the title bar creates a timestamp-named directory (`YYYY_MMDD_HHMM_SS`) and a `QUICK_START.md` file without asking for a folder name. Use it when you just want to start writing a task immediately |
+| **Quick Start** | ⚡ Quick Start button at the top of the view creates a timestamp-named directory (`YYYY_MMDD_HHMM_SS`) and a `QUICK_START.md` file without asking for a folder name. Use it when you just want to start writing a task immediately |
 | Path display | Current path shown as the first item in the list with inline action buttons (New PROMPT.md, New TASK.md, New SPEC.md, Copy, Rename, New Directory, Archive) |
 | **Date/time prefix** | Root directory displays date or time before directory names: `[HH:MM]` for today, `[MM/DD]` for other dates (files are shown without prefix) |
 | **Editor target file icons** | Files opened in Editor view (TASK.md, PROMPT.md, SPEC.md, QUICK_START.md) display an `edit` icon to distinguish them from regular Markdown files |
 | Sorting | Files are sorted by creation date (ascending) by default |
 | Drag & Drop | Copy files by dragging them within the view or from external sources |
+| **Keyboard navigation** | Use ↑ / ↓ to move the selection and Enter to open the selected item |
 | Auto-refresh | Automatically updates when files are created, modified, or deleted (even when the view is hidden) |
 | Settings icon | Quick access to default path and sort configuration |
 
@@ -209,7 +210,7 @@ Use the following variables inside a template:
 
 | Item | Steps |
 | --- | --- |
-| Quick Start | Click the ⚡ icon in Plans title menu.<br>Creates a timestamp-named directory (`YYYY_MMDD_HHMM_SS`) without asking for a folder name, and generates a `QUICK_START.md` file inside it.<br>The file opens in Editor View and is selected in Plans. If a directory with the same name already exists, a numeric suffix (`_2`, `_3`, ...) is appended. |
+| Quick Start | Click the ⚡ Quick Start button at the top of Plans View.<br>Creates a timestamp-named directory (`YYYY_MMDD_HHMM_SS`) without asking for a folder name, and generates a `QUICK_START.md` file inside it.<br>The file opens in Editor View and is selected in Plans. If a directory with the same name already exists, a numeric suffix (`_2`, `_3`, ...) is appended. |
 | New Task | Click the rocket icon in Plans title menu.<br>Creates a new directory under the currently opened directory in Plans View and automatically generates a timestamped Markdown file.<br>The file is selected in Plans with "editing" label and opens in Editor View.<br>If the current path cannot be retrieved, it falls back to the default path. |
 | New Directory | Click the folder icon in the path display row.<br>Creates a new directory under the currently opened directory (without creating a Markdown file). |
 | Create PROMPT.md | Click the file icon in the path display row or Editor header.<br>A timestamped Markdown file is created (for example, `2025_1229_1430_25_PROMPT.md`) and opens in Editor View. |
@@ -337,14 +338,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.0.18.vsix
+   code --install-extension ai-coding-sidebar-1.0.22.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.0.18.vsix
+code --install-extension releases/ai-coding-sidebar-1.0.22.vsix
 ```
 
 #### Build the package yourself
@@ -358,7 +359,7 @@ code --install-extension releases/ai-coding-sidebar-1.0.18.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.0.18.vsix
+   code --install-extension releases/ai-coding-sidebar-1.0.22.vsix
    ```
 4. Restart VS Code.
 

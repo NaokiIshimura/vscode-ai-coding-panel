@@ -2,6 +2,59 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { formatFileSize } from '../../utils/fileUtils';
 
+/**
+ * ファイル種類に応じたアイコン名（codicon名）を取得する
+ * ThemeIconとWebviewのcodiconで同じ名前を使えるよう共通化している
+ */
+export function getFileIconName(fileName: string): string {
+    const ext = path.extname(fileName).toLowerCase();
+
+    // Markdownファイルの場合、Editor View対象ファイルかどうかで分ける
+    if (ext === '.md') {
+        const editorTargetPattern = /(?:TASK|PROMPT|SPEC|QUICK_START)\.md$/i;
+        // Editor View対象ファイル（TASK/PROMPT/SPEC/QUICK_START）はeditアイコン
+        if (editorTargetPattern.test(fileName)) {
+            return 'edit';
+        }
+        // それ以外はmarkdownアイコン（通常のエディタで開く）
+        return 'markdown';
+    }
+
+    // 拡張子に応じてアイコンを選択
+    const iconMap: { [key: string]: string } = {
+        '.ts': 'symbol-method',
+        '.tsx': 'symbol-method',
+        '.js': 'symbol-function',
+        '.jsx': 'symbol-function',
+        '.json': 'json',
+        '.txt': 'file-text',
+        '.py': 'symbol-class',
+        '.java': 'symbol-class',
+        '.cpp': 'symbol-class',
+        '.c': 'symbol-class',
+        '.h': 'symbol-class',
+        '.css': 'symbol-color',
+        '.scss': 'symbol-color',
+        '.html': 'symbol-misc',
+        '.xml': 'symbol-misc',
+        '.yml': 'settings-gear',
+        '.yaml': 'settings-gear',
+        '.sh': 'terminal',
+        '.bat': 'terminal',
+        '.png': 'file-media',
+        '.jpg': 'file-media',
+        '.jpeg': 'file-media',
+        '.gif': 'file-media',
+        '.svg': 'file-media',
+        '.pdf': 'file-pdf',
+        '.zip': 'file-zip',
+        '.git': 'git-branch',
+        '.gitignore': 'git-branch'
+    };
+
+    return iconMap[ext] || 'file';
+}
+
 export class FileItem extends vscode.TreeItem {
     constructor(
         public readonly label: string,
@@ -48,51 +101,6 @@ export class FileItem extends vscode.TreeItem {
      * ファイル種類に応じたアイコンを取得
      */
     private getFileIcon(fileName: string): vscode.ThemeIcon {
-        const ext = path.extname(fileName).toLowerCase();
-
-        // Markdownファイルの場合、Editor View対象ファイルかどうかで分ける
-        if (ext === '.md') {
-            const editorTargetPattern = /(?:TASK|PROMPT|SPEC|QUICK_START)\.md$/i;
-            // Editor View対象ファイル（TASK/PROMPT/SPEC/QUICK_START）はeditアイコン
-            if (editorTargetPattern.test(fileName)) {
-                return new vscode.ThemeIcon('edit');
-            }
-            // それ以外はmarkdownアイコン（通常のエディタで開く）
-            return new vscode.ThemeIcon('markdown');
-        }
-
-        // 拡張子に応じてアイコンを選択
-        const iconMap: { [key: string]: string } = {
-            '.ts': 'symbol-method',
-            '.tsx': 'symbol-method',
-            '.js': 'symbol-function',
-            '.jsx': 'symbol-function',
-            '.json': 'json',
-            '.txt': 'file-text',
-            '.py': 'symbol-class',
-            '.java': 'symbol-class',
-            '.cpp': 'symbol-class',
-            '.c': 'symbol-class',
-            '.h': 'symbol-class',
-            '.css': 'symbol-color',
-            '.scss': 'symbol-color',
-            '.html': 'symbol-misc',
-            '.xml': 'symbol-misc',
-            '.yml': 'settings-gear',
-            '.yaml': 'settings-gear',
-            '.sh': 'terminal',
-            '.bat': 'terminal',
-            '.png': 'file-media',
-            '.jpg': 'file-media',
-            '.jpeg': 'file-media',
-            '.gif': 'file-media',
-            '.svg': 'file-media',
-            '.pdf': 'file-pdf',
-            '.zip': 'file-zip',
-            '.git': 'git-branch',
-            '.gitignore': 'git-branch'
-        };
-
-        return new vscode.ThemeIcon(iconMap[ext] || 'file');
+        return new vscode.ThemeIcon(getFileIconName(fileName));
     }
 }

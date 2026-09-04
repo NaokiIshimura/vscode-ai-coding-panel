@@ -37,12 +37,13 @@ Claude Codeでの生産性を最大化するために設計された、強力な
 | ディレクトリナビゲーション | ディレクトリをクリックでそのディレクトリに移動。".."で親ディレクトリに戻る |
 | 自動ファイル選択 | ディレクトリに移動した際に、最も古いTASK.md、PROMPT.md、SPEC.md、QUICK_START.mdファイルを自動的に選択して表示 |
 | **初期プロンプト付きディレクトリ作成** | 「Create directory」ボタンで`.claude/plans`ディレクトリと初期プロンプトファイル（`YYYY_MMDD_HHMM_SS_PROMPT.md`）を自動作成。Run/Plan/Specボタンの使い方を説明するテンプレート付き。ファイルは自動的にEditor Viewで開かれる |
-| **Quick Start** | タイトルバーの⚡ボタンで、フォルダ名を入力せずにタイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成。すぐにタスクを書き始めたいときに便利 |
+| **Quick Start** | ビュー最上部の⚡ Quick Startボタンで、フォルダ名を入力せずにタイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成。すぐにタスクを書き始めたいときに便利 |
 | パス表示 | 現在のパスをリストの先頭アイテムとして表示（New PROMPT.md、New TASK.md、New SPEC.md、Copy、Rename、New Directory、Archiveボタン付き） |
 | **日付/時間プレフィックス** | ルートディレクトリのディレクトリ名の前に日付または時間を表示: 当日は`[HH:MM]`、当日以外は`[MM/DD]`（ファイルはプレフィックスなし） |
 | **Editor対象ファイルアイコン** | Editor Viewで開くファイル（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）は`edit`アイコンで表示し、通常のMarkdownファイルと区別 |
 | ソート | ファイルはデフォルトで作成日時の昇順でソート |
 | ドラッグ&ドロップ | ビュー内または外部からのファイルをドラッグしてコピー |
+| **キーボード操作** | ↑ / ↓ で選択を移動、Enterで選択項目を開く |
 | 自動更新 | ファイルが作成、変更、削除されたときに自動的に更新（ビュー非表示中でも反映） |
 | 設定アイコン | デフォルトパスとソート設定へのクイックアクセス |
 
@@ -208,7 +209,7 @@ created: {{datetime}}
 
 | 項目 | 手順 |
 | --- | --- |
-| Quick Start | Plansのタイトルメニューにある⚡アイコンをクリック<br>フォルダ名の入力を求めずに、タイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成します<br>作成されたファイルはEditor Viewで開かれ、Plansで選択状態になります。同名ディレクトリが既に存在する場合は連番サフィックス（`_2`, `_3`, ...）が付与されます |
+| Quick Start | Plans View最上部の⚡ Quick Startボタンをクリック<br>フォルダ名の入力を求めずに、タイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成します<br>作成されたファイルはEditor Viewで開かれ、Plansで選択状態になります。同名ディレクトリが既に存在する場合は連番サフィックス（`_2`, `_3`, ...）が付与されます |
 | New Task | Plansのタイトルメニューにあるロケットアイコンをクリック<br>Plans Viewで現在開いているディレクトリ配下に新しいディレクトリを作成し、タイムスタンプ付きのMarkdownファイルを自動生成します<br>作成されたファイルはPlansで「editing」ラベルとともに選択され、Editor Viewで開かれます<br>現在のパスが取得できない場合は、デフォルトパス配下に作成されます |
 | 新規ディレクトリ | パス表示行のフォルダアイコンをクリック<br>現在開いているディレクトリ配下に新しいディレクトリを作成します（Markdownファイルは作成しない） |
 | PROMPT.md作成 | パス表示行またはEditorヘッダーのファイルアイコンをクリック<br>タイムスタンプ付きのMarkdownファイルが作成され、Editor Viewで開かれます（例: `2025_1229_1430_25_PROMPT.md`） |
@@ -336,14 +337,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.0.18.vsix
+   code --install-extension ai-coding-sidebar-1.0.22.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.0.18.vsix
+code --install-extension releases/ai-coding-sidebar-1.0.22.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -357,7 +358,7 @@ code --install-extension releases/ai-coding-sidebar-1.0.18.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.0.18.vsix
+   code --install-extension releases/ai-coding-sidebar-1.0.22.vsix
    ```
 4. VS Codeを再起動
 

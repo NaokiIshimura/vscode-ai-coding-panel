@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src {{cspSource}}; font-src {{cspSource}};">
+    <title>Plans</title>
+    <link rel="stylesheet" href="{{codiconsUri}}">
+    <link rel="stylesheet" href="{{styleUri}}">
+</head>
+<body>
+    <div id="header">
+        <div class="header-actions">
+            <button class="quick-start-button" id="quick-start-button" title="Create a new task directory instantly">
+                <span class="codicon codicon-zap"></span>
+                <span>Quick Start</span>
+            </button>
+        </div>
+    </div>
+    <div id="list" tabindex="0"></div>
+    <div id="context-menu" class="context-menu hidden"></div>
+    <script src="{{scriptUri}}"></script>
+</body>
+</html>

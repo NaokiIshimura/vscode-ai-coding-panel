@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -272,6 +272,8 @@
         {
           "id": "aiCodingSidebarExplorer",
           "name": "Plans",
+          "type": "webview",
+          "retainContextWhenHidden": true,
           "visibility": "visible"
         },
         {
@@ -302,29 +304,24 @@
     "menus": {
       "view/title": [
         {
-          "command": "aiCodingSidebar.quickStart",
+          "command": "aiCodingSidebar.newDirectory",
           "when": "view == aiCodingSidebarExplorer",
           "group": "navigation@1"
         },
         {
-          "command": "aiCodingSidebar.newDirectory",
+          "command": "aiCodingSidebar.newSpec",
           "when": "view == aiCodingSidebarExplorer",
           "group": "navigation@2"
         },
         {
-          "command": "aiCodingSidebar.newSpec",
+          "command": "aiCodingSidebar.refresh",
           "when": "view == aiCodingSidebarExplorer",
           "group": "navigation@3"
         },
         {
-          "command": "aiCodingSidebar.refresh",
-          "when": "view == aiCodingSidebarExplorer",
-          "group": "navigation@4"
-        },
-        {
           "command": "aiCodingSidebar.openPlansSettings",
           "when": "view == aiCodingSidebarExplorer",
-          "group": "navigation@5"
+          "group": "navigation@4"
         },
         {
           "command": "aiCodingSidebar.createMarkdownFile",
@@ -350,133 +347,6 @@
           "command": "aiCodingSidebar.openTerminalSettings",
           "when": "view == terminalView",
           "group": "navigation@1"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "aiCodingSidebar.createMarkdownFile",
-          "when": "view == aiCodingSidebarExplorer && viewItem =~ /^pathDisplay/",
-          "group": "inline@1"
-        },
-        {
-          "command": "aiCodingSidebar.createTaskFile",
-          "when": "view == aiCodingSidebarExplorer && viewItem =~ /^pathDisplay/",
-          "group": "inline@2"
-        },
-        {
-          "command": "aiCodingSidebar.createSpecFile",
-          "when": "view == aiCodingSidebarExplorer && viewItem =~ /^pathDisplay/",
-          "group": "inline@3"
-        },
-        {
-          "command": "aiCodingSidebar.copyRelativePath",
-          "when": "view == aiCodingSidebarExplorer && viewItem == pathDisplayNonRoot",
-          "group": "inline@4"
-        },
-        {
-          "command": "aiCodingSidebar.rename",
-          "when": "view == aiCodingSidebarExplorer && viewItem == pathDisplayNonRoot",
-          "group": "inline@5"
-        },
-        {
-          "command": "aiCodingSidebar.addDirectory",
-          "when": "view == aiCodingSidebarExplorer && viewItem =~ /^pathDisplay/",
-          "group": "inline@6"
-        },
-        {
-          "command": "aiCodingSidebar.archiveDirectory",
-          "when": "view == aiCodingSidebarExplorer && viewItem == pathDisplayNonRoot",
-          "group": "inline@7"
-        },
-        {
-          "command": "aiCodingSidebar.showInPanel",
-          "when": "view == aiCodingSidebarExplorer && viewItem == directory",
-          "group": "inline@1"
-        },
-        {
-          "command": "aiCodingSidebar.archiveDirectory",
-          "when": "view == aiCodingSidebarExplorer && viewItem == directory",
-          "group": "inline@2"
-        },
-        {
-          "command": "aiCodingSidebar.addDirectory",
-          "when": "view == aiCodingSidebarExplorer && viewItem == directory",
-          "group": "2_workspace@2"
-        },
-        {
-          "command": "aiCodingSidebar.renameDirectory",
-          "when": "view == aiCodingSidebarExplorer && viewItem == directory",
-          "group": "2_workspace@3"
-        },
-        {
-          "command": "aiCodingSidebar.deleteDirectory",
-          "when": "view == aiCodingSidebarExplorer && viewItem == directory",
-          "group": "2_workspace@4"
-        },
-        {
-          "command": "aiCodingSidebar.archiveDirectory",
-          "when": "view == aiCodingSidebarExplorer && viewItem == directory",
-          "group": "3_archive@1"
-        },
-        {
-          "command": "aiCodingSidebar.copyRelativePath",
-          "when": "view == aiCodingSidebarExplorer",
-          "group": "1_copy@1"
-        },
-        {
-          "command": "aiCodingSidebar.checkoutBranch",
-          "when": "view == aiCodingSidebarExplorer && viewItem == directory",
-          "group": "1_copy@2"
-        },
-        {
-          "command": "aiCodingSidebar.createMarkdownFile",
-          "when": "view == aiCodingSidebarExplorer && viewItem == directory",
-          "group": "2_workspace"
-        },
-        {
-          "command": "aiCodingSidebar.createFile",
-          "when": "view == aiCodingSidebarExplorer && viewItem == directory",
-          "group": "2_workspace@2"
-        },
-        {
-          "command": "aiCodingSidebar.rename",
-          "when": "view == aiCodingSidebarExplorer && viewItem == file",
-          "group": "3_edit@1"
-        },
-        {
-          "command": "aiCodingSidebar.delete",
-          "when": "view == aiCodingSidebarExplorer && viewItem == file",
-          "group": "3_edit@2"
-        },
-        {
-          "command": "aiCodingSidebar.openInEditor",
-          "when": "view == aiCodingSidebarExplorer && viewItem == file",
-          "group": "1_copy@1"
-        },
-        {
-          "command": "aiCodingSidebar.copyRelativePath",
-          "when": "view == aiCodingSidebarExplorer && viewItem == file",
-          "group": "1_copy@2"
-        },
-        {
-          "command": "aiCodingSidebar.insertPathToEditor",
-          "when": "view == aiCodingSidebarExplorer && viewItem == file",
-          "group": "inline@1"
-        },
-        {
-          "command": "aiCodingSidebar.insertPathToTerminal",
-          "when": "view == aiCodingSidebarExplorer && viewItem == file",
-          "group": "inline@2"
-        },
-        {
-          "command": "aiCodingSidebar.insertPathToEditor",
-          "when": "view == aiCodingSidebarExplorer && viewItem == file",
-          "group": "4_insert@1"
-        },
-        {
-          "command": "aiCodingSidebar.insertPathToTerminal",
-          "when": "view == aiCodingSidebarExplorer && viewItem == file",
-          "group": "4_insert@2"
         }
       ],
       "webview/context": [
@@ -610,10 +480,11 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile && npm run copy-xterm",
+    "vscode:prepublish": "npm run compile && npm run copy-xterm && npm run copy-codicons",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "copy-xterm": "mkdir -p media/xterm && cp node_modules/@xterm/xterm/css/xterm.css media/xterm/ && cp node_modules/@xterm/xterm/lib/xterm.js media/xterm/ && cp node_modules/@xterm/addon-fit/lib/addon-fit.js media/xterm/xterm-addon-fit.js && cp node_modules/@xterm/addon-web-links/lib/addon-web-links.js media/xterm/xterm-addon-web-links.js && cp node_modules/@xterm/addon-unicode11/lib/addon-unicode11.js media/xterm/xterm-addon-unicode11.js",
+    "copy-codicons": "mkdir -p media/codicons && cp node_modules/@vscode/codicons/dist/codicon.css media/codicons/ && cp node_modules/@vscode/codicons/dist/codicon.ttf media/codicons/",
     "package": "npx vsce package --out releases/ --allow-missing-repository --no-dependencies",
     "version:patch": "npm version patch --no-git-tag-version",
     "version:minor": "npm version minor --no-git-tag-version",
@@ -631,6 +502,7 @@
     "@types/node": "16.x",
     "@types/ps-tree": "^1.1.6",
     "@types/vscode": "^1.74.0",
+    "@vscode/codicons": "^0.0.46-24",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.6.2",
     "chai": "^6.2.2",

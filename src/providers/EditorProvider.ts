@@ -707,6 +707,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         // 外部リソースのURIを取得
         const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'resources', 'webview', 'editor', 'style.css'));
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'resources', 'webview', 'editor', 'main.js'));
+        const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'codicons', 'codicon.css'));
         const templatePath = vscode.Uri.joinPath(this._extensionUri, 'resources', 'webview', 'editor', 'index.html');
 
         // HTMLテンプレートを読み込み（非同期化）
@@ -716,6 +717,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         return htmlTemplate
             .replace(/\{\{cspSource\}\}/g, webview.cspSource)
             .replace(/\{\{styleUri\}\}/g, styleUri.toString())
-            .replace(/\{\{scriptUri\}\}/g, scriptUri.toString());
+            .replace(/\{\{scriptUri\}\}/g, scriptUri.toString())
+            .replace(/\{\{codiconsUri\}\}/g, codiconsUri.toString());
     }
 }

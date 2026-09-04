@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src {{cspSource}};">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}}; script-src {{cspSource}}; font-src {{cspSource}};">
     <title>Markdown Editor</title>
+    <link rel="stylesheet" href="{{codiconsUri}}">
     <link rel="stylesheet" href="{{styleUri}}">
 </head>
 <body>
@@ -12,17 +13,16 @@
         <div class="file-info">
             <span id="file-path"></span>
         </div>
-        <div class="header-actions">
-            <button class="edit-button" id="edit-button" title="Edit in VS Code">✏️</button>
-            <button class="save-button" id="save-button" title="Save file">💾</button>
-            <button class="spec-button" id="spec-button" title="Create specification documents">Spec</button>
-            <button class="plan-button" id="plan-button" title="Create implementation plan">Plan</button>
-            <button class="run-button" id="run-button" title="Run task (Cmd+R / Ctrl+R)">Run</button>
-        </div>
     </div>
     <div id="sub-header">
         <div class="sub-header-actions">
-            <button class="next-button" id="next-button" title="Create new PROMPT.md (Cmd+M / Ctrl+M)">Next</button>
+            <button class="edit-button" id="edit-button" title="Edit in VS Code"><span class="codicon codicon-edit"></span></button>
+            <button class="save-button" id="save-button" title="Save file"><span class="codicon codicon-save"></span></button>
+        </div>
+        <div class="sub-header-actions">
+            <button class="spec-button" id="spec-button" title="Create specification documents"><span class="codicon codicon-book"></span><span>Spec</span></button>
+            <button class="plan-button" id="plan-button" title="Create implementation plan"><span class="codicon codicon-checklist"></span><span>Plan</span></button>
+            <button class="run-button" id="run-button" title="Run task (Cmd+R / Ctrl+R)"><span class="codicon codicon-play"></span><span>Run</span></button>
         </div>
     </div>
     <div id="editor-container">
@@ -30,6 +30,11 @@
         <textarea id="editor" placeholder="Enter prompt here..."></textarea>
         <div id="shortcuts-overlay">Cmd+M / Ctrl+M - Create new markdown file
 Cmd+R / Ctrl+R - Run task in terminal</div>
+    </div>
+    <div id="footer">
+        <div class="footer-actions">
+            <button class="next-button" id="next-button" title="Create new PROMPT.md (Cmd+M / Ctrl+M)"><span class="codicon codicon-new-file"></span><span>Next</span></button>
+        </div>
     </div>
     <script src="{{scriptUri}}"></script>
 </body>

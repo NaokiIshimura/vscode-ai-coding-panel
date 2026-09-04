@@ -42,16 +42,16 @@ body {
     font-size: 11px;
     line-height: 16px;
     font-family: inherit;
-    /* 黄色は明るい色のため、テーマに関わらず濃い文字色でコントラストを確保する */
-    background-color: #e5b700;
-    color: #1f1f1f;
+    /* 白文字が読めるよう、黄色系のまま明度を落としたゴールドを使う */
+    background-color: #9a7b00;
+    color: #ffffff;
     border: none;
     border-radius: 2px;
     cursor: pointer;
 }
 
 .quick-start-button:hover {
-    background-color: #f5c518;
+    background-color: #b39000;
 }
 
 .quick-start-button .codicon {

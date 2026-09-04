@@ -57,7 +57,9 @@ Markdownプロンプトファイルを編集し、パネルから直接Claude Co
 | **自動ターミナル統合** | コマンドはTerminalビューに送信され、シームレスなワークフローのためにファイル-タブの自動関連付けが行われる |
 | 自動表示 | タイムスタンプ形式のMarkdownファイル（形式: `YYYY_MMDD_HHMM_SS_PROMPT.md`、`..._TASK.md`、`..._SPEC.md`、`..._QUICK_START.md`）を選択すると自動的に表示。その他のMarkdownファイルは通常のエディタで開く |
 | Saveボタン | ヘッダーに表示され、未保存の変更がある場合は色が変わる。ファイル未開時は現在のPlansディレクトリに新規作成 |
-| **Nextボタン** | Run/Plan/Specボタンの下段に配置された赤い**Next**ボタン。タイムスタンプ付きの`PROMPT.md`を新規作成して開くため、Editorから離れずに次のプロンプトへ進める。`Cmd+M` / `Ctrl+M`でも実行可能 |
+| **3段構成のレイアウト** | 1段目に開いているファイルのパス（未オープン時は案内文）、2段目の左にEdit / Save・右にSpec / Plan / Run、最下段にNextボタンを配置 |
+| **Nextボタン** | ビュー最下部の専用領域に配置された赤い**Next**ボタン。タイムスタンプ付きの`PROMPT.md`を新規作成して開くため、Editorから離れずに次のプロンプトへ進める。`Cmd+M` / `Ctrl+M`でも実行可能 |
+| ボタンのアイコン | すべてのボタンにVS Code標準のcodiconを表示（Spec: 本、Plan: チェックリスト、Run: 再生、Next: 新規ファイル、Edit: 鉛筆、Save: フロッピー）。Plans ViewのQuick Startボタンと見た目を統一 |
 | カスタマイズ可能なコマンド | ワークフローに合わせてRun、Plan、Specコマンドを設定で変更可能 |
 | 読み取り専用モード | VSCodeエディタでファイルがアクティブになると自動的に読み取り専用モードに切り替わる |
 | 自動保存 | ファイル切替、ディレクトリ移動、ビューを閉じる際に自動保存 |
@@ -337,14 +339,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.0.vsix
+   code --install-extension ai-coding-sidebar-1.1.1.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.1.0.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.1.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -358,7 +360,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.0.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.0.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.1.vsix
    ```
 4. VS Codeを再起動
 

@@ -12,6 +12,22 @@ let originalContent = '';
 let currentFilePath = '';
 let isReadOnly = false;
 
+// ファイル未オープン時にヘッダーへ表示する案内文
+const FILE_PATH_PLACEHOLDER = 'No file open - select a file in Plans View';
+
+// ヘッダーのファイルパス表示を更新する（未オープン時は案内文を表示）
+const setFilePath = (filePath) => {
+    if (filePath) {
+        filePathElement.textContent = filePath;
+        filePathElement.classList.remove('placeholder');
+    } else {
+        filePathElement.textContent = FILE_PATH_PLACEHOLDER;
+        filePathElement.classList.add('placeholder');
+    }
+};
+
+setFilePath('');
+
 // メッセージを受信
 window.addEventListener('message', event => {
     const message = event.data;
@@ -20,7 +36,7 @@ window.addEventListener('message', event => {
             editor.value = message.content;
             originalContent = message.content;
             currentFilePath = message.filePath;
-            filePathElement.textContent = message.filePath;
+            setFilePath(message.filePath);
             saveButton.classList.remove('dirty');
 
             // Handle read-only mode
@@ -65,7 +81,7 @@ window.addEventListener('message', event => {
             editor.value = '';
             originalContent = '';
             currentFilePath = '';
-            filePathElement.textContent = '';
+            setFilePath('');
             saveButton.classList.remove('dirty');
             readonlyIndicator.classList.remove('show');
             editButton.classList.remove('active');

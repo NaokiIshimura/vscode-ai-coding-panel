@@ -7,6 +7,7 @@ const saveButton = document.getElementById('save-button');
 const specButton = document.getElementById('spec-button');
 const planButton = document.getElementById('plan-button');
 const runButton = document.getElementById('run-button');
+const nextButton = document.getElementById('next-button');
 let originalContent = '';
 let currentFilePath = '';
 let isReadOnly = false;
@@ -175,6 +176,13 @@ planButton.addEventListener('click', () => {
         type: 'planTask',
         filePath: currentFilePath,
         content: (currentFilePath && isDirty && !isReadOnly) || !currentFilePath ? editor.value : null
+    });
+});
+
+// Next button click handler - create new PROMPT.md
+nextButton.addEventListener('click', () => {
+    vscode.postMessage({
+        type: 'createMarkdownFile'
     });
 });
 

@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-09-05
+
+### Added
+- **Editor View Next Button**: Added a dedicated button bar below the Run/Plan/Spec row containing a red **Next** button
+  - Creates a new timestamped `PROMPT.md` and opens it in Editor View, so you can move on to the next prompt without leaving the Editor
+  - Reuses the existing `aiCodingSidebar.createMarkdownFile` command, the same action as `Cmd+M` / `Ctrl+M`
+
+### Changed
+- **Uniform Button Bar Height**: The button bars in Plans View, Editor View and Terminal View are now all 36px tall
+  - Introduced a shared `--button-bar-height` CSS variable in each webview and replaced vertical padding with `min-height` plus vertical centering
+  - Terminal View's tab bar and shortcut bar were previously 33px and roughly 26-29px, so they no longer look misaligned against the other views
+- **Plans View Root Directory Behavior**: Navigating back to the root directory no longer auto-selects the oldest target file
+  - Auto-selection still applies when navigating into a subdirectory; the root now stays a plain task list
+  - Added `PlansProvider._isRootDirectory()`, which compares paths via `path.resolve()` so trailing slashes and relative notations are handled correctly
+
+### Removed
+- **Plans View Title Bar Buttons**: Removed **New Task** (`aiCodingSidebar.newDirectory`) and **New Spec** (`aiCodingSidebar.newSpec`) from the Plans View title bar
+  - The commands themselves remain registered; **New Task** is still available via `Cmd+S` / `Ctrl+S`
+- **Editor View Title Bar Buttons**: Removed **New PROMPT.md**, **New TASK.md** and **New SPEC.md** from the Editor View title bar, leaving only the settings icon
+  - `New TASK.md` / `New SPEC.md` remain available from the Plans View context menu, and `New PROMPT.md` is now covered by the new **Next** button
+
+### Fixed
+- **Terminal View Height Calculation**: Replaced the hard-coded header heights in the terminal area calculation with the shared `--button-bar-height` variable
+  - `#terminals-container` used `calc(100% - 33px - 29px)` and `#terminal-overlay` used `top: 62px`, neither of which followed the actual rendered header height
+  - The `#header` border is now included in the calculation, so the terminal area is sized correctly
+
 ## [1.0.22] - 2026-09-05
 
 ### Added
@@ -2175,3 +2201,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.19...v1.0.20
 [1.0.21]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.20...v1.0.21
 [1.0.22]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.21...v1.0.22
+[1.1.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.22...v1.1.0

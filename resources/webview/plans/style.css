@@ -1,4 +1,6 @@
 body {
+    /* ボタン設置領域の高さ（Plans / Editor / Terminal の各Viewで共通） */
+    --button-bar-height: 36px;
     margin: 0;
     padding: 0;
     height: 100vh;
@@ -13,7 +15,9 @@ body {
 
 /* ヘッダー（Editor Viewのボタン領域と同じ見た目） */
 #header {
-    padding: 8px;
+    box-sizing: border-box;
+    min-height: var(--button-bar-height);
+    padding: 0 8px;
     background-color: var(--vscode-sideBar-background);
     border-bottom: 1px solid var(--vscode-panel-border);
     display: flex;

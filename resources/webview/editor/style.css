@@ -1,4 +1,6 @@
 body {
+    /* ボタン設置領域の高さ（Plans / Editor / Terminal の各Viewで共通） */
+    --button-bar-height: 36px;
     margin: 0;
     padding: 0;
     height: 100vh;
@@ -13,7 +15,9 @@ body.focused {
 }
 
 #header {
-    padding: 8px;
+    box-sizing: border-box;
+    min-height: var(--button-bar-height);
+    padding: 0 8px;
     background-color: var(--vscode-editor-background);
     border-bottom: 1px solid var(--vscode-panel-border);
     font-size: 12px;
@@ -22,6 +26,7 @@ body.focused {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    flex-shrink: 0;
 }
 
 .file-info {
@@ -44,6 +49,48 @@ body.focused {
     align-items: center;
     gap: 4px;
     flex-shrink: 0;
+}
+
+#sub-header {
+    box-sizing: border-box;
+    min-height: var(--button-bar-height);
+    padding: 0 8px;
+    background-color: var(--vscode-editor-background);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    font-size: 12px;
+    color: var(--vscode-foreground);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.sub-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.next-button {
+    padding: 2px 8px;
+    font-size: 11px;
+    line-height: 16px;
+    background-color: #dc3545;
+    color: #ffffff;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.next-button:hover {
+    background-color: #c82333;
+}
+
+.next-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .run-button {

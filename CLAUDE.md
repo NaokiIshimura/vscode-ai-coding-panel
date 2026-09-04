@@ -385,6 +385,54 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.1変更: Editor Viewのレイアウト再編とcodicon化
+
+Editor Viewのボタン配置を3段構成に整理し、全ボタンをVS Code標準のcodiconに統一：
+
+**3段構成へのレイアウト再編（`resources/webview/editor/index.html` / `style.css`）**
+
+| 段 | 要素 | 内容 |
+|---|---|---|
+| 1段目 | `#header` | ファイルパス表示のみ（未オープン時は案内文） |
+| 2段目 | `#sub-header` | 左: Edit / Save、右: Spec / Plan / Run |
+| 最下段 | `#footer` | Next |
+
+- `#header` から `.header-actions`（Spec/Plan/Run）を削除。CSSの `.header-actions` ルールも削除済み
+- `#footer` を新設。`#sub-header` と同構成だが区切り線は `border-top`、`justify-content: flex-end` で右寄せ。高さは共通の `--button-bar-height`（36px）
+- `#sub-header` は2グループ構成のため `justify-content: space-between`
+
+**全ボタンのcodicon化**
+
+| ボタン | 変更前 | codicon |
+|---|---|---|
+| Spec | テキストのみ | `codicon-book` |
+| Plan | テキストのみ | `codicon-checklist` |
+| Run | テキストのみ | `codicon-play` |
+| Next | テキストのみ | `codicon-new-file` |
+| Edit | ✏️（絵文字） | `codicon-edit` |
+| Save | 💾（絵文字） | `codicon-save` |
+
+- **重要**: v1.1.0で「Editor ViewのCSPと `codiconsUri` の受け渡しはアイコン追加前の状態に戻してある」と記載していたが、本バージョンで再度追加した
+  - `index.html`: CSPに `font-src {{cspSource}}` を追加し、`{{codiconsUri}}` のstylesheetを読み込む
+  - `EditorProvider._getHtmlForWebview()`: `media/codicons/codicon.css` の `codiconsUri` を追加してテンプレート変数を置換
+- 絵文字ではなくcodiconを採用したのは、Plans ViewのQuick Startボタンと見た目を統一するため。アイコンサイズ（`font-size: 14px; line-height: 16px`）もQuick Startと同一
+- Next の候補は `chevron-right` / `debug-continue` / `arrow-right` 等も検討したが、codiconsには「次のトラック（▶|）」相当のアイコンが無いため、実際の動作（新規PROMPT.md作成）と一致する `new-file` を採用
+
+**ボタン色の調整（白文字とのコントラスト比を実測して選定）**
+
+| ボタン | 変更前 | 変更後 | 白文字コントラスト |
+|---|---|---|---|
+| Next | `#dc3545` / hover `#c82333` | `#c9483f` / hover `#d55b52` | 4.53 → 4.69 |
+| Quick Start（Plans View） | `#e5b700` + 文字色 `#1f1f1f` | `#9a7b00` + 文字色 `#ffffff` | 1.89 → 4.03 |
+
+- Quick Start は文字色を白にする要件のため、黄色系の色相（R:G ≒ 1:0.8、B=0）を保ったまま明度を下げた。明るい黄色（`#e5b700`）のままでは白文字のコントラストが2を下回り判読できない
+- Next は一度ダスティローズ（`#b56370`、色相350°）にしたがピンク寄りに見えたため、色相を4°（G > B）の赤側へ補正した上で彩度を落としている
+
+**ファイル未オープン時の案内表示（`resources/webview/editor/main.js`）**
+- `FILE_PATH_PLACEHOLDER`（`No file open - select a file in Plans View`）と `setFilePath()` を追加
+- `showContent` / `clearContent` の `filePathElement.textContent = ...` を `setFilePath()` 経由に統一し、スクリプト初期化時にも呼び出して起動直後から案内文が出るようにした
+- `#file-path.placeholder` で `var(--vscode-descriptionForeground)` の淡色＋斜体にし、実際のファイルパスと視覚的に区別
+
 ### v1.1.0変更: ヘッダーボタンの整理とEditor View「Next」ボタンの追加
 
 VS Codeのタイトルバーに散在していたファイル作成系ボタンを整理し、Editor View内に「Next」ボタンを新設：
@@ -403,10 +451,10 @@ VS Codeのタイトルバーに散在していたファイル作成系ボタン�
 - 残るタイトルバーボタンは Plans View が `Refresh` / `Plans Settings`、Editor View が `Editor Settings` のみ
 
 **Editor View「Next」ボタンの追加**
-- `resources/webview/editor/index.html`: `#header` の下に `#sub-header` 領域を新設し、赤い `Next` ボタン（`#next-button`）を配置
+- `resources/webview/editor/index.html`: `#header` の下に `#sub-header` 領域を新設し、赤い `Next` ボタン（`#next-button`）を配置（v1.1.1で最下部の `#footer` へ移動）
 - `resources/webview/editor/main.js`: クリック時に `{ type: 'createMarkdownFile' }` を postMessage。`EditorProvider` 側の既存ハンドラがそのまま `aiCodingSidebar.createMarkdownFile` を実行するため、TypeScript側の変更は不要だった
-- 色は `#dc3545`（ホバー `#c82333`）。Spec（紫）/ Plan（緑）/ Run（青）/ Save dirty（橙）/ Quick Start（黄）と重複しない色として選定
-- 検討段階で codicon（`codicon-arrow-right` → `codicon-arrow-down`）を試したが最終的にアイコンなしとしたため、Editor ViewのCSPと `codiconsUri` の受け渡しはアイコン追加前の状態に戻してある（codiconはPlans Viewのみで使用）
+- 色は `#dc3545`（ホバー `#c82333`）。Spec（紫）/ Plan（緑）/ Run（青）/ Save dirty（橙）/ Quick Start（黄）と重複しない色として選定（v1.1.1で `#c9483f` に変更）
+- 検討段階で codicon（`codicon-arrow-right` → `codicon-arrow-down`）を試したが最終的にアイコンなしとしたため、Editor ViewのCSPと `codiconsUri` の受け渡しはアイコン追加前の状態に戻してある（codiconはPlans Viewのみで使用）※v1.1.1で再度追加済み
 
 **ボタン設置領域の高さ統一（36px）**
 - 各Webviewの CSS に `--button-bar-height: 36px` を定義し、ボタン行に `min-height` + `box-sizing: border-box` を適用。縦paddingをやめて `align-items: center` で中央揃えにしている

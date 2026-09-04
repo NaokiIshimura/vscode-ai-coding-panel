@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-09-05
+
+### Changed
+- **Editor View Layout**: Reorganized the Editor View into three bars
+  - The top bar now shows only the open file path; Spec / Plan / Run moved down to the second bar, sharing it with Edit / Save (Edit / Save on the left, Spec / Plan / Run on the right)
+  - The Next button moved out of the second bar into a new bar at the bottom of the view
+- **Button Icons**: Replaced the emoji on the Edit and Save buttons with VS Code codicons and added codicons to Spec, Plan, Run and Next
+  - Spec: `book`, Plan: `checklist`, Run: `play`, Next: `new-file`, Edit: `edit`, Save: `save`
+  - The Editor webview now loads `media/codicons/codicon.css`; `font-src` was added to its Content Security Policy and `codiconsUri` to `EditorProvider._getHtmlForWebview()`
+  - Icon size and spacing match the Quick Start button in Plans View, so both views share one visual style
+- **Next Button Color**: Softened the Next button from `#dc3545` to `#c9483f`, keeping it clearly red while reducing saturation and brightness
+  - Contrast against the white label improved from 4.53:1 to 4.69:1
+- **Quick Start Button Color**: Changed the Quick Start button in Plans View to white text on a darker gold background (`#e5b700` + `#1f1f1f` to `#9a7b00` + `#ffffff`)
+  - The original bright yellow gave white text a contrast ratio of only 1.89:1; the new gold reaches 4.03:1 while staying in the yellow family
+
+### Added
+- **Editor View Empty State**: The top bar now shows "No file open - select a file in Plans View" in a dimmed italic style when no file is open
+  - Previously the bar was simply blank, giving no indication of the current state
+
 ## [1.1.0] - 2026-09-05
 
 ### Added
@@ -2202,3 +2221,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.21]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.20...v1.0.21
 [1.0.22]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.21...v1.0.22
 [1.1.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.22...v1.1.0
+[1.1.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.0...v1.1.1

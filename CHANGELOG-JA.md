@@ -5,6 +5,25 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.1] - 2026-09-05
+
+### 変更
+- **Editor Viewのレイアウト**: Editor Viewを3段構成に再編
+  - 1段目は開いているファイルのパス表示のみとし、Spec / Plan / Runを2段目へ移動。2段目は左にEdit / Save、右にSpec / Plan / Runを配置
+  - Nextボタンを2段目から切り出し、ビュー最下部の新設ブロックへ移動
+- **ボタンのアイコン**: Edit・Saveボタンの絵文字をVS Code標準のcodiconに置き換え、Spec・Plan・Run・Nextにもcodiconを追加
+  - Spec: `book`、Plan: `checklist`、Run: `play`、Next: `new-file`、Edit: `edit`、Save: `save`
+  - Editor Viewのwebviewで`media/codicons/codicon.css`を読み込むよう変更し、CSPに`font-src`を、`EditorProvider._getHtmlForWebview()`に`codiconsUri`を追加
+  - アイコンのサイズと余白をPlans ViewのQuick Startボタンと揃え、両Viewで見た目を統一
+- **Nextボタンの色**: Nextボタンを`#dc3545`から`#c9483f`へ変更し、赤系を保ったまま彩度と明度を下げて柔らかい印象に
+  - 白文字とのコントラスト比は4.53:1から4.69:1に改善
+- **Quick Startボタンの色**: Plans ViewのQuick Startボタンを白文字＋濃いゴールド背景に変更（`#e5b700` + `#1f1f1f` → `#9a7b00` + `#ffffff`）
+  - 元の明るい黄色では白文字とのコントラスト比が1.89:1しかなかったため、黄色系の色相を保ったまま明度を落として4.03:1を確保
+
+### 追加
+- **Editor Viewの未オープン時の表示**: ファイルを開いていないとき、1段目に「No file open - select a file in Plans View」を淡色の斜体で表示
+  - 従来は空欄のままで、現在の状態が分からなかった
+
 ## [1.1.0] - 2026-09-05
 
 ### 追加
@@ -1673,3 +1692,4 @@ v0.8.33以前からアップグレードする場合:
 [1.0.21]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.20...v1.0.21
 [1.0.22]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.21...v1.0.22
 [1.1.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.22...v1.1.0
+[1.1.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.0...v1.1.1

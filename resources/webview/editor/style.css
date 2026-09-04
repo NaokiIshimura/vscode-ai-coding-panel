@@ -44,11 +44,11 @@ body.focused {
     white-space: nowrap;
 }
 
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
+/* ファイル未オープン時の案内文 */
+#file-path.placeholder {
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+    opacity: 0.8;
 }
 
 #sub-header {
@@ -61,7 +61,7 @@ body.focused {
     color: var(--vscode-foreground);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 8px;
     flex-shrink: 0;
 }
@@ -73,11 +73,55 @@ body.focused {
     flex-shrink: 0;
 }
 
+/* Editor View最下部のボタン設置領域 */
+#footer {
+    box-sizing: border-box;
+    min-height: var(--button-bar-height);
+    padding: 0 8px;
+    background-color: var(--vscode-editor-background);
+    border-top: 1px solid var(--vscode-panel-border);
+    font-size: 12px;
+    color: var(--vscode-foreground);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* 各ボタンをアイコン＋ラベルの横並びにする */
+.spec-button,
+.plan-button,
+.run-button,
+.next-button,
+.edit-button,
+.save-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+}
+
+/* アイコンのサイズはPlans ViewのQuick Startボタンと揃える */
+.sub-header-actions .codicon,
+.footer-actions .codicon {
+    font-size: 14px;
+    line-height: 16px;
+}
+
 .next-button {
     padding: 2px 8px;
     font-size: 11px;
     line-height: 16px;
-    background-color: #dc3545;
+    /* 赤系のまま彩度をやや落として、鮮やかすぎない柔らかい赤にする */
+    background-color: #c9483f;
     color: #ffffff;
     border: none;
     border-radius: 2px;
@@ -85,7 +129,7 @@ body.focused {
 }
 
 .next-button:hover {
-    background-color: #c82333;
+    background-color: #d55b52;
 }
 
 .next-button:disabled {

@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 A powerful VS Code panel extension designed to maximize your productivity with Claude Code.
 
@@ -58,8 +58,10 @@ Edit Markdown prompt files and execute Claude Code commands directly from the pa
 | **Run/Plan/Spec Commands** | Execute Claude Code with pre-configured commands:<br>- **Run** (`Cmd+R` / `Ctrl+R`): `claude "Execute the instructions described in the file at ${filePath}"`<br>- **Plan**: `claude --permission-mode plan "Review ... create an implementation plan ..."`<br>- **Spec**: `claude --permission-mode plan "Review ... create specification documents ..."`<br>Auto-saves before execution and works even without a file open |
 | **Auto-Terminal Integration** | Commands are sent to Terminal view with automatic file-tab association for seamless workflow |
 | Auto-display | Automatically opens when selecting a timestamp-named Markdown file (format: `YYYY_MMDD_HHMM_SS_PROMPT.md`, `..._TASK.md`, `..._SPEC.md`, or `..._QUICK_START.md`). Other Markdown files open in the standard editor |
-| Save button | Displays in header with color change indicating unsaved changes. Creates new file if none is open (saves to current Plans directory) |
-| **Next button** | Red **Next** button in a dedicated bar below the Run/Plan/Spec buttons. Creates a new timestamped `PROMPT.md` and opens it, so you can move on to the next prompt without leaving the Editor. Also available with `Cmd+M` / `Ctrl+M` |
+| **Three-Row Layout** | The view is split into three bars: the top bar shows the open file path (or a guidance message when no file is open), the second bar holds Edit / Save on the left and Spec / Plan / Run on the right, and the bottom bar holds the Next button |
+| Save button | Displays in the second bar with a color change indicating unsaved changes. Creates new file if none is open (saves to current Plans directory) |
+| **Next button** | Red **Next** button in a dedicated bar at the bottom of the view. Creates a new timestamped `PROMPT.md` and opens it, so you can move on to the next prompt without leaving the Editor. Also available with `Cmd+M` / `Ctrl+M` |
+| Button icons | Every button uses a VS Code codicon (Spec: book, Plan: checklist, Run: play, Next: new file, Edit: pencil, Save: floppy disk), matching the Quick Start button in Plans View |
 | Customizable commands | Configure Run, Plan, and Spec commands in settings to match your workflow |
 | Read-only mode | Automatically switches to read-only mode when the file is active in VSCode editor |
 | Auto-save | Automatically saves when switching files, navigating directories, or closing the view |
@@ -338,14 +340,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.0.vsix
+   code --install-extension ai-coding-sidebar-1.1.1.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.0.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.1.vsix
 ```
 
 #### Build the package yourself
@@ -359,7 +361,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.0.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.0.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.1.vsix
    ```
 4. Restart VS Code.
 

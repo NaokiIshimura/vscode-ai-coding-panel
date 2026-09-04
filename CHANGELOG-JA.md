@@ -5,6 +5,26 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.0.22] - 2026-09-05
+
+### 追加
+- **Plans View「Quick Start」ボタン**: Plans Viewの最上部に、Editor ViewのRun/Plan/Specボタンと同じ形状で、⚡アイコン付きの黄色い**Quick Start**ボタンを追加
+  - 従来Plans Viewのタイトルバーにあった⚡アイコンを置き換えるもので、`aiCodingSidebar.quickStart`コマンド自体の挙動は変更なし
+- **Plans Viewのキーボード操作**: ↑ / ↓ で選択を移動し、Enterで選択項目を開けるように追加
+
+### 変更
+- **Plans ViewのWebview化**: Plans ViewをVS Codeのツリービューから、ファイル一覧と本物のボタンを同居させられるWebviewへ全面移行
+  - ファイル一覧、パス表示、`..`（親ディレクトリ）行、日付/時間プレフィックス、編集中ファイルのハイライト、ソート、ファイル監視、ポーリングの挙動は従来通り
+  - 右クリックメニュー、ホバー時のアクションアイコン（Insert Path to Editor / Terminal、Archive、Rename、New PROMPT/TASK/SPEC.md など）、ドラッグ＆ドロップは、従来VS Codeのツリービューが提供していた機能のためWebview内で再実装
+  - ファイル種別アイコンは、VS Codeの`ThemeIcon`ではなく同梱した`@vscode/codicons`フォントで描画
+
+### 技術的変更
+- **Plans Viewの内部構造**: `PlansProvider`が`vscode.TreeDataProvider` / `vscode.TreeDragAndDropController`ではなく`vscode.WebviewViewProvider`を実装するよう変更
+  - `getChildren()`を`buildItems()`に置き換え。素のオブジェクトを返すため、ツリービューなしでテスト可能に
+  - コマンドから利用する公開API（`setRootPath`、`getCurrentPath`、`navigateToDirectory`、`revealFile`など）は互換性を維持したため、コマンド側の変更は最小限
+  - `CommandDependencies.treeView`と`selectInitialFolder()`ヘルパーを削除
+  - `extension.ts` / `commands/types.ts`の未使用importを削除し、Menuツリービューを`context.subscriptions`に登録して確実に破棄されるよう修正
+
 ## [1.0.21] - 2026-09-02
 
 ### 修正
@@ -1625,3 +1645,4 @@ v0.8.33以前からアップグレードする場合:
 [1.0.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.15...v1.0.16
 [1.0.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.19...v1.0.20
 [1.0.21]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.20...v1.0.21
+[1.0.22]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.21...v1.0.22

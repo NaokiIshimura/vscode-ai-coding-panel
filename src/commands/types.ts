@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import { PlansProvider, EditorProvider, TerminalProvider } from '../providers';
 import { FileOperationService } from '../services/FileOperationService';
 import { TemplateService } from '../services/TemplateService';
@@ -12,5 +11,4 @@ export interface CommandDependencies {
     terminalProvider: TerminalProvider;
     fileOperationService: FileOperationService;
     templateService: TemplateService;
-    treeView: vscode.TreeView<any>;
 }

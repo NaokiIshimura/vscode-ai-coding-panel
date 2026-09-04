@@ -38,7 +38,7 @@ src/
 │   ├── files.ts          # ファイル操作関連コマンド（12コマンド）
 │   └── index.ts          # 統合コマンドレジストリ
 ├── providers/            # UIコンポーネント
-│   ├── PlansProvider.ts  # Plansビュー（フラットリスト、Drag&Drop）
+│   ├── PlansProvider.ts  # PlansビューのWebView（フラットリスト、Drag&Drop、v1.0.22でWebview化）
 │   ├── EditorProvider.ts # Markdown EditorのWebView（v0.9.1で外部HTML/CSS/JS化）
 │   ├── TerminalProvider.ts # xterm.jsターミナルのWebView（スクロール位置自動追従、Claude Code自動検知、セッション再接続機能付き）
 │   ├── MenuProvider.ts   # 設定メニュー
@@ -69,10 +69,14 @@ src/
         │   ├── index.html  # HTMLテンプレート
         │   ├── style.css   # スタイルシート
         │   └── main.js     # JavaScript
-        └── terminal/     # TerminalProvider用外部ファイル（v0.9.7で追加）
-            ├── index.html  # HTMLテンプレート
+        ├── terminal/     # TerminalProvider用外部ファイル（v0.9.7で追加）
+        │   ├── index.html  # HTMLテンプレート
+        │   ├── style.css   # スタイルシート
+        │   └── main.js     # JavaScript
+        └── plans/        # PlansProvider用外部ファイル（v1.0.22で追加）
+            ├── index.html  # HTMLテンプレート（Quick Startボタン＋一覧＋コンテキストメニュー）
             ├── style.css   # スタイルシート
-            └── main.js     # JavaScript
+            └── main.js     # JavaScript（一覧描画、右クリックメニュー、Drag&Drop、キーボード操作）
 ```
 
 ### Provider間の依存関係
@@ -380,6 +384,48 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `package.json`: 設定スキーマのデフォルト値
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
+
+### v1.0.22大規模改修: Plans ViewのWebview化と「Quick Start」ボタン設置
+
+Plans View（`aiCodingSidebarExplorer`）を `TreeDataProvider` ベースからWebviewベースへ全面移行し、Editor ViewのSpec/Plan/Runと同じ見た目の「Quick Start」ボタンをビュー内に設置：
+
+**方針決定の経緯**
+| 案 | 内容 | 結果 |
+|---|---|---|
+| 案1 | Plans Viewの直前に別Webviewビュー（`plansToolbar`）を追加 | 「新しいviewを追加せずPlans View内に」というフィードバックで却下 |
+| 案2 | TreeView内の先頭にクリック可能な行（`FileItem`）を追加 | 「Editor Viewのようなボタンにしてほしい」というフィードバックで却下 |
+| **案3（採用）** | **Plans View全体をWebview化** | ユーザー選択 |
+
+**技術的背景（なぜWebview化が必須か）**
+- `TreeDataProvider` はツリー行（ラベル＋アイコン）しか描画できず、HTMLボタンを描画できない
+- `TreeView.message` は `string` 型のみ（MarkdownString・コマンドリンク非対応）
+- `contributes.viewsWelcome` はコマンドリンクをボタン描画するが、ツリーが空のときしか表示されない
+- → 本物のボタンを単一ビュー内に置くにはWebview化しか手段がない
+
+**実装内容**
+- `src/providers/PlansProvider.ts`: `vscode.TreeDataProvider` / `vscode.TreeDragAndDropController` の実装をやめ、`vscode.WebviewViewProvider` として再実装
+  - `getChildren()` → `buildItems()`: 表示行を `PlansViewItem`（`kind`/`label`/`filePath`/`icon`/`contextValue` 等を持つ素のオブジェクト）の配列として構築し、`postMessage` でWebviewへ送信。TreeView非依存になったためテストが容易
+  - 削除: `getTreeItem()`, `getParent()`, `onDidChangeTreeData`, `setTreeView()`, `handleDrag()`, `handleDrop()`, `dragMimeTypes`, `dropMimeTypes`
+  - 維持: `setRootPath()`, `getRootPath()`, `getCurrentPath()`, `getActiveFolderPath()`, `setActiveFolder()`, `resetActiveFolder()`, `navigateToDirectory()`, `revealFile()`, `revealDirectory()`, `getSelectedItem()`/`setSelectedItem()`, `refresh()`, `handleVisibilityChange()`, `dispose()`（コマンド側の改修を最小化するため公開APIは互換を保持）
+- `resources/webview/plans/`（新規）: `index.html` / `style.css` / `main.js`。Quick Startボタン、ファイル一覧、コンテキストメニュー、Drag&Drop、キーボード操作（↑↓/Enter）を実装
+- `src/providers/items/FileItem.ts`: アイコン判定を `getFileIconName()` としてエクスポートし、`FileItem`（ThemeIcon）とWebview（codicon）で共通利用
+- `src/extension.ts`: `createTreeView()` を `registerWebviewViewProvider()` に置換。ファイル選択時にEditor Viewで開く処理（旧 `onDidChangeSelection`）を `PlansProvider` のメッセージハンドラへ移設。`selectInitialFolder()` と初期化用 `setTimeout(500)` を削除
+- `src/commands/types.ts` / `src/commands/plans.ts`: `CommandDependencies.treeView` と `selectInitialFolder()` を削除し、`plansProvider.revealDirectory()` に置換
+- `package.json`:
+  - `aiCodingSidebarExplorer` に `"type": "webview"` と `retainContextWhenHidden` を追加
+  - `contributes.menus["view/item/context"]` のPlans View向け25エントリを削除（Webview側のHTMLメニューで実装するため）
+  - `copy-codicons` スクリプトを追加し `vscode:prepublish` に組み込み（`@vscode/codicons` を `media/codicons/` へコピー）
+
+**Webview化に伴う設計上の注意点**
+- **コマンド引数の互換性**: 既存コマンドは `FileItem` を引数に取る。Webviewからは素のオブジェクトしか送れないため、`_createFileItem()` でパスから `FileItem` を復元して `executeCommand` に渡している
+- **`contextValue` の引き継ぎ**: `aiCodingSidebar.archiveDirectory` は `item.contextValue === 'pathDisplayNonRoot'` で「現在表示中のディレクトリ自体か」を判定するため、Webviewから `contextValue` を送信して復元時に設定している（これを忘れるとアーカイブの挙動が変わる）
+- **CSP**: codiconsのttf読み込みのため `font-src {{cspSource}}` が必要
+- **外部ファイルのDrag&Drop**: Webviewではブラウザ由来のFile APIから絶対パスを取得できないため、VS Codeが設定する `text/uri-list` を読み取って処理している
+
+**トレードオフ（Webview化で失われたVS Code標準機能）**
+- ファイルアイコンテーマ連携（codiconsによる固定アイコンで代替）
+- TreeViewの `reveal()` API（`postMessage` による選択通知で代替）
+- `package.json` によるコンテキストメニュー定義（`main.js` の `CONTEXT_MENUS` で代替）
 
 ### v1.0.21バグ修正: Plans View「Quick Start」の作成先ディレクトリ修正
 

@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.22] - 2026-09-05
+
+### Added
+- **Plans View Quick Start Button**: Added a **Quick Start** button at the top of Plans View, shaped like the Run/Plan/Spec buttons in Editor View and rendered in yellow with a ⚡ lightning icon
+  - Replaces the ⚡ icon that previously lived in the Plans View title bar; the underlying `aiCodingSidebar.quickStart` command behavior is unchanged
+- **Plans View Keyboard Navigation**: Added ↑ / ↓ to move the selection and Enter to open the selected item
+
+### Changed
+- **Plans View Rebuilt as a Webview**: Plans View is no longer a VS Code tree view — it is now rendered as a webview so it can host real buttons alongside the file list
+  - The file list, path breadcrumb, `..` parent row, date/time prefixes, editing highlight, sorting, file watching and polling all behave as before
+  - Right-click context menus, hover action icons (Insert Path to Editor / Terminal, Archive, Rename, New PROMPT/TASK/SPEC.md, ...) and drag & drop are reimplemented inside the webview, since they were previously provided by VS Code's tree view
+  - File type icons now come from the bundled `@vscode/codicons` font instead of VS Code's `ThemeIcon`
+
+### Technical
+- **Plans View Internals**: `PlansProvider` now implements `vscode.WebviewViewProvider` instead of `vscode.TreeDataProvider` / `vscode.TreeDragAndDropController`
+  - `getChildren()` was replaced by `buildItems()`, which returns plain objects and is therefore testable without a tree view
+  - The public API used by commands (`setRootPath`, `getCurrentPath`, `navigateToDirectory`, `revealFile`, ...) is unchanged, so command modules needed only minimal updates
+  - Removed `CommandDependencies.treeView` and the `selectInitialFolder()` helper
+  - Removed unused imports in `extension.ts` / `commands/types.ts`, and registered the Menu tree view in `context.subscriptions` so it is disposed correctly
+
 ## [1.0.21] - 2026-09-02
 
 ### Fixed
@@ -2154,3 +2174,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.15...v1.0.16
 [1.0.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.19...v1.0.20
 [1.0.21]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.20...v1.0.21
+[1.0.22]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.21...v1.0.22

@@ -3,12 +3,15 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { PlansProvider } from '../../../providers/PlansProvider';
+import { FileItem } from '../../../providers/items/FileItem';
 import { FileWatcherService } from '../../../services/FileWatcherService';
 
 suite('PlansProvider Integration Test Suite', () => {
 	let plansProvider: PlansProvider;
 	let fileWatcherService: FileWatcherService;
 	const testDir = path.join(__dirname, '../../fixtures/plans');
+	// out/test/suite/providers から拡張機能のルートへ遡る
+	const extensionRoot = path.resolve(__dirname, '../../../..');
 
 	setup(async () => {
 		// テストディレクトリを作成
@@ -19,8 +22,8 @@ suite('PlansProvider Integration Test Suite', () => {
 		// FileWatcherServiceを初期化
 		fileWatcherService = new FileWatcherService();
 
-		// PlansProviderを初期化
-		plansProvider = new PlansProvider(fileWatcherService);
+		// PlansProviderを初期化（WebView初期化なし）
+		plansProvider = new PlansProvider(fileWatcherService, vscode.Uri.file(extensionRoot));
 	});
 
 	teardown(() => {
@@ -32,6 +35,23 @@ suite('PlansProvider Integration Test Suite', () => {
 			fs.rmSync(testDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 		}
 	});
+
+	/**
+	 * refresh()の呼び出しを記録するスパイを仕掛ける
+	 * Webview化により onDidChangeTreeData が無くなったため、更新契機の検証に使用する
+	 */
+	function spyOnRefresh(): { calledCount: () => number; restore: () => void } {
+		const original = plansProvider.refresh.bind(plansProvider);
+		let count = 0;
+		(plansProvider as any).refresh = (targetPath?: string) => {
+			count++;
+			original(targetPath);
+		};
+		return {
+			calledCount: () => count,
+			restore: () => { (plansProvider as any).refresh = original; }
+		};
+	}
 
 	suite('setRootPath', () => {
 		test('Should set root path and activate folder', async () => {
@@ -56,25 +76,36 @@ suite('PlansProvider Integration Test Suite', () => {
 			const nonExistentPath = path.join(testDir, 'nonexistent');
 			await plansProvider.setRootPath(nonExistentPath);
 
-			// パスが見つからない場合、createDirectoryButtonが表示される
-			const children = await plansProvider.getChildren();
-			assert.ok(children.length > 0);
+			// パスが見つからない場合、作成ボタンが表示される
+			const items = await plansProvider.buildItems();
+			assert.strictEqual(items.length, 1);
+			assert.strictEqual(items[0].kind, 'createDirectory');
+			assert.strictEqual(items[0].contextValue, 'createDirectoryButton');
 		});
 	});
 
-	suite('getChildren', () => {
+	suite('buildItems', () => {
 		test('Should return empty array when no root path is set', async () => {
-			const children = await plansProvider.getChildren();
-			assert.strictEqual(children.length, 0);
+			const items = await plansProvider.buildItems();
+			assert.strictEqual(items.length, 0);
 		});
 
-		test('Should return path display item when root path is set', async () => {
+		test('Should return path display item as the first item', async () => {
 			await plansProvider.setRootPath(testDir);
 
-			const children = await plansProvider.getChildren();
-			assert.ok(children.length > 0);
-			// 最初のアイテムはパス表示アイテム
-			assert.strictEqual(children[0].contextValue, 'pathDisplay');
+			const items = await plansProvider.buildItems();
+			assert.ok(items.length > 0);
+			// Quick StartはHTMLボタンになったため、一覧の先頭はパス表示アイテム
+			assert.strictEqual(items[0].kind, 'path');
+			assert.strictEqual(items[0].contextValue, 'pathDisplay');
+		});
+
+		test('Should not include a Quick Start row (it is an HTML button now)', async () => {
+			await plansProvider.setRootPath(testDir);
+
+			const items = await plansProvider.buildItems();
+			const quickStartRow = items.find(item => item.label === 'Quick Start');
+			assert.strictEqual(quickStartRow, undefined);
 		});
 
 		test('Should return parent directory item when not at root', async () => {
@@ -85,11 +116,23 @@ suite('PlansProvider Integration Test Suite', () => {
 			await plansProvider.setRootPath(testDir);
 			plansProvider.setActiveFolder(subDir);
 
-			const children = await plansProvider.getChildren();
-			// パス表示アイテムと親ディレクトリアイテムが存在する
-			const parentItem = children.find(item => item.contextValue === 'parentDirectory');
+			const items = await plansProvider.buildItems();
+			const parentItem = items.find(item => item.kind === 'parent');
 			assert.ok(parentItem);
-			assert.strictEqual(parentItem.label, '..');
+			assert.strictEqual(parentItem!.label, '..');
+			assert.strictEqual(parentItem!.filePath, testDir);
+		});
+
+		test('Should mark the path display item as non-root in a subdirectory', async () => {
+			const subDir = path.join(testDir, 'subdir');
+			fs.mkdirSync(subDir, { recursive: true });
+
+			await plansProvider.setRootPath(testDir);
+			plansProvider.setActiveFolder(subDir);
+
+			const items = await plansProvider.buildItems();
+			// archiveDirectoryコマンドが 'pathDisplayNonRoot' を判定するため重要
+			assert.strictEqual(items[0].contextValue, 'pathDisplayNonRoot');
 		});
 
 		test('Should list files and directories', async () => {
@@ -99,43 +142,90 @@ suite('PlansProvider Integration Test Suite', () => {
 
 			await plansProvider.setRootPath(testDir);
 
-			const children = await plansProvider.getChildren();
+			const items = await plansProvider.buildItems();
 			// パス表示アイテム + ファイル + ディレクトリ
-			assert.ok(children.length >= 3);
+			assert.ok(items.length >= 3);
 
-			const fileItem = children.find(item => item.filePath === path.join(testDir, 'test.md'));
-			const dirItem = children.find(item => item.filePath === path.join(testDir, 'testDir'));
+			const fileItem = items.find(item => item.filePath === path.join(testDir, 'test.md'));
+			const dirItem = items.find(item => item.filePath === path.join(testDir, 'testDir'));
 
 			assert.ok(fileItem);
 			assert.ok(dirItem);
-			assert.strictEqual(fileItem!.isDirectory, false);
-			assert.strictEqual(dirItem!.isDirectory, true);
+			assert.strictEqual(fileItem!.kind, 'file');
+			assert.strictEqual(dirItem!.kind, 'directory');
+			assert.strictEqual(dirItem!.contextValue, 'directory');
+			assert.strictEqual(fileItem!.contextValue, 'file');
 		});
 
-		test('Should return empty array for element parameter (flat list)', async () => {
+		test('Should assign an edit icon to Editor View target files', async () => {
+			fs.writeFileSync(path.join(testDir, '2026_0101_0101_01_PROMPT.md'), 'content', 'utf8');
+			fs.writeFileSync(path.join(testDir, 'other.md'), 'content', 'utf8');
+
 			await plansProvider.setRootPath(testDir);
 
-			// elementが指定された場合は空配列を返す（フラットリスト形式のため）
-			const mockElement = {
-				label: 'test',
-				filePath: testDir,
-				isDirectory: true
-			} as any;
+			const items = await plansProvider.buildItems();
+			const promptItem = items.find(item => item.label === '2026_0101_0101_01_PROMPT.md');
+			const otherItem = items.find(item => item.label === 'other.md');
 
-			const children = await plansProvider.getChildren(mockElement);
-			assert.strictEqual(children.length, 0);
+			assert.strictEqual(promptItem!.icon, 'edit');
+			assert.strictEqual(otherItem!.icon, 'markdown');
 		});
 	});
 
-	suite('getTreeItem', () => {
-		test('Should return the element as-is', async () => {
-			await plansProvider.setRootPath(testDir);
+	suite('webview inline actions', () => {
+		// TreeViewの view/item/context inline グループをWebviewへ移植した際に
+		// これらのアクションが欠落した不具合があったため、定義の存在を検証する
+		const mainJsPath = path.join(extensionRoot, 'resources', 'webview', 'plans', 'main.js');
 
-			const children = await plansProvider.getChildren();
-			const firstItem = children[0];
+		test('Should define inline actions for file rows', () => {
+			const mainJs = fs.readFileSync(mainJsPath, 'utf8');
+			const inlineActionsBlock = mainJs.slice(
+				mainJs.indexOf('const INLINE_ACTIONS'),
+				mainJs.indexOf('quickStartButton.addEventListener')
+			);
 
-			const treeItem = plansProvider.getTreeItem(firstItem);
-			assert.strictEqual(treeItem, firstItem);
+			assert.ok(inlineActionsBlock.includes('aiCodingSidebar.insertPathToEditor'));
+			assert.ok(inlineActionsBlock.includes('aiCodingSidebar.insertPathToTerminal'));
+		});
+
+		test('Should define inline actions for path and directory rows', () => {
+			const mainJs = fs.readFileSync(mainJsPath, 'utf8');
+			const inlineActionsBlock = mainJs.slice(
+				mainJs.indexOf('const INLINE_ACTIONS'),
+				mainJs.indexOf('quickStartButton.addEventListener')
+			);
+
+			for (const command of [
+				'aiCodingSidebar.createMarkdownFile',
+				'aiCodingSidebar.createTaskFile',
+				'aiCodingSidebar.createSpecFile',
+				'aiCodingSidebar.addDirectory',
+				'aiCodingSidebar.copyRelativePath',
+				'aiCodingSidebar.rename',
+				'aiCodingSidebar.archiveDirectory',
+				'aiCodingSidebar.showInPanel'
+			]) {
+				assert.ok(inlineActionsBlock.includes(command), `${command} should have an inline action`);
+			}
+		});
+	});
+
+	suite('webview html', () => {
+		test('Should render the Quick Start button and resolve template variables', async () => {
+			const webview = {
+				cspSource: 'vscode-webview://test',
+				asWebviewUri: (uri: vscode.Uri) => uri
+			} as unknown as vscode.Webview;
+
+			const html = await (plansProvider as any)._getHtmlForWebview(webview);
+
+			assert.ok(html.includes('quick-start-button'));
+			assert.ok(html.includes('Quick Start'));
+			// テンプレート変数が全て置換されていること
+			assert.ok(!html.includes('{{cspSource}}'));
+			assert.ok(!html.includes('{{styleUri}}'));
+			assert.ok(!html.includes('{{scriptUri}}'));
+			assert.ok(!html.includes('{{codiconsUri}}'));
 		});
 	});
 
@@ -163,23 +253,21 @@ suite('PlansProvider Integration Test Suite', () => {
 			const currentPath = plansProvider.getCurrentPath();
 			assert.strictEqual(currentPath, subDir);
 		});
+
+		test('Should ignore folders outside of the root path', async () => {
+			await plansProvider.setRootPath(testDir);
+			plansProvider.setActiveFolder('/tmp/outside-of-root');
+
+			assert.strictEqual(plansProvider.getActiveFolderPath(), testDir);
+		});
 	});
 
 	suite('refresh', () => {
-		test('Should fire onDidChangeTreeData event', (done) => {
-			const disposable = plansProvider.onDidChangeTreeData(() => {
-				disposable.dispose();
-				done();
-			});
-
-			plansProvider.refresh();
-		});
-
 		test('Should clear cache on full refresh', async () => {
 			await plansProvider.setRootPath(testDir);
 
 			// 初回読み込みでキャッシュを構築
-			await plansProvider.getChildren();
+			await plansProvider.buildItems();
 
 			// 新しいファイルを作成
 			fs.writeFileSync(path.join(testDir, 'new.md'), 'content', 'utf8');
@@ -188,9 +276,17 @@ suite('PlansProvider Integration Test Suite', () => {
 			plansProvider.refresh();
 
 			// キャッシュがクリアされているので新しいファイルが表示される
-			const children = await plansProvider.getChildren();
-			const newFile = children.find(item => item.filePath === path.join(testDir, 'new.md'));
+			const items = await plansProvider.buildItems();
+			const newFile = items.find(item => item.filePath === path.join(testDir, 'new.md'));
 			assert.ok(newFile);
+		});
+
+		test('Should not throw when no webview is resolved', async () => {
+			await plansProvider.setRootPath(testDir);
+
+			assert.doesNotThrow(() => {
+				plansProvider.refresh();
+			});
 		});
 	});
 
@@ -220,28 +316,61 @@ suite('PlansProvider Integration Test Suite', () => {
 	});
 
 	suite('selected item management', () => {
-		test('Should set and get selected item', async () => {
-			await plansProvider.setRootPath(testDir);
+		test('Should set and get selected item', () => {
+			const item = new FileItem(
+				'test.md',
+				vscode.TreeItemCollapsibleState.None,
+				path.join(testDir, 'test.md'),
+				false,
+				0,
+				new Date(),
+				new Date()
+			);
 
-			const children = await plansProvider.getChildren();
-			const firstItem = children[0];
+			plansProvider.setSelectedItem(item);
 
-			plansProvider.setSelectedItem(firstItem);
-
-			const selectedItem = plansProvider.getSelectedItem();
-			assert.strictEqual(selectedItem, firstItem);
+			assert.strictEqual(plansProvider.getSelectedItem(), item);
 		});
 
-		test('Should clear selected item', async () => {
-			await plansProvider.setRootPath(testDir);
+		test('Should clear selected item', () => {
+			const item = new FileItem(
+				'test.md',
+				vscode.TreeItemCollapsibleState.None,
+				path.join(testDir, 'test.md'),
+				false,
+				0,
+				new Date(),
+				new Date()
+			);
 
-			const children = await plansProvider.getChildren();
-			plansProvider.setSelectedItem(children[0]);
-
+			plansProvider.setSelectedItem(item);
 			plansProvider.setSelectedItem(undefined);
 
-			const selectedItem = plansProvider.getSelectedItem();
-			assert.strictEqual(selectedItem, undefined);
+			assert.strictEqual(plansProvider.getSelectedItem(), undefined);
+		});
+	});
+
+	suite('_createFileItem', () => {
+		test('Should preserve the given contextValue for archiveDirectory', async () => {
+			const subDir = path.join(testDir, 'subdir');
+			fs.mkdirSync(subDir, { recursive: true });
+
+			const item = await (plansProvider as any)._createFileItem(subDir, true, 'subdir', 'pathDisplayNonRoot');
+
+			// archiveDirectoryコマンドが contextValue で現在ディレクトリか判定するため
+			assert.strictEqual(item.contextValue, 'pathDisplayNonRoot');
+			assert.strictEqual(item.filePath, subDir);
+			assert.strictEqual(item.isDirectory, true);
+		});
+
+		test('Should fall back to the default contextValue when not given', async () => {
+			const filePath = path.join(testDir, 'test.md');
+			fs.writeFileSync(filePath, 'content', 'utf8');
+
+			const item = await (plansProvider as any)._createFileItem(filePath, false);
+
+			assert.strictEqual(item.contextValue, 'file');
+			assert.strictEqual(item.isDirectory, false);
 		});
 	});
 
@@ -279,13 +408,12 @@ suite('PlansProvider Integration Test Suite', () => {
 
 			await plansProvider.setRootPath(testDir);
 
-			const children = await plansProvider.getChildren();
-			const fileItem = children.find(item => item.filePath === path.join(testDir, 'test.md'));
+			const items = await plansProvider.buildItems();
+			const fileItem = items.find(item => item.filePath === path.join(testDir, 'test.md'));
 
 			assert.ok(fileItem);
 			// ルートディレクトリのファイルはプレフィックスなし
-			const label = (fileItem as vscode.TreeItem).label;
-			assert.strictEqual(label, 'test.md');
+			assert.strictEqual(fileItem!.label, 'test.md');
 		});
 
 		test('Should display date/time prefix for directories in root directory', async () => {
@@ -293,15 +421,13 @@ suite('PlansProvider Integration Test Suite', () => {
 
 			await plansProvider.setRootPath(testDir);
 
-			const children = await plansProvider.getChildren();
-			const dirItem = children.find(item => item.filePath === path.join(testDir, 'subdir'));
+			const items = await plansProvider.buildItems();
+			const dirItem = items.find(item => item.filePath === path.join(testDir, 'subdir'));
 
 			assert.ok(dirItem);
-			// ルートディレクトリのディレクトリもプレフィックス付き文字列ラベル
-			const label = (dirItem as vscode.TreeItem).label as string;
-			assert.ok(typeof label === 'string');
-			assert.ok(label.endsWith('subdir'));
-			assert.ok(label.startsWith('['));
+			// ルートディレクトリのディレクトリはプレフィックス付きラベル
+			assert.ok(dirItem!.label.endsWith('subdir'));
+			assert.ok(dirItem!.label.startsWith('['));
 		});
 
 		test('Should not display date/time prefix for files in subdirectory', async () => {
@@ -312,28 +438,12 @@ suite('PlansProvider Integration Test Suite', () => {
 			await plansProvider.setRootPath(testDir);
 			plansProvider.setActiveFolder(subDir);
 
-			const children = await plansProvider.getChildren();
-			const fileItem = children.find(item => item.filePath === path.join(subDir, 'sub.md'));
+			const items = await plansProvider.buildItems();
+			const fileItem = items.find(item => item.filePath === path.join(subDir, 'sub.md'));
 
 			assert.ok(fileItem);
-			// サブディレクトリのファイルはプレフィックスなし（文字列のまま）
-			const label = (fileItem as vscode.TreeItem).label;
-			assert.strictEqual(label, 'sub.md');
-		});
-	});
-
-	suite('onDidChangeTreeData', () => {
-		test('Should be defined', () => {
-			assert.ok(plansProvider.onDidChangeTreeData);
-		});
-
-		test('Should allow event subscription', () => {
-			const disposable = plansProvider.onDidChangeTreeData(() => {
-				// Event handler
-			});
-
-			assert.ok(disposable);
-			disposable.dispose();
+			// サブディレクトリのファイルはプレフィックスなし
+			assert.strictEqual(fileItem!.label, 'sub.md');
 		});
 	});
 
@@ -358,16 +468,13 @@ suite('PlansProvider Integration Test Suite', () => {
 			assert.strictEqual(timer, undefined, 'Polling timer should be cleared on dispose');
 		});
 
-		test('Should fire onDidChangeTreeData when directory changes during polling', async () => {
+		test('Should refresh when directory changes during polling', async () => {
 			await plansProvider.setRootPath(testDir);
 
 			// ポーリングの初期スナップショットを確定させる
 			await (plansProvider as any)._pollDirectory();
 
-			let eventFired = false;
-			const disposable = plansProvider.onDidChangeTreeData(() => {
-				eventFired = true;
-			});
+			const spy = spyOnRefresh();
 
 			// ファイルを追加してディレクトリを変化させる
 			fs.writeFileSync(path.join(testDir, 'polling_test.md'), 'content', 'utf8');
@@ -375,27 +482,24 @@ suite('PlansProvider Integration Test Suite', () => {
 			// _pollDirectoryを直接呼び出して変化を検知させる
 			await (plansProvider as any)._pollDirectory();
 
-			disposable.dispose();
-			assert.ok(eventFired, 'onDidChangeTreeData should fire when directory content changes');
+			spy.restore();
+			assert.ok(spy.calledCount() > 0, 'refresh should be called when directory content changes');
 		});
 
-		test('Should not fire onDidChangeTreeData when directory is unchanged', async () => {
+		test('Should not refresh when directory is unchanged', async () => {
 			await plansProvider.setRootPath(testDir);
 			fs.writeFileSync(path.join(testDir, 'stable.md'), 'content', 'utf8');
 
 			// 初回ポーリングでスナップショットを確定させる
 			await (plansProvider as any)._pollDirectory();
 
-			let eventFired = false;
-			const disposable = plansProvider.onDidChangeTreeData(() => {
-				eventFired = true;
-			});
+			const spy = spyOnRefresh();
 
 			// 2回目のポーリング（変化なし）
 			await (plansProvider as any)._pollDirectory();
 
-			disposable.dispose();
-			assert.strictEqual(eventFired, false, 'onDidChangeTreeData should not fire when directory is unchanged');
+			spy.restore();
+			assert.strictEqual(spy.calledCount(), 0, 'refresh should not be called when directory is unchanged');
 		});
 
 		test('Should reset snapshot when navigating to directory', async () => {

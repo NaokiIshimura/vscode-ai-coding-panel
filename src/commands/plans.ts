@@ -14,7 +14,7 @@ export function registerPlansCommands(
     context: vscode.ExtensionContext,
     deps: CommandDependencies
 ): void {
-    const { plansProvider, editorProvider, fileOperationService, treeView } = deps;
+    const { plansProvider, editorProvider, fileOperationService } = deps;
     const configProvider = new ConfigurationProvider();
 
     // 1. refresh - ビューの更新
@@ -140,9 +140,7 @@ export function registerPlansCommands(
 
                 // 設定したフォルダを選択状態にする（存在する場合のみ）
                 if (pathExists) {
-                    setTimeout(async () => {
-                        await selectInitialFolder(treeView, targetPath);
-                    }, 300);
+                    await plansProvider.revealDirectory(targetPath);
                 }
             }
         })
@@ -561,9 +559,6 @@ export function registerPlansCommands(
                     vscode.window.showWarningMessage(`Directory created but failed to create initial prompt file: ${fileError}`);
                 }
 
-                setTimeout(async () => {
-                    await selectInitialFolder(treeView, targetPath);
-                }, 500);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to create directory: ${error}`);
             }
@@ -642,25 +637,4 @@ export function registerPlansCommands(
             }
         })
     );
-}
-
-/**
- * 初期フォルダを選択する関数
- */
-async function selectInitialFolder(treeView: vscode.TreeView<FileItem>, rootPath: string): Promise<void> {
-    try {
-        const rootItem = new FileItem(
-            path.basename(rootPath),
-            vscode.TreeItemCollapsibleState.Expanded,
-            rootPath,
-            true,
-            0,
-            new Date(),
-            new Date()
-        );
-
-        await treeView.reveal(rootItem, { select: true, focus: false, expand: true });
-    } catch (error) {
-        console.error('Failed to select initial folder:', error);
-    }
 }

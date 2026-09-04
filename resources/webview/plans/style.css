@@ -1,0 +1,204 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    color: var(--vscode-foreground);
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    background-color: var(--vscode-sideBar-background);
+}
+
+/* ヘッダー（Editor Viewのボタン領域と同じ見た目） */
+#header {
+    padding: 8px;
+    background-color: var(--vscode-sideBar-background);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.quick-start-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    line-height: 16px;
+    font-family: inherit;
+    /* 黄色は明るい色のため、テーマに関わらず濃い文字色でコントラストを確保する */
+    background-color: #e5b700;
+    color: #1f1f1f;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.quick-start-button:hover {
+    background-color: #f5c518;
+}
+
+.quick-start-button .codicon {
+    font-size: 14px;
+    line-height: 16px;
+}
+
+.quick-start-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ファイル一覧 */
+#list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    outline: none;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px;
+    height: 22px;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.row:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.row.selected {
+    background-color: var(--vscode-list-inactiveSelectionBackground);
+}
+
+#list:focus-within .row.selected {
+    background-color: var(--vscode-list-activeSelectionBackground);
+    color: var(--vscode-list-activeSelectionForeground);
+}
+
+.row.drop-target {
+    background-color: var(--vscode-list-dropBackground);
+}
+
+.row .codicon {
+    flex-shrink: 0;
+    font-size: 16px;
+}
+
+.row .label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.row .description {
+    margin-left: 4px;
+    min-width: 0;
+    opacity: 0.7;
+    font-size: 0.9em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 行ホバー時のインラインアクション（旧TreeViewのinlineグループ相当） */
+.row-actions {
+    display: none;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    padding-left: 4px;
+    flex-shrink: 0;
+}
+
+.row:hover .row-actions,
+.row.selected .row-actions {
+    display: flex;
+}
+
+.row-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.row-action:hover {
+    background-color: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+}
+
+.row-action .codicon {
+    font-size: 14px;
+}
+
+.row.editing .label {
+    color: var(--vscode-list-highlightForeground);
+    font-weight: 600;
+}
+
+/* パス表示行 */
+.row.path {
+    font-weight: 600;
+}
+
+/* 空状態・エラー表示 */
+.message {
+    padding: 8px;
+    opacity: 0.8;
+    white-space: normal;
+}
+
+/* コンテキストメニュー */
+.context-menu {
+    position: fixed;
+    z-index: 100;
+    min-width: 160px;
+    padding: 4px 0;
+    background-color: var(--vscode-menu-background, var(--vscode-editor-background));
+    color: var(--vscode-menu-foreground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    border-radius: 4px;
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
+}
+
+.context-menu.hidden {
+    display: none;
+}
+
+.context-menu-item {
+    padding: 4px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.context-menu-item:hover {
+    background-color: var(--vscode-menu-selectionBackground, var(--vscode-list-activeSelectionBackground));
+    color: var(--vscode-menu-selectionForeground, var(--vscode-list-activeSelectionForeground));
+}
+
+.context-menu-separator {
+    height: 1px;
+    margin: 4px 0;
+    background-color: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+}

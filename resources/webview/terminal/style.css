@@ -1,4 +1,6 @@
 html, body {
+    /* ボタン設置領域の高さ（Plans / Editor / Terminal の各Viewで共通） */
+    --button-bar-height: 36px;
     margin: 0;
     padding: 0;
     height: 100%;
@@ -22,7 +24,7 @@ body.focused {
     box-sizing: border-box;
 }
 .header-row-1 {
-    height: 33px;
+    min-height: var(--button-bar-height);
     padding: 0 4px;
     display: flex;
     align-items: center;
@@ -30,10 +32,13 @@ body.focused {
     box-sizing: border-box;
 }
 .header-row-2 {
-    padding: 4px 8px;
+    min-height: var(--button-bar-height);
+    padding: 0 8px;
     display: flex;
+    align-items: center;
     gap: 4px;
     border-top: 1px solid var(--vscode-panel-border);
+    box-sizing: border-box;
 }
 .shortcut-group {
     display: flex;
@@ -181,14 +186,15 @@ body.focused {
     background-color: var(--vscode-inputValidation-errorBackground, #5a1d1d);
 }
 #terminals-container {
-    height: calc(100% - 33px - 29px);
+    /* ヘッダー2行 + #header の border-bottom を差し引く */
+    height: calc(100% - var(--button-bar-height) * 2 - 1px);
     width: 100%;
     position: relative;
     overflow: hidden;
 }
 #terminal-overlay {
     position: absolute;
-    top: 62px;
+    top: calc(var(--button-bar-height) * 2 + 1px);
     left: 0;
     right: 0;
     bottom: 0;

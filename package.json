@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.0.22",
+  "version": "1.1.0",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -304,44 +304,19 @@
     "menus": {
       "view/title": [
         {
-          "command": "aiCodingSidebar.newDirectory",
-          "when": "view == aiCodingSidebarExplorer",
-          "group": "navigation@1"
-        },
-        {
-          "command": "aiCodingSidebar.newSpec",
-          "when": "view == aiCodingSidebarExplorer",
-          "group": "navigation@2"
-        },
-        {
           "command": "aiCodingSidebar.refresh",
           "when": "view == aiCodingSidebarExplorer",
-          "group": "navigation@3"
+          "group": "navigation@1"
         },
         {
           "command": "aiCodingSidebar.openPlansSettings",
           "when": "view == aiCodingSidebarExplorer",
-          "group": "navigation@4"
-        },
-        {
-          "command": "aiCodingSidebar.createMarkdownFile",
-          "when": "view == markdownEditor",
-          "group": "navigation@1"
-        },
-        {
-          "command": "aiCodingSidebar.createTaskFile",
-          "when": "view == markdownEditor",
           "group": "navigation@2"
-        },
-        {
-          "command": "aiCodingSidebar.createSpecFile",
-          "when": "view == markdownEditor",
-          "group": "navigation@3"
         },
         {
           "command": "aiCodingSidebar.openEditorSettings",
           "when": "view == markdownEditor",
-          "group": "navigation@4"
+          "group": "navigation@1"
         },
         {
           "command": "aiCodingSidebar.openTerminalSettings",

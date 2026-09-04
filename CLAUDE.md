@@ -385,6 +385,39 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.0変更: ヘッダーボタンの整理とEditor View「Next」ボタンの追加
+
+VS Codeのタイトルバーに散在していたファイル作成系ボタンを整理し、Editor View内に「Next」ボタンを新設：
+
+**タイトルバーボタンの削除（`package.json` の `contributes.menus["view/title"]`）**
+
+| ビュー | 削除したボタン | コマンドID | 代替手段 |
+|---|---|---|---|
+| Plans View | New Task | `aiCodingSidebar.newDirectory` | `Cmd+S` / `Ctrl+S` |
+| Plans View | New Spec | `aiCodingSidebar.newSpec` | なし（コマンド登録のみ残存） |
+| Editor View | New PROMPT.md | `aiCodingSidebar.createMarkdownFile` | Nextボタン、`Cmd+M` / `Ctrl+M`、Plans Viewのコンテキストメニュー |
+| Editor View | New TASK.md | `aiCodingSidebar.createTaskFile` | Plans Viewのコンテキストメニュー |
+| Editor View | New SPEC.md | `aiCodingSidebar.createSpecFile` | Plans Viewのコンテキストメニュー |
+
+- コマンド定義（`contributes.commands`）と `registerCommand` は削除していない。Plans ViewのWebviewコンテキストメニュー（`resources/webview/plans/main.js` の `CONTEXT_MENUS`）とキーバインドから引き続き実行されるため
+- 残るタイトルバーボタンは Plans View が `Refresh` / `Plans Settings`、Editor View が `Editor Settings` のみ
+
+**Editor View「Next」ボタンの追加**
+- `resources/webview/editor/index.html`: `#header` の下に `#sub-header` 領域を新設し、赤い `Next` ボタン（`#next-button`）を配置
+- `resources/webview/editor/main.js`: クリック時に `{ type: 'createMarkdownFile' }` を postMessage。`EditorProvider` 側の既存ハンドラがそのまま `aiCodingSidebar.createMarkdownFile` を実行するため、TypeScript側の変更は不要だった
+- 色は `#dc3545`（ホバー `#c82333`）。Spec（紫）/ Plan（緑）/ Run（青）/ Save dirty（橙）/ Quick Start（黄）と重複しない色として選定
+- 検討段階で codicon（`codicon-arrow-right` → `codicon-arrow-down`）を試したが最終的にアイコンなしとしたため、Editor ViewのCSPと `codiconsUri` の受け渡しはアイコン追加前の状態に戻してある（codiconはPlans Viewのみで使用）
+
+**ボタン設置領域の高さ統一（36px）**
+- 各Webviewの CSS に `--button-bar-height: 36px` を定義し、ボタン行に `min-height` + `box-sizing: border-box` を適用。縦paddingをやめて `align-items: center` で中央揃えにしている
+- 対象: Plans `#header` / Editor `#header`・`#sub-header` / Terminal `.header-row-1`・`.header-row-2`
+- Terminal View にはヘッダー高さをハードコードした計算（`#terminals-container` の `calc(100% - 33px - 29px)`、`#terminal-overlay` の `top: 62px`）があり、実際の描画高さに追従していなかったため、`--button-bar-height` ベース（+ `#header` のborder 1px）に修正した
+
+**Plans Viewのrootディレクトリでの自動選択を停止**
+- `PlansProvider.navigateToDirectory()` の末尾にある「最も古い対象ファイル（TASK/PROMPT/SPEC/QUICK_START.md）を自動選択してEditor Viewに表示する」処理を、移動先がrootの場合はスキップ
+- 判定用に `_isRootDirectory()` を追加。既存の `startsWith` による範囲チェックとは別に `path.resolve()` で正規化して比較する
+- 「..」で親へ戻る操作も `navigateToDirectory()` を経由するため、この1箇所でカバーできる
+
 ### v1.0.22大規模改修: Plans ViewのWebview化と「Quick Start」ボタン設置
 
 Plans View（`aiCodingSidebarExplorer`）を `TreeDataProvider` ベースからWebviewベースへ全面移行し、Editor ViewのSpec/Plan/Runと同じ見た目の「Quick Start」ボタンをビュー内に設置：

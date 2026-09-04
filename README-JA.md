@@ -35,7 +35,7 @@ Claude Codeでの生産性を最大化するために設計された、強力な
 | --- | --- |
 | フラットリスト表示 | 現在のディレクトリの内容のみを表示（ツリー構造ではない） |
 | ディレクトリナビゲーション | ディレクトリをクリックでそのディレクトリに移動。".."で親ディレクトリに戻る |
-| 自動ファイル選択 | ディレクトリに移動した際に、最も古いTASK.md、PROMPT.md、SPEC.md、QUICK_START.mdファイルを自動的に選択して表示 |
+| 自動ファイル選択 | サブディレクトリに移動した際に、最も古いTASK.md、PROMPT.md、SPEC.md、QUICK_START.mdファイルを自動的に選択して表示。rootディレクトリに戻った場合は何も選択せず、タスク一覧としての表示を維持 |
 | **初期プロンプト付きディレクトリ作成** | 「Create directory」ボタンで`.claude/plans`ディレクトリと初期プロンプトファイル（`YYYY_MMDD_HHMM_SS_PROMPT.md`）を自動作成。Run/Plan/Specボタンの使い方を説明するテンプレート付き。ファイルは自動的にEditor Viewで開かれる |
 | **Quick Start** | ビュー最上部の⚡ Quick Startボタンで、フォルダ名を入力せずにタイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成。すぐにタスクを書き始めたいときに便利 |
 | パス表示 | 現在のパスをリストの先頭アイテムとして表示（New PROMPT.md、New TASK.md、New SPEC.md、Copy、Rename、New Directory、Archiveボタン付き） |
@@ -57,7 +57,7 @@ Markdownプロンプトファイルを編集し、パネルから直接Claude Co
 | **自動ターミナル統合** | コマンドはTerminalビューに送信され、シームレスなワークフローのためにファイル-タブの自動関連付けが行われる |
 | 自動表示 | タイムスタンプ形式のMarkdownファイル（形式: `YYYY_MMDD_HHMM_SS_PROMPT.md`、`..._TASK.md`、`..._SPEC.md`、`..._QUICK_START.md`）を選択すると自動的に表示。その他のMarkdownファイルは通常のエディタで開く |
 | Saveボタン | ヘッダーに表示され、未保存の変更がある場合は色が変わる。ファイル未開時は現在のPlansディレクトリに新規作成 |
-| 新規ファイルボタン | ヘッダーからPROMPT.md、TASK.md、SPEC.mdファイルを作成。PROMPT.mdは`Cmd+M` / `Ctrl+M`でも作成可能 |
+| **Nextボタン** | Run/Plan/Specボタンの下段に配置された赤い**Next**ボタン。タイムスタンプ付きの`PROMPT.md`を新規作成して開くため、Editorから離れずに次のプロンプトへ進める。`Cmd+M` / `Ctrl+M`でも実行可能 |
 | カスタマイズ可能なコマンド | ワークフローに合わせてRun、Plan、Specコマンドを設定で変更可能 |
 | 読み取り専用モード | VSCodeエディタでファイルがアクティブになると自動的に読み取り専用モードに切り替わる |
 | 自動保存 | ファイル切替、ディレクトリ移動、ビューを閉じる際に自動保存 |
@@ -100,8 +100,8 @@ Claude Code向けに設計された、インテリジェントな自動化とコ
 ## 典型的なClaude Codeワークフロー
 
 ### 1. タスクの作成
-1. Plansタイトルメニューのロケットアイコン🚀をクリックして新しいタスクディレクトリを作成
-2. タイムスタンプ付きのTASK.mdファイルがEditorビューで開く
+1. Plansビュー最上部の⚡ Quick Startボタンをクリックして新しいタスクディレクトリを作成
+2. タイムスタンプ付きのQUICK_START.mdファイルがEditorビューで開く
 3. タスクの説明や要件を記述
 
 ### 2. Claude Codeで実行
@@ -138,7 +138,7 @@ Claude Code向けに設計された、インテリジェントな自動化とコ
 
 ### 基本操作
 1. アクティビティバーの「AI Coding Panel」アイコンをクリック（または`Cmd+Shift+A` / `Ctrl+Shift+A`を押す）
-2. Plansのロケットアイコン🚀をクリックして、TASK.mdファイル付きの新しいタスクディレクトリを作成
+2. Plans最上部の⚡ Quick Startボタンをクリックして、QUICK_START.mdファイル付きの新しいタスクディレクトリを作成
 3. Editorビューでタスクの説明や要件を記述
 4. `Cmd+R` / `Ctrl+R`を押してClaude Codeでタスクを実行
 5. TerminalビューでClaude Codeの進捗を監視
@@ -210,11 +210,11 @@ created: {{datetime}}
 | 項目 | 手順 |
 | --- | --- |
 | Quick Start | Plans View最上部の⚡ Quick Startボタンをクリック<br>フォルダ名の入力を求めずに、タイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成します<br>作成されたファイルはEditor Viewで開かれ、Plansで選択状態になります。同名ディレクトリが既に存在する場合は連番サフィックス（`_2`, `_3`, ...）が付与されます |
-| New Task | Plansのタイトルメニューにあるロケットアイコンをクリック<br>Plans Viewで現在開いているディレクトリ配下に新しいディレクトリを作成し、タイムスタンプ付きのMarkdownファイルを自動生成します<br>作成されたファイルはPlansで「editing」ラベルとともに選択され、Editor Viewで開かれます<br>現在のパスが取得できない場合は、デフォルトパス配下に作成されます |
+| New Task | パネルにフォーカスした状態で`Cmd+S` / `Ctrl+S`を押す<br>Plans Viewで現在開いているディレクトリ配下に新しいディレクトリを作成し、タイムスタンプ付きのMarkdownファイルを自動生成します<br>作成されたファイルはPlansで「editing」ラベルとともに選択され、Editor Viewで開かれます<br>現在のパスが取得できない場合は、デフォルトパス配下に作成されます |
 | 新規ディレクトリ | パス表示行のフォルダアイコンをクリック<br>現在開いているディレクトリ配下に新しいディレクトリを作成します（Markdownファイルは作成しない） |
-| PROMPT.md作成 | パス表示行またはEditorヘッダーのファイルアイコンをクリック<br>タイムスタンプ付きのMarkdownファイルが作成され、Editor Viewで開かれます（例: `2025_1229_1430_25_PROMPT.md`） |
-| TASK.md作成 | パス表示行またはEditorヘッダーのTASK.mdアイコンをクリック<br>タイムスタンプ付きのTASK.mdファイルが作成され、Editor Viewで開かれます |
-| SPEC.md作成 | パス表示行またはEditorヘッダーのSPEC.mdアイコンをクリック<br>タイムスタンプ付きのSPEC.mdファイルが作成され、Editor Viewで開かれます |
+| PROMPT.md作成 | Editor Viewの**Next**ボタン、パス表示行のファイルアイコン、または`Cmd+M` / `Ctrl+M`<br>タイムスタンプ付きのMarkdownファイルが作成され、Editor Viewで開かれます（例: `2025_1229_1430_25_PROMPT.md`） |
+| TASK.md作成 | パス表示行のTASK.mdアイコンをクリック<br>タイムスタンプ付きのTASK.mdファイルが作成され、Editor Viewで開かれます |
+| SPEC.md作成 | パス表示行のSPEC.mdアイコンをクリック<br>タイムスタンプ付きのSPEC.mdファイルが作成され、Editor Viewで開かれます |
 
 ### 相対パスの設定
 
@@ -337,14 +337,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.0.22.vsix
+   code --install-extension ai-coding-sidebar-1.1.0.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.0.22.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.0.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -358,7 +358,7 @@ code --install-extension releases/ai-coding-sidebar-1.0.22.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.0.22.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.0.vsix
    ```
 4. VS Codeを再起動
 

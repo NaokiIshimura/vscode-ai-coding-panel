@@ -5,6 +5,32 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.0] - 2026-09-05
+
+### 追加
+- **Editor View「Next」ボタン**: Run/Plan/Specボタンの下に専用のボタン領域を追加し、赤い**Next**ボタンを設置
+  - タイムスタンプ付きの`PROMPT.md`を新規作成してEditor Viewで開くため、Editorから離れずに次のプロンプトへ進める
+  - 既存の`aiCodingSidebar.createMarkdownFile`コマンドを再利用しており、`Cmd+M` / `Ctrl+M`と同じ動作
+
+### 変更
+- **ボタン設置領域の高さ統一**: Plans View、Editor View、Terminal Viewのボタン設置領域の高さをすべて36pxに統一
+  - 各Webviewに共通のCSS変数`--button-bar-height`を導入し、縦paddingではなく`min-height`＋縦中央揃えで高さを揃えるよう変更
+  - Terminal Viewのタブバー（33px）とショートカットバー（約26〜29px）が他のViewとずれていた問題を解消
+- **Plans Viewのrootディレクトリの挙動**: rootディレクトリへ戻った際に、最も古い対象ファイルを自動選択しないように変更
+  - サブディレクトリへ移動した場合の自動選択は従来通り。rootはタスク一覧としての表示を維持する
+  - 判定用に`PlansProvider._isRootDirectory()`を追加。`path.resolve()`で正規化して比較するため、末尾スラッシュや相対表記の差異があっても正しく判定される
+
+### 削除
+- **Plans Viewのタイトルバーボタン**: Plans Viewのタイトルバーから**New Task**（`aiCodingSidebar.newDirectory`）と**New Spec**（`aiCodingSidebar.newSpec`）を削除
+  - コマンド自体は登録されたままで、**New Task**は`Cmd+S` / `Ctrl+S`から引き続き利用可能
+- **Editor Viewのタイトルバーボタン**: Editor Viewのタイトルバーから**New PROMPT.md**、**New TASK.md**、**New SPEC.md**を削除し、設定アイコンのみに変更
+  - `New TASK.md` / `New SPEC.md`はPlans Viewの右クリックメニューから引き続き利用可能。`New PROMPT.md`は新設の**Next**ボタンが担う
+
+### 修正
+- **Terminal Viewの高さ計算**: ターミナル表示領域の高さ計算にハードコードされていたヘッダー高さを、共通のCSS変数`--button-bar-height`ベースに修正
+  - `#terminals-container`が`calc(100% - 33px - 29px)`、`#terminal-overlay`が`top: 62px`と、実際に描画されるヘッダー高さに追従していなかった
+  - `#header`のborderも計算に含めるようにし、ターミナル領域が正しいサイズになるよう修正
+
 ## [1.0.22] - 2026-09-05
 
 ### 追加
@@ -1646,3 +1672,4 @@ v0.8.33以前からアップグレードする場合:
 [1.0.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.19...v1.0.20
 [1.0.21]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.20...v1.0.21
 [1.0.22]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.21...v1.0.22
+[1.1.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.22...v1.1.0

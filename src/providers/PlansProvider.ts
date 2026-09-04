@@ -516,13 +516,25 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
         this._lastDirModTime = 0;
 
         // 対象ファイル（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）を検索して自動選択
-        if (this.editorProvider) {
+        // rootディレクトリはタスク一覧の役割のため、自動選択・自動表示は行わない
+        if (this.editorProvider && !this._isRootDirectory(targetPath)) {
             const oldestFile = await this.findOldestTargetFile(targetPath);
             if (oldestFile) {
                 await this.editorProvider.showFile(oldestFile);
                 await this.revealFile(oldestFile);
             }
         }
+    }
+
+    /**
+     * 指定されたパスがrootディレクトリかどうかを判定する
+     */
+    private _isRootDirectory(targetPath: string): boolean {
+        if (!this.rootPath) {
+            return false;
+        }
+
+        return path.resolve(targetPath) === path.resolve(this.rootPath);
     }
 
     /**

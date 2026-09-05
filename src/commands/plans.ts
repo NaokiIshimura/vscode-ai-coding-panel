@@ -5,6 +5,7 @@ import { CommandDependencies } from './types';
 import { FileItem } from '../providers';
 import { loadTemplate } from '../utils/templateUtils';
 import { ConfigurationProvider } from '../services/ConfigurationProvider';
+import { FileOperationService } from '../services/FileOperationService';
 import { TemplateService } from '../services/TemplateService';
 
 /**
@@ -412,61 +413,14 @@ export function registerPlansCommands(
                 isCurrentDirectory = true;
             }
 
-            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-            if (!workspaceRoot) {
-                vscode.window.showErrorMessage('No workspace is open');
+            const archivedDirPath = await ensureArchivedDirectory(configProvider, fileOperationService);
+            if (!archivedDirPath) {
                 return;
             }
 
-            const defaultRelativePath = configProvider.getDefaultRelativePath();
-            if (!defaultRelativePath) {
-                vscode.window.showErrorMessage('Default task path is not configured');
-                return;
-            }
-
-            const defaultTasksPath = path.join(workspaceRoot, defaultRelativePath);
-            const archivedDirPath = path.join(defaultTasksPath, 'archived');
             const originalName = path.basename(targetPath);
-
-            try {
-                try {
-                    await fsPromises.access(archivedDirPath);
-                } catch {
-                    const result = await fileOperationService.createDirectory(archivedDirPath);
-                    if (!result.success) {
-                        throw result.error || new Error('Failed to create archived directory');
-                    }
-                }
-            } catch (error) {
-                vscode.window.showErrorMessage(`Failed to create archived directory: ${error}`);
-                return;
-            }
-
-            let destPath = path.join(archivedDirPath, originalName);
-            let finalName = originalName;
-            let hasConflict = false;
-
-            let destExists = false;
-            try {
-                await fsPromises.access(destPath);
-                destExists = true;
-            } catch {
-                destExists = false;
-            }
-
-            if (destExists) {
-                hasConflict = true;
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const hour = String(now.getHours()).padStart(2, '0');
-                const minute = String(now.getMinutes()).padStart(2, '0');
-                const second = String(now.getSeconds()).padStart(2, '0');
-                const timestamp = `${year}${month}${day}_${hour}${minute}${second}`;
-                finalName = `${originalName}_${timestamp}`;
-                destPath = path.join(archivedDirPath, finalName);
-            }
+            const { destPath, finalName, hasConflict } =
+                await resolveArchiveDestination(archivedDirPath, originalName, true);
 
             try {
                 const result = await fileOperationService.moveFile(targetPath, destPath);
@@ -498,7 +452,53 @@ export function registerPlansCommands(
         })
     );
 
-    // 12. createDefaultPath - デフォルトパスの作成＋初期プロンプトファイル作成
+    // 12. archiveFile - ファイルアーカイブ
+    context.subscriptions.push(
+        vscode.commands.registerCommand('aiCodingSidebar.archiveFile', async (item?: FileItem) => {
+            if (!item || item.isDirectory) {
+                vscode.window.showErrorMessage('No file is selected');
+                return;
+            }
+
+            const archivedDirPath = await ensureArchivedDirectory(configProvider, fileOperationService);
+            if (!archivedDirPath) {
+                return;
+            }
+
+            const targetPath = item.filePath;
+            const originalName = path.basename(targetPath);
+            const { destPath, finalName, hasConflict } =
+                await resolveArchiveDestination(archivedDirPath, originalName, false);
+
+            try {
+                const result = await fileOperationService.moveFile(targetPath, destPath);
+                if (!result.success) {
+                    throw result.error || new Error('Failed to move file');
+                }
+
+                // Editor Viewで開いているファイルをアーカイブした場合は表示をクリアする
+                if (editorProvider.getCurrentFilePath() === targetPath) {
+                    await editorProvider.clearFile();
+                }
+
+                plansProvider.refresh();
+
+                if (hasConflict) {
+                    vscode.window.showInformationMessage(
+                        `File archived (renamed to "${finalName}" due to conflict)`
+                    );
+                } else {
+                    vscode.window.showInformationMessage(
+                        `File "${originalName}" archived`
+                    );
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to archive file: ${error}`);
+            }
+        })
+    );
+
+    // 13. createDefaultPath - デフォルトパスの作成＋初期プロンプトファイル作成
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.createDefaultPath', async (targetPath: string, relativePath?: string) => {
             if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -565,7 +565,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 13. quickStart - タスク名を指定せずにディレクトリ＋QUICK_START.mdを作成
+    // 14. quickStart - タスク名を指定せずにディレクトリ＋QUICK_START.mdを作成
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.quickStart', async () => {
             const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -629,7 +629,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 14. navigateToDirectory - ディレクトリ移動
+    // 15. navigateToDirectory - ディレクトリ移動
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.navigateToDirectory', (targetPath: string) => {
             if (targetPath) {
@@ -637,4 +637,92 @@ export function registerPlansCommands(
             }
         })
     );
+}
+
+/**
+ * アーカイブ先ディレクトリ（<plans>/archived）を取得する
+ * 存在しない場合は作成し、失敗時はエラーメッセージを表示してundefinedを返す
+ */
+async function ensureArchivedDirectory(
+    configProvider: ConfigurationProvider,
+    fileOperationService: FileOperationService
+): Promise<string | undefined> {
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspaceRoot) {
+        vscode.window.showErrorMessage('No workspace is open');
+        return undefined;
+    }
+
+    const defaultRelativePath = configProvider.getDefaultRelativePath();
+    if (!defaultRelativePath) {
+        vscode.window.showErrorMessage('Default task path is not configured');
+        return undefined;
+    }
+
+    const archivedDirPath = path.join(workspaceRoot, defaultRelativePath, 'archived');
+
+    try {
+        try {
+            await fsPromises.access(archivedDirPath);
+        } catch {
+            const result = await fileOperationService.createDirectory(archivedDirPath);
+            if (!result.success) {
+                throw result.error || new Error('Failed to create archived directory');
+            }
+        }
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed to create archived directory: ${error}`);
+        return undefined;
+    }
+
+    return archivedDirPath;
+}
+
+/**
+ * アーカイブ先のパスを決定する
+ * 同名が既に存在する場合はタイムスタンプを付与して衝突を回避する
+ * （ディレクトリは末尾に、ファイルは拡張子の前に付与する）
+ */
+async function resolveArchiveDestination(
+    archivedDirPath: string,
+    originalName: string,
+    isDirectory: boolean
+): Promise<{ destPath: string; finalName: string; hasConflict: boolean }> {
+    const destPath = path.join(archivedDirPath, originalName);
+
+    let destExists = false;
+    try {
+        await fsPromises.access(destPath);
+        destExists = true;
+    } catch {
+        destExists = false;
+    }
+
+    if (!destExists) {
+        return { destPath, finalName: originalName, hasConflict: false };
+    }
+
+    const timestamp = formatArchiveTimestamp(new Date());
+    const extension = isDirectory ? '' : path.extname(originalName);
+    const baseName = extension ? path.basename(originalName, extension) : originalName;
+    const finalName = `${baseName}_${timestamp}${extension}`;
+
+    return {
+        destPath: path.join(archivedDirPath, finalName),
+        finalName,
+        hasConflict: true
+    };
+}
+
+/**
+ * アーカイブの衝突回避に使うタイムスタンプ（YYYYMMDD_HHmmss）を生成する
+ */
+function formatArchiveTimestamp(now: Date): string {
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hour = String(now.getHours()).padStart(2, '0');
+    const minute = String(now.getMinutes()).padStart(2, '0');
+    const second = String(now.getSeconds()).padStart(2, '0');
+    return `${year}${month}${day}_${hour}${minute}${second}`;
 }

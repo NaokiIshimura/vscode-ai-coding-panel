@@ -113,6 +113,7 @@ suite('Extension Test Suite', () => {
 			'aiCodingSidebar.navigateToDirectory',
 			'aiCodingSidebar.createDefaultPath',
 			'aiCodingSidebar.archiveDirectory',
+			'aiCodingSidebar.archiveFile',
 		];
 
 		plansCommands.forEach(cmd => {

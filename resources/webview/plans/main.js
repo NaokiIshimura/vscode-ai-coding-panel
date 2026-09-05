@@ -56,6 +56,7 @@ const CONTEXT_MENUS = {
         { command: 'aiCodingSidebar.copyRelativePath', title: 'Copy Relative Path' },
         { separator: true },
         { command: 'aiCodingSidebar.rename', title: 'Rename...' },
+        { command: 'aiCodingSidebar.archiveFile', title: 'Archive' },
         { command: 'aiCodingSidebar.delete', title: 'Delete' }
     ]
 };
@@ -86,7 +87,8 @@ const INLINE_ACTIONS = {
     ],
     file: [
         { command: 'aiCodingSidebar.insertPathToEditor', title: 'Insert Path to Editor', icon: 'edit' },
-        { command: 'aiCodingSidebar.insertPathToTerminal', title: 'Insert Path to Terminal', icon: 'terminal' }
+        { command: 'aiCodingSidebar.insertPathToTerminal', title: 'Insert Path to Terminal', icon: 'terminal' },
+        { command: 'aiCodingSidebar.archiveFile', title: 'Archive', icon: 'archive' }
     ]
 };
 

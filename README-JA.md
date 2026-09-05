@@ -200,7 +200,7 @@ created: {{datetime}}
 | 削除 | ファイル・フォルダを削除（ゴミ箱に移動） |
 | コピー・切り取り・貼り付け | 標準的なファイル操作をサポート |
 | ドラッグ&ドロップ | Plansビュー内または外部からファイルをドラッグしてコピー。コピー成功時にメッセージを表示 |
-| アーカイブ | タスクディレクトリをアーカイブしてワークスペースを整理。ディレクトリ行のアーカイブアイコン（インラインボタン）をクリックするか、右クリックして「Archive」を選択すると、`archived`フォルダに移動されます。ルートディレクトリ以外のディレクトリ内にいる場合は、パス表示ヘッダーにもアーカイブボタンが表示され、クリックすると現在のディレクトリをアーカイブしてルートに戻ります。同名のディレクトリが既に存在する場合は、競合を避けるために自動的にタイムスタンプが追加されます。 |
+| アーカイブ | タスクディレクトリと個別のファイルをアーカイブしてワークスペースを整理。ディレクトリ行またはファイル行のアーカイブアイコン（インラインボタン）をクリックするか、右クリックして「Archive」を選択すると、`archived`フォルダに移動されます。ルートディレクトリ以外のディレクトリ内にいる場合は、パス表示ヘッダーにもアーカイブボタンが表示され、クリックすると現在のディレクトリをアーカイブしてルートに戻ります。Editorビューで開いているファイルをアーカイブした場合は、Editorビューの表示がクリアされます。同名のエントリが既に存在する場合は、競合を避けるために自動的にタイムスタンプが追加されます（ディレクトリは名前の末尾、ファイルは拡張子の前に付与）。 |
 | ブランチチェックアウト | ディレクトリを右クリックして、ディレクトリ名をそのままブランチ名としてgitブランチをチェックアウト。ブランチが存在しない場合は作成し、既に存在する場合は切り替え |
 | Editorにパスを挿入 | Editorビューに相対パスを挿入。ファイル行のeditアイコンをクリック、または右クリックして「Insert Path to Editor」を選択。複数選択に対応 |
 | Terminalにパスを挿入 | Terminalビューに相対パスを挿入。ファイル行のterminalアイコンをクリック、または右クリックして「Insert Path to Terminal」を選択。複数選択に対応。パスはスペースで区切られます |
@@ -339,14 +339,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.1.vsix
+   code --install-extension ai-coding-sidebar-1.1.2.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.1.1.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.2.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -360,7 +360,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.1.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.1.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.2.vsix
    ```
 4. VS Codeを再起動
 

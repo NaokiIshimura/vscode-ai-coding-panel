@@ -30,6 +30,177 @@
         return baseY === viewportY;
     }
 
+    // リンク検出時に結合する折り返し行の上限
+    const MAX_WRAPPED_LINES = 20;
+
+    // 行末が右端に達しているとみなす許容幅
+    // Claude CodeのようなTUIは右側に余白を残して折り返すため、厳密な右端一致では判定できない
+    const WRAP_EDGE_TOLERANCE = 4;
+
+    // TUIが描画するボックスの罫線（縦線）
+    const BOX_VERTICAL = '\u2502\u2503\u2506\u2507\u250a\u250b';
+
+    // 折り返し行の先頭に付く余白・罫線
+    const CONTINUATION_PREFIX = new RegExp('^ *(?:[' + BOX_VERTICAL + '] *)?');
+
+    // 行末に付く罫線
+    const BORDER_SUFFIX = new RegExp(' *[' + BOX_VERTICAL + ']$');
+
+    // URLの本体に現れうる文字（折り返し位置の前後判定に使用）
+    const URL_BODY_CHAR = /[A-Za-z0-9\-._~:/?#@!$&*+,;=%]/;
+
+    // URL検出パターン（WebLinksAddonのデフォルトに罫線・ブロック文字の除外を追加）
+    const URL_PATTERN = /(?:https?|HTTPS?):\/\/[^\s"'!*(){}|\\\^<>`\u2500-\u259f]*[^\s"':,.!?{}|\\\^~\[\]`()<>\u2500-\u259f]/g;
+
+    /**
+     * バッファ行を読み取り、文字列と各文字のセル座標を返す
+     * 行末の空白と罫線は除去するが、折り返し判定用に元の行末位置は保持する
+     * @param {object} term - xtermインスタンス
+     * @param {number} y - バッファ行番号（0始まり）
+     * @returns {{text: string, cells: Array<{x: number, y: number, width: number}>, isWrapped: boolean, contentEndX: number}|null}
+     */
+    function readBufferLine(term, y) {
+        if (y < 0) {
+            return null;
+        }
+        const line = term.buffer.active.getLine(y);
+        if (!line) {
+            return null;
+        }
+
+        const cell = term.buffer.active.getNullCell();
+        let text = '';
+        const cells = [];
+
+        for (let x = 0; x < line.length; x++) {
+            line.getCell(x, cell);
+            const width = cell.getWidth();
+            // 全角文字の後続セル（幅0）はスキップ
+            if (width === 0) {
+                continue;
+            }
+            const chars = cell.getChars() || ' ';
+            for (const ch of chars) {
+                text += ch;
+                // サロゲートペアでも text の添字と cells の添字を一致させる
+                for (let i = 0; i < ch.length; i++) {
+                    cells.push({ x: x, y: y, width: width });
+                }
+            }
+        }
+
+        // 行末の空白を除去
+        let end = text.length;
+        while (end > 0 && text[end - 1] === ' ') {
+            end--;
+        }
+        text = text.slice(0, end);
+        cells.length = end;
+
+        // 罫線を除去する前の行末位置（折り返し判定に使用）
+        const lastCell = cells.length > 0 ? cells[cells.length - 1] : null;
+        const contentEndX = lastCell ? lastCell.x + lastCell.width : 0;
+
+        // 行末の罫線を除去
+        const borderMatch = text.match(BORDER_SUFFIX);
+        if (borderMatch) {
+            const cut = text.length - borderMatch[0].length;
+            text = text.slice(0, cut);
+            cells.length = cut;
+        }
+
+        return {
+            text: text,
+            cells: cells,
+            isWrapped: line.isWrapped,
+            contentEndX: contentEndX
+        };
+    }
+
+    /**
+     * 次の行を前の行の続きとみなせるかを判定し、次の行から読み飛ばす先頭文字数を返す
+     * 続きでない場合は -1 を返す
+     *
+     * xtermが折り返しとして記録している行（isWrapped）はそのまま続きとみなす。
+     * Claude CodeのようなTUIは自前で改行を挿入するためisWrappedが立たず、
+     * さらに折り返し行の先頭にインデントや罫線が入るため、以下の条件で続きと判定する:
+     * - 前の行が右端付近まで達している
+     * - 改行位置の前後の文字がいずれもURLに現れうる文字である
+     */
+    function getContinuationOffset(term, prevLine, nextLine) {
+        if (nextLine.isWrapped) {
+            return 0;
+        }
+        if (prevLine.contentEndX < term.cols - WRAP_EDGE_TOLERANCE) {
+            return -1;
+        }
+        const prevLast = prevLine.text.slice(-1);
+        if (!prevLast || !URL_BODY_CHAR.test(prevLast)) {
+            return -1;
+        }
+        const prefixMatch = nextLine.text.match(CONTINUATION_PREFIX);
+        const offset = prefixMatch ? prefixMatch[0].length : 0;
+        const nextFirst = nextLine.text.charAt(offset);
+        if (!nextFirst || !URL_BODY_CHAR.test(nextFirst)) {
+            return -1;
+        }
+        return offset;
+    }
+
+    /**
+     * 指定行を含む折り返しブロックを結合し、文字列と各文字のセル座標を返す
+     * @param {object} term - xtermインスタンス
+     * @param {number} y - バッファ行番号（0始まり）
+     * @returns {{text: string, cells: Array<{x: number, y: number, width: number}>}|null}
+     */
+    function readWrappedBlock(term, y) {
+        const target = readBufferLine(term, y);
+        if (!target) {
+            return null;
+        }
+
+        // offset は前の行の続きとして結合する際に読み飛ばす先頭文字数
+        const entries = [{ line: target, offset: 0 }];
+
+        // 上方向へ遡る
+        for (let cur = y - 1; entries.length < MAX_WRAPPED_LINES; cur--) {
+            const prev = readBufferLine(term, cur);
+            if (!prev) {
+                break;
+            }
+            const offset = getContinuationOffset(term, prev, entries[0].line);
+            if (offset < 0) {
+                break;
+            }
+            entries[0].offset = offset;
+            entries.unshift({ line: prev, offset: 0 });
+        }
+
+        // 下方向へ辿る
+        for (let cur = y + 1; entries.length < MAX_WRAPPED_LINES; cur++) {
+            const next = readBufferLine(term, cur);
+            if (!next) {
+                break;
+            }
+            const offset = getContinuationOffset(term, entries[entries.length - 1].line, next);
+            if (offset < 0) {
+                break;
+            }
+            entries.push({ line: next, offset: offset });
+        }
+
+        let text = '';
+        const cells = [];
+        for (const entry of entries) {
+            text += entry.line.text.slice(entry.offset);
+            for (let i = entry.offset; i < entry.line.cells.length; i++) {
+                cells.push(entry.line.cells[i]);
+            }
+        }
+
+        return { text: text, cells: cells };
+    }
+
     // ショートカットバーの表示切り替え
     function updateShortcutBar(isClaudeCodeRunning) {
         const notRunning = document.getElementById('shortcuts-not-running');
@@ -151,12 +322,53 @@
             console.warn('Failed to load Unicode11 addon:', e);
         }
 
-        // Web Links Addonをロード
-        const webLinksAddon = new WebLinksAddon.WebLinksAddon((event, uri) => {
-            event.preventDefault();
-            vscode.postMessage({ type: 'openUrl', url: uri });
+        // URLリンクプロバイダー（折り返しで分断されたURLも結合して検出）
+        // ファイルパス用プロバイダーより先に登録して優先させる
+        term.registerLinkProvider({
+            provideLinks: (bufferLineNumber, callback) => {
+                const targetY = bufferLineNumber - 1;
+                const block = readWrappedBlock(term, targetY);
+                if (!block || !block.text) {
+                    callback(undefined);
+                    return;
+                }
+
+                const links = [];
+                URL_PATTERN.lastIndex = 0;
+                let match;
+
+                while ((match = URL_PATTERN.exec(block.text)) !== null) {
+                    const url = match[0];
+                    const startCell = block.cells[match.index];
+                    const endCell = block.cells[match.index + url.length - 1];
+                    if (!startCell || !endCell) {
+                        continue;
+                    }
+
+                    // 対象行にかからないリンクは返さない
+                    if (endCell.y < targetY || startCell.y > targetY) {
+                        continue;
+                    }
+
+                    links.push({
+                        range: {
+                            start: { x: startCell.x + 1, y: startCell.y + 1 },
+                            end: { x: endCell.x + endCell.width, y: endCell.y + 1 }
+                        },
+                        text: url,
+                        decorations: {
+                            pointerCursor: true,
+                            underline: true
+                        },
+                        activate: () => {
+                            vscode.postMessage({ type: 'openUrl', url: url });
+                        }
+                    });
+                }
+
+                callback(links.length > 0 ? links : undefined);
+            }
         });
-        term.loadAddon(webLinksAddon);
 
         // ターミナルを開く
         term.open(wrapperEl);

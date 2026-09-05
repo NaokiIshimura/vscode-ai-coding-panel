@@ -633,7 +633,6 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         const xtermCssUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'xterm', 'xterm.css'));
         const xtermJsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'xterm', 'xterm.js'));
         const xtermFitUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'xterm', 'xterm-addon-fit.js'));
-        const xtermWebLinksUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'xterm', 'xterm-addon-web-links.js'));
         const xtermUnicode11Uri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'xterm', 'xterm-addon-unicode11.js'));
 
         // 外部リソースのURIを取得
@@ -676,7 +675,6 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
             .replace(/\{\{styleUri\}\}/g, styleUri.toString())
             .replace(/\{\{xtermJsUri\}\}/g, xtermJsUri.toString())
             .replace(/\{\{xtermFitUri\}\}/g, xtermFitUri.toString())
-            .replace(/\{\{xtermWebLinksUri\}\}/g, xtermWebLinksUri.toString())
             .replace(/\{\{xtermUnicode11Uri\}\}/g, xtermUnicode11Uri.toString())
             .replace(/\{\{terminalConfig\}\}/g, terminalConfig)
             .replace(/\{\{scriptUri\}\}/g, scriptUri.toString());

@@ -5,6 +5,19 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.8] - 2026-09-05
+
+### 追加
+- **Plans Viewのインラインアクションのツールチップ**: 行のArchiveアイコンにマウスオーバーすると「Archive」と表示されるようにした
+  - 行に表示される他のインラインアクションアイコン（New PROMPT.md、New TASK.md、New SPEC.md、Rename...、Insert Path to Editor、Insert Path to Terminal、Show in File List、New Directory）にも同じツールチップを表示する
+  - 少し待つとアイコンの下に表示され、下端に収まらない場合は上側に表示する
+  - マウスアウト・クリック・スクロール・一覧の再描画・コンテキストメニュー表示のタイミングで閉じる
+
+### 技術的変更
+- **title属性ではなく自前のツールチップを描画**: ツールチップはWebview側で描画している
+  - 各行は`title`にファイルパスを保持しており、アイコン側ではなくその親のネイティブツールチップが表示されていた
+  - アイコンのボタンには空の`title`を設定して親から継承されるネイティブツールチップを抑止し、スクリーンリーダー向けに`aria-label`は残している
+
 ## [1.1.7] - 2026-09-05
 
 ### 削除
@@ -1782,3 +1795,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.4...v1.1.5
 [1.1.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.5...v1.1.6
 [1.1.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.6...v1.1.7
+[1.1.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.7...v1.1.8

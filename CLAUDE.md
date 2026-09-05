@@ -386,6 +386,45 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.8新機能: Plans Viewインラインアクションのツールチップ
+
+Plans Viewの行に表示されるインラインアクションアイコン（Archive等）にマウスオーバーすると、アクション名が表示されるようにした：
+
+**なぜ`title`属性だけでは足りなかったか**
+
+| 要素 | `title` | 挙動 |
+|---|---|---|
+| `.row`（行本体） | `item.tooltip || item.filePath` | ファイルパスのネイティブツールチップが出る |
+| `.row-action`（アイコン） | `entry.title`（例: `Archive`） | 行側のツールチップが優先され、アクション名が出ない |
+
+- `createRowActions()` は元からボタンに `title` を設定していたが、Webview内ではネイティブツールチップが期待どおりに切り替わらず、アイコン上でも親の `.row` のファイルパスが表示されていた
+- そのため自前のツールチップを描画し、ボタン側の `title` は**空文字**にして親から継承されるネイティブツールチップを抑止している（`title` を削除するのではなく空にするのがポイント。属性が無いと親の `title` が使われる）
+- `aria-label` は従来どおりアクション名を保持しているため、スクリーンリーダー向けの情報は変わらない
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `resources/webview/plans/index.html` | `#tooltip` 要素を追加 |
+| `resources/webview/plans/style.css` | `.tooltip` / `.tooltip.hidden` を追加。色は `--vscode-editorHoverWidget-*` 系を使用 |
+| `resources/webview/plans/main.js` | `attachTooltip()` / `showTooltip()` / `hideTooltip()` を追加し、`.row-action` 生成時に登録 |
+
+**表示・非表示の制御**
+
+| 項目 | 内容 |
+|---|---|
+| 表示遅延 | `TOOLTIP_DELAY = 300`（ms）。`mouseenter` でタイマーを張り、`mouseleave` / `mousedown` でクリア |
+| 位置 | アイコンの下に中央揃え（`TOOLTIP_GAP = 4`px）。下端に収まらない場合は上側へ反転し、左右も画面内へクランプする |
+| 閉じるタイミング | マウスアウト・クリック（`mousedown` とコマンド実行時）・一覧のスクロール・`window` の `blur`・`render()` での再描画・`showContextMenu()` |
+
+- 位置計算は `position: fixed` + `getBoundingClientRect()` で行うため、テキスト設定後に一度 `hidden` を外してから測る必要がある
+- `showTooltip()` の冒頭で `element.isConnected` を確認している。遅延中に `render()` が走って行が差し替わった場合、既にDOMから外れた要素の座標を使ってしまうため
+- `.tooltip` には `pointer-events: none` を指定。指定しないとツールチップ自身がマウスを受け取り、`mouseleave` が即座に発火してちらつく
+
+**適用範囲**
+- `INLINE_ACTIONS` に定義された全アイコンが対象（Archive のほか New PROMPT.md / New TASK.md / New SPEC.md / Rename... / Copy Relative Path / New Directory / Show in File List / Insert Path to Editor / Insert Path to Terminal）
+- ヘッダーの Quick Start ボタンは従来どおりネイティブの `title` のままにしている（親に `title` を持つ要素が無く、実際にツールチップが表示されるため）
+
 ### v1.1.7削除: Menu Viewからの「Quick actions」削除
 
 Menu View（`workspaceSettings`）から「Quick actions」セクションを削除し、Usage Guide / Global / Workspace の3項目構成に変更：

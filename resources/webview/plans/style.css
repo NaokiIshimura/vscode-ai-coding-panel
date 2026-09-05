@@ -173,6 +173,27 @@ body {
     white-space: normal;
 }
 
+/* ツールチップ（インラインアクションのホバー説明） */
+.tooltip {
+    position: fixed;
+    z-index: 200;
+    max-width: 240px;
+    padding: 2px 6px;
+    font-size: 12px;
+    line-height: 18px;
+    white-space: nowrap;
+    pointer-events: none;
+    color: var(--vscode-editorHoverWidget-foreground, var(--vscode-foreground));
+    background-color: var(--vscode-editorHoverWidget-background, var(--vscode-editorWidget-background));
+    border: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-widget-border, transparent));
+    border-radius: 3px;
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
+}
+
+.tooltip.hidden {
+    display: none;
+}
+
 /* コンテキストメニュー */
 .context-menu {
     position: fixed;

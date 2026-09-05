@@ -3,6 +3,7 @@ const vscode = acquireVsCodeApi();
 const quickStartButton = document.getElementById('quick-start-button');
 const listElement = document.getElementById('list');
 const contextMenuElement = document.getElementById('context-menu');
+const tooltipElement = document.getElementById('tooltip');
 
 // 内部ドラッグ用のMIMEタイプ（VS Codeのtext/uri-listと区別する）
 const INTERNAL_MIME = 'application/vnd.aicodingsidebar.paths';
@@ -132,6 +133,7 @@ window.addEventListener('message', event => {
  */
 function render(messageText) {
     hideContextMenu();
+    hideTooltip();
     listElement.textContent = '';
 
     if (messageText) {
@@ -245,16 +247,20 @@ function createRowActions(item) {
     for (const entry of entries) {
         const button = document.createElement('button');
         button.className = 'row-action';
-        button.title = entry.title;
+        // 空のtitleで行（ファイルパス）のネイティブツールチップを抑止し、代わりに自前のものを表示する
+        button.title = '';
         button.setAttribute('aria-label', entry.title);
 
         const icon = document.createElement('span');
         icon.className = `codicon codicon-${entry.icon}`;
         button.appendChild(icon);
 
+        attachTooltip(button, entry.title);
+
         button.addEventListener('click', (event) => {
             // 行本体のクリック（ディレクトリ移動・ファイルを開く）を発火させない
             event.stopPropagation();
+            hideTooltip();
             executeItemCommand(entry.command, item);
         });
 
@@ -263,6 +269,63 @@ function createRowActions(item) {
 
     return container;
 }
+
+// ツールチップ表示までの待ち時間（ms）
+const TOOLTIP_DELAY = 300;
+// 要素とツールチップの間隔（px）
+const TOOLTIP_GAP = 4;
+
+let tooltipTimer;
+
+/**
+ * 要素にホバーしたらツールチップを表示するよう登録する
+ * （Webviewではネイティブのtitleツールチップが表示されないことがあるため自前で描画する）
+ */
+function attachTooltip(element, text) {
+    element.addEventListener('mouseenter', () => {
+        clearTimeout(tooltipTimer);
+        tooltipTimer = setTimeout(() => showTooltip(element, text), TOOLTIP_DELAY);
+    });
+    element.addEventListener('mouseleave', hideTooltip);
+    element.addEventListener('mousedown', hideTooltip);
+}
+
+/**
+ * 対象要素の下（はみ出す場合は上）にツールチップを表示する
+ */
+function showTooltip(element, text) {
+    if (!element.isConnected) {
+        return;
+    }
+
+    tooltipElement.textContent = text;
+    tooltipElement.classList.remove('hidden');
+
+    const targetRect = element.getBoundingClientRect();
+    const tooltipRect = tooltipElement.getBoundingClientRect();
+
+    let left = targetRect.left + (targetRect.width - tooltipRect.width) / 2;
+    left = Math.min(left, window.innerWidth - tooltipRect.width - TOOLTIP_GAP);
+    left = Math.max(TOOLTIP_GAP, left);
+
+    let top = targetRect.bottom + TOOLTIP_GAP;
+    if (top + tooltipRect.height > window.innerHeight) {
+        top = targetRect.top - tooltipRect.height - TOOLTIP_GAP;
+    }
+    top = Math.max(TOOLTIP_GAP, top);
+
+    tooltipElement.style.left = `${left}px`;
+    tooltipElement.style.top = `${top}px`;
+}
+
+function hideTooltip() {
+    clearTimeout(tooltipTimer);
+    tooltipElement.classList.add('hidden');
+}
+
+// 一覧のスクロールやフォーカス喪失で位置がずれるため閉じる
+listElement.addEventListener('scroll', hideTooltip);
+window.addEventListener('blur', hideTooltip);
 
 /**
  * 選択状態の表示を更新する
@@ -310,6 +373,7 @@ function showContextMenu(event, item) {
         return;
     }
 
+    hideTooltip();
     contextMenuElement.textContent = '';
 
     for (const entry of entries) {

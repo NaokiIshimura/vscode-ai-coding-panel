@@ -43,6 +43,7 @@ Claude Codeでの生産性を最大化するために設計された、強力な
 | **Editor対象ファイルアイコン** | Editor Viewで開くファイル（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）は`edit`アイコンで表示し、通常のMarkdownファイルと区別 |
 | ソート | ファイルはデフォルトで作成日時の昇順でソート |
 | ドラッグ&ドロップ | ビュー内または外部からのファイルをドラッグしてコピー |
+| **インラインアクションのツールチップ** | 行のインラインアクションアイコン（Archive、New PROMPT.md、Rename...、Insert Path to Editor など）にマウスオーバーすると、そのアクション名を表示 |
 | **キーボード操作** | ↑ / ↓ で選択を移動、Enterで選択項目を開く |
 | 自動更新 | ファイルが作成、変更、削除されたときに自動的に更新（ビュー非表示中でも反映） |
 | 設定アイコン | デフォルトパスとソート設定へのクイックアクセス |
@@ -339,14 +340,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.7.vsix
+   code --install-extension ai-coding-sidebar-1.1.8.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.1.7.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.8.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -360,7 +361,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.7.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.7.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.8.vsix
    ```
 4. VS Codeを再起動
 

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8] - 2026-09-05
+
+### Added
+- **Tooltips for Inline Actions in Plans View**: Hovering the Archive icon on a row now shows an "Archive" tooltip
+  - The same tooltip is shown for every inline action icon on a row (New PROMPT.md, New TASK.md, New SPEC.md, Rename..., Insert Path to Editor, Insert Path to Terminal, Show in File List and New Directory)
+  - The tooltip appears after a short delay below the icon, and flips above it when there is no room at the bottom of the view
+  - It is dismissed on mouse out, click, scroll, redraw of the list and when the context menu opens
+
+### Technical
+- **Custom Tooltip Instead of the `title` Attribute**: The tooltip is rendered by the webview itself
+  - Each row carries its file path in `title`, and the native tooltip of that ancestor was shown instead of the one on the icon
+  - The icon buttons now set an empty `title` to suppress the inherited native tooltip, and keep `aria-label` for screen readers
+
 ## [1.1.7] - 2026-09-05
 
 ### Removed
@@ -2311,3 +2324,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.4...v1.1.5
 [1.1.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.5...v1.1.6
 [1.1.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.6...v1.1.7
+[1.1.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.7...v1.1.8

@@ -23,7 +23,7 @@ Claude Codeでの生産性を最大化するために設計された、強力な
 | **Plans** | フラットリストでプロンプトファイルを閲覧・管理、ディレクトリナビゲーション対応 |
 | **Editor** | Run/Plan/Specボタンを備えたClaude Code実行のコマンドセンター |
 | **Terminal** | Claude Code最適化済み：自動検知、コンテキスト対応ショートカット、永続的セッション |
-| **Menu** | 設定や共通操作へのクイックアクセス |
+| **Menu** | 設定やドキュメントへのクイックアクセス |
 
 ## 機能詳細
 
@@ -91,13 +91,12 @@ Claude Code向けに設計された、インテリジェントな自動化とコ
 
 ### Menu
 
-設定や共通操作へのクイックアクセス。
+設定やドキュメントへのクイックアクセス。
 
 | 機能 | 説明 |
 | --- | --- |
 | 設定 | ユーザ設定、グローバル設定を開く |
 | テンプレート | テンプレートをカスタマイズ |
-| クイックアクション | ターミナルを開く、デフォルトブランチへ切り替え、Git pull、統合ブラウザを開く、新しいウィンドウでワークスペースを複製（既定で展開） |
 
 ## 典型的なClaude Codeワークフロー
 
@@ -340,14 +339,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.6.vsix
+   code --install-extension ai-coding-sidebar-1.1.7.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.1.6.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.7.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -361,7 +360,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.6.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.6.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.7.vsix
    ```
 4. VS Codeを再起動
 

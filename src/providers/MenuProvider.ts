@@ -147,61 +147,6 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
                     )
                 ],
                 vscode.TreeItemCollapsibleState.Collapsed
-            ),
-            // Quick actions（親項目）
-            new MenuItem(
-                'Quick actions',
-                'Convenient actions for development',
-                undefined,
-                new vscode.ThemeIcon('zap'),
-                [
-                    new MenuItem(
-                        'Open Terminal',
-                        'Open integrated terminal in VSCode',
-                        {
-                            command: 'aiCodingSidebar.openTerminal',
-                            title: 'Open Terminal'
-                        },
-                        new vscode.ThemeIcon('terminal')
-                    ),
-                    new MenuItem(
-                        'Checkout Default Branch',
-                        'Switch to the default branch (main/master)',
-                        {
-                            command: 'aiCodingSidebar.checkoutDefaultBranch',
-                            title: 'Checkout Default Branch'
-                        },
-                        new vscode.ThemeIcon('git-branch')
-                    ),
-                    new MenuItem(
-                        'Git Pull',
-                        'Pull the latest changes from remote',
-                        {
-                            command: 'aiCodingSidebar.gitPull',
-                            title: 'Git Pull'
-                        },
-                        new vscode.ThemeIcon('arrow-down')
-                    ),
-                    new MenuItem(
-                        'Open Integrated Browser',
-                        'Open the VSCode integrated browser',
-                        {
-                            command: 'aiCodingSidebar.openIntegratedBrowser',
-                            title: 'Open Integrated Browser'
-                        },
-                        new vscode.ThemeIcon('globe')
-                    ),
-                    new MenuItem(
-                        'Duplicate Workspace in New Window',
-                        'Open a copy of this workspace in a new window',
-                        {
-                            command: 'workbench.action.duplicateWorkspaceInNewWindow',
-                            title: 'Duplicate Workspace in New Window'
-                        },
-                        new vscode.ThemeIcon('multiple-windows')
-                    )
-                ],
-                vscode.TreeItemCollapsibleState.Expanded
             )
         ];
     }

@@ -450,7 +450,12 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         );
     }
 
-    public async showFile(filePath: string) {
+    /**
+     * ファイルをEditor Viewに表示する
+     * @param filePath 表示するファイルのパス
+     * @param options focusEditor: 表示後にエディタ（テキストエリア）へフォーカスを移す
+     */
+    public async showFile(filePath: string, options?: { focusEditor?: boolean }) {
         // Save current file if it has unsaved changes before switching
         if (this._currentFilePath && this._isDirty && this._pendingContent && this._currentFilePath !== filePath) {
             try {
@@ -485,7 +490,8 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                     type: 'showContent',
                     filePath: displayPath,
                     content: content,
-                    isReadOnly: isOpenInEditor
+                    isReadOnly: isOpenInEditor,
+                    focusEditor: options?.focusEditor === true
                 });
                 this._view.show?.(true);
             }

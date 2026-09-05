@@ -385,6 +385,31 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.3変更: プロンプトファイル作成後のエディタフォーカス
+
+`PROMPT.md` を新規作成した直後に、Editor Viewの入力エリア（textarea）へフォーカスが移るようにした：
+
+**背景**
+- 従来は `markdownEditor.focus` でビュー自体をアクティブにするだけだったため、Nextボタンでファイルを作成しても入力を始めるにはエディタをクリックする必要があった
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/providers/EditorProvider.ts` | `showFile(filePath, options?: { focusEditor?: boolean })` にオプション引数を追加し、`showContent` メッセージへ `focusEditor` を含めて送信 |
+| `resources/webview/editor/main.js` | `focusEditor()` を追加。`showContent` 受信時に `focusEditor` が真ならtextareaへフォーカスし、カーソルを先頭（0,0）へ配置 |
+| `src/commands/files.ts` | `aiCodingSidebar.createMarkdownFile` の処理順を `markdownEditor.focus` → `showFile(filePath, { focusEditor: true })` に変更 |
+
+**設計上の注意点**
+- **オプトイン方式**: `showFile()` の既定動作は従来どおりフォーカスを奪わない。全呼び出しでフォーカスすると、Plans Viewでファイルを選択した際にキーボード操作（↑↓/Enter）のフォーカスが奪われるため、`createMarkdownFile` からのみ `focusEditor: true` を渡している
+- **`requestAnimationFrame` での遅延**: `editor.value` への代入と同一フレームで `setSelectionRange()` を呼ぶとカーソル位置がずれるため、描画後に実行している
+- **カーソル位置**: `templates/prompt.md` は冒頭が空行・末尾がメタデータ行のため、先頭に置くことでそのまま本文を入力できる
+- **コマンド順序**: 先に `markdownEditor.focus` でビューをアクティブにしてから表示・フォーカスを行う。逆順だとビューフォーカスがtextareaのフォーカスを上書きする可能性がある
+
+**適用範囲**
+- Nextボタンのほか、`Cmd+M` / `Ctrl+M` と Plans Viewコンテキストメニューの「New PROMPT.md」も同じコマンド経由のため同様に動作する
+- TASK.md / SPEC.md / Quick Start の作成コマンドは変更していない
+
 ### v1.1.2新機能: Plans Viewのファイルアーカイブ
 
 Plans Viewのファイル行から `archived/` へ退避できる `aiCodingSidebar.archiveFile` コマンドを追加：

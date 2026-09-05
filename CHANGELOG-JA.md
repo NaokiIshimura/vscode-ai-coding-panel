@@ -5,6 +5,18 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.4] - 2026-09-05
+
+### 削除
+- **Terminal Viewのショートカット**: ショートカットバーから2つのボタンを削除
+  - Claude Code未起動時のグループから `claude --permission-mode auto` を削除し、`claude`・`claude -c`・`claude -r`・`↑` の構成に
+  - `↑` で開くupdateコマンドのグループから `brew upgrade claude-code` を削除し、`claude update` のみに
+  - `aiCodingSidebar.editor.commandPrefix` 設定は変更していないため、Run / Plan / Spec は従来どおり設定値のプレフィックスを使用する
+
+### 変更
+- **Editor Viewのボタンフォント**: Spec / Plan / Run / Next / Edit / Save で共有しているルールに `font-weight: normal` を明示的に追加
+  - Nextボタンの文字太さがブラウザ既定に依存しなくなり、Runボタンと完全に一致する
+
 ## [1.1.3] - 2026-09-05
 
 ### 変更
@@ -1723,3 +1735,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.0...v1.1.1
 [1.1.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.1...v1.1.2
 [1.1.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.2...v1.1.3
+[1.1.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.3...v1.1.4

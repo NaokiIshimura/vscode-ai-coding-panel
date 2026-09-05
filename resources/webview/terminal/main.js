@@ -683,11 +683,9 @@
     }
 
     document.getElementById('btn-claude')?.addEventListener('click', () => sendShortcut('claude', true));
-    document.getElementById('btn-claude-permission-mode-auto')?.addEventListener('click', () => sendShortcut('claude --permission-mode auto', true));
     document.getElementById('btn-claude-c')?.addEventListener('click', () => sendShortcut('claude -c', true));
     document.getElementById('btn-claude-r')?.addEventListener('click', () => sendShortcut('claude -r', true));
     document.getElementById('btn-claude-update')?.addEventListener('click', () => sendShortcut('claude update', false));
-    document.getElementById('btn-brew-upgrade-claude-code')?.addEventListener('click', () => sendShortcut('brew upgrade claude-code', false));
     document.getElementById('btn-model-sonnet')?.addEventListener('click', () => sendShortcut('/model sonnet', false));
     document.getElementById('btn-model-opus')?.addEventListener('click', () => sendShortcut('/model opus', false));
     document.getElementById('btn-compact')?.addEventListener('click', () => sendShortcut('/compact', false));

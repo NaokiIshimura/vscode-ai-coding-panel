@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2026-09-05
+
+### Removed
+- **Terminal View Shortcuts**: Removed two buttons from the shortcut bar
+  - `claude --permission-mode auto` from the group shown while Claude Code is not running, leaving `claude`, `claude -c`, `claude -r` and the `↑` toggle
+  - `brew upgrade claude-code` from the update command group opened with `↑`, which now offers only `claude update`
+  - The `aiCodingSidebar.editor.commandPrefix` setting is unaffected, so Run / Plan / Spec keep using whatever prefix is configured
+
+### Changed
+- **Editor View Button Font**: Added an explicit `font-weight: normal` to the rule shared by the Spec / Plan / Run / Next / Edit / Save buttons
+  - The Next button no longer relies on the browser default for its weight, so it matches the Run button exactly
+
 ## [1.1.3] - 2026-09-05
 
 ### Changed
@@ -2252,3 +2264,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.0...v1.1.1
 [1.1.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.1...v1.1.2
 [1.1.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.2...v1.1.3
+[1.1.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.3...v1.1.4

@@ -385,6 +385,24 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.4変更: Terminal Viewショートカットの整理とボタンフォントの統一
+
+**Terminal Viewショートカットバーからのボタン削除**
+
+| グループ | 削除したボタン | 削除後の構成 |
+|---|---|---|
+| `shortcuts-not-running` | `claude --permission-mode auto` | `[claude] [claude -c] [claude -r] [↑]` |
+| `shortcuts-update` | `brew upgrade claude-code` | `[claude update] [←]` |
+
+- `resources/webview/terminal/index.html` の `<button>` 要素と、`resources/webview/terminal/main.js` の `addEventListener` を両方削除している。片方だけ残すと存在しないIDへの `?.` アクセスが無言で失敗するため、必ず対で消す
+- `aiCodingSidebar.editor.commandPrefix` の既定値（`claude --permission-mode auto`）は**変更していない**。ショートカットボタンはターミナルへ文字列を送るだけで、Run / Plan / Spec が使うプレフィックス設定とは独立している
+- README.md / README-JA.md の「Context-Aware Shortcuts / コンテキスト対応ショートカット」の一覧も同時に更新した。CHANGELOG と CLAUDE.md の過去バージョン節（v1.0.18等）は履歴のため変更していない
+
+**Editor Viewボタンのフォント統一（`resources/webview/editor/style.css`）**
+- Spec / Plan / Run / Next / Edit / Save が共有するルールに `font-weight: normal` を追加
+- `font-family: inherit` / `font-size: 11px` / `line-height: 16px` は既に全ボタンで一致していたため、残る差異になり得るのは `font-weight` のブラウザ既定値のみだった。これを明示することでNextとRunの描画が完全に一致する
+- 背景色の違い（Next: `#c9483f` 固定、Run: `--vscode-button-background`）はそのまま維持している。白文字のサブピクセルレンダリングは背景色によって太さの印象が変わるため、フォント指定を揃えても見え方が完全に同一になるとは限らない
+
 ### v1.1.3変更: プロンプトファイル作成後のエディタフォーカス
 
 `PROMPT.md` を新規作成した直後に、Editor Viewの入力エリア（textarea）へフォーカスが移るようにした：

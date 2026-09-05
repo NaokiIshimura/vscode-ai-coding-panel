@@ -71,6 +71,42 @@ body {
     outline: none;
 }
 
+/* フッター（Editor Viewの右下と同じ位置にドラッグ&ドロップの注意を表示する） */
+#footer {
+    box-sizing: border-box;
+    min-height: var(--button-bar-height);
+    padding: 0 8px;
+    background-color: var(--vscode-sideBar-background);
+    border-top: 1px solid var(--vscode-panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+.footer-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    font-size: 11px;
+    line-height: 16px;
+    color: var(--vscode-descriptionForeground);
+}
+
+/* サイドバーの幅が狭いときは末尾を省略する */
+.footer-hint span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.footer-hint .codicon {
+    flex-shrink: 0;
+    font-size: 14px;
+    line-height: 16px;
+}
+
 .row {
     display: flex;
     align-items: center;
@@ -97,6 +133,13 @@ body {
 
 .row.drop-target {
     background-color: var(--vscode-list-dropBackground);
+}
+
+/* 行以外（空白領域・ファイル行）へのドロップ中は一覧全体をハイライトする */
+body.drag-over #list {
+    background-color: var(--vscode-list-dropBackground);
+    outline: 1px dashed var(--vscode-focusBorder);
+    outline-offset: -1px;
 }
 
 .row .codicon {

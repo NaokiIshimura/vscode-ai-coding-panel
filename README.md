@@ -44,7 +44,7 @@ Browse and manage files in a flat list view with directory navigation.
 | **Date/time prefix** | Root directory displays date or time before directory names: `[HH:MM]` for today, `[MM/DD]` for other dates (files are shown without prefix) |
 | **Editor target file icons** | Files opened in Editor view (TASK.md, PROMPT.md, SPEC.md, QUICK_START.md) display an `edit` icon to distinguish them from regular Markdown files |
 | Sorting | Files are sorted by creation date (ascending) by default |
-| Drag & Drop | Copy files by dragging them within the view or from external sources |
+| Drag & Drop | Copy files by dragging them within the view or from external sources. Hold **Shift** while dragging in from outside the view: VS Code disables pointer events on webview-based views during a drag unless Shift is held. Drop onto a directory row to copy into that directory, or anywhere else in the view to copy into the directory currently shown. Folders cannot be dropped (files only). A reminder is shown at the bottom right of the view |
 | **Inline action tooltips** | Hovering an inline action icon on a row (Archive, New PROMPT.md, Rename..., Insert Path to Editor and so on) shows the name of the action |
 | **Keyboard navigation** | Use ↑ / ↓ to move the selection and Enter to open the selected item |
 | Auto-refresh | Automatically updates when files are created, modified, or deleted (even when the view is hidden) |
@@ -200,7 +200,7 @@ Use the following variables inside a template:
 | Rename | Rename files and folders. After renaming a directory, automatically navigates to the renamed directory. |
 | Delete | Delete files and folders (moved to trash). |
 | Copy / Cut / Paste | Perform standard clipboard operations. |
-| Drag & Drop | Copy files by dragging them within the Plans view or from external sources. Displays a success message after copying. |
+| Drag & Drop | Copy files by dragging them within the Plans view or from external sources. Hold **Shift** while dragging in from outside the view: VS Code disables pointer events on webview-based views during a drag unless Shift is held. Drop onto a directory row to copy into that directory, or anywhere else in the view to copy into the directory currently shown. Displays a success message after copying. |
 | Archive | Archive task directories and individual files to keep your workspace organized. Click the archive icon (inline button) on a directory or file row, or right-click and select "Archive" to move it to the `archived` folder. When inside a non-root directory, an archive button also appears in the path display header - clicking it archives the current directory and returns to root. Archiving the file currently open in Editor view clears the editor. If an entry with the same name already exists, a timestamp is automatically added to avoid conflicts (appended to a directory name, inserted before the extension for a file). |
 | Checkout Branch | Right-click a directory to checkout a git branch using the directory name. Creates the branch if it doesn't exist, or switches to it if it already exists. |
 | Insert Path to Editor | Insert relative path into the Editor view. Click the edit icon on file rows, or right-click and select "Insert Path to Editor". Supports multiple selection. |
@@ -341,14 +341,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.8.vsix
+   code --install-extension ai-coding-sidebar-1.1.9.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.8.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.9.vsix
 ```
 
 #### Build the package yourself
@@ -362,7 +362,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.8.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.8.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.9.vsix
    ```
 4. Restart VS Code.
 

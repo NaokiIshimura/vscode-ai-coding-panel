@@ -134,6 +134,17 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             case 'drop':
                 await this._handleDrop(message.targetPath, message.sources, message.uriList);
                 break;
+            case 'dropFiles':
+                await this._handleDroppedFileContents(
+                    message.targetPath,
+                    message.files,
+                    message.skippedDirectories,
+                    message.skippedFiles
+                );
+                break;
+            case 'dropUnsupported':
+                vscode.window.showWarningMessage('Could not read the dropped item.');
+                break;
         }
     }
 
@@ -619,20 +630,11 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
 
     /**
      * Webviewからのドロップを処理する
+     * targetPathが未指定の場合（空白領域やファイル行へのドロップ）は現在表示中のディレクトリを対象にする
      */
-    private async _handleDrop(targetPath: string, sources?: string[], uriList?: string): Promise<void> {
-        if (!targetPath) {
-            return;
-        }
-
-        // ドロップ先がファイルの場合はその親ディレクトリを対象にする
-        let targetDir = targetPath;
-        try {
-            const stat = await fsPromises.stat(targetPath);
-            if (!stat.isDirectory()) {
-                targetDir = path.dirname(targetPath);
-            }
-        } catch {
+    private async _handleDrop(targetPath?: string, sources?: string[], uriList?: string): Promise<void> {
+        const targetDir = await this._resolveDropTargetDir(targetPath);
+        if (!targetDir) {
             return;
         }
 
@@ -642,8 +644,87 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
         }
 
         if (uriList) {
-            const uris = uriList.split('\n').filter(uri => uri.trim() !== '');
+            // text/uri-listは改行区切りで、'#'始まりの行はコメント
+            const uris = uriList
+                .split(/\r?\n/)
+                .map(uri => uri.trim())
+                .filter(uri => uri !== '' && !uri.startsWith('#'));
             await this.copyExternalFiles(uris, targetDir);
+        }
+    }
+
+    /**
+     * Webviewから送られたファイルの内容を書き出す
+     * 外部アプリからのドロップではWebviewが絶対パスを取得できないため、内容を受け取って保存する
+     */
+    private async _handleDroppedFileContents(
+        targetPath: string | undefined,
+        files: Array<{ name?: string; data?: string }> | undefined,
+        skippedDirectories?: string[],
+        skippedFiles?: string[]
+    ): Promise<void> {
+        if (skippedDirectories && skippedDirectories.length > 0) {
+            vscode.window.showWarningMessage(
+                `Dropping a folder is not supported: ${skippedDirectories.join(', ')}`
+            );
+        }
+
+        if (skippedFiles && skippedFiles.length > 0) {
+            vscode.window.showWarningMessage(
+                `Could not read dropped file: ${skippedFiles.join(', ')}`
+            );
+        }
+
+        if (!files || files.length === 0) {
+            return;
+        }
+
+        const targetDir = await this._resolveDropTargetDir(targetPath);
+        if (!targetDir) {
+            return;
+        }
+
+        const copiedFiles: string[] = [];
+
+        for (const file of files) {
+            // Webview由来の名前をそのまま結合しない（パス区切りを含む場合に備える）
+            const fileName = path.basename(file.name || '');
+            if (!fileName || fileName === '.' || fileName === '..') {
+                continue;
+            }
+
+            const destination = path.join(targetDir, fileName);
+
+            try {
+                if (!(await this.confirmOverwrite(destination, fileName))) {
+                    continue;
+                }
+
+                await fs.promises.writeFile(destination, Buffer.from(file.data || '', 'base64'));
+                copiedFiles.push(fileName);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to copy ${fileName}: ${error}`);
+            }
+        }
+
+        this.showCopyResult(copiedFiles);
+    }
+
+    /**
+     * ドロップ先のディレクトリを決定する
+     * ドロップ先がファイルの場合はその親ディレクトリを対象にする
+     */
+    private async _resolveDropTargetDir(targetPath?: string): Promise<string | undefined> {
+        const dropPath = targetPath || this.getCurrentPath();
+        if (!dropPath) {
+            return undefined;
+        }
+
+        try {
+            const stat = await fsPromises.stat(dropPath);
+            return stat.isDirectory() ? dropPath : path.dirname(dropPath);
+        } catch {
+            return undefined;
         }
     }
 
@@ -684,27 +765,10 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             }
 
             try {
-                // ファイルが既に存在するかチェック
-                let fileExists = false;
-                try {
-                    await fs.promises.access(targetPath);
-                    fileExists = true;
-                } catch {
-                    fileExists = false;
+                if (!(await this.confirmOverwrite(targetPath, fileName))) {
+                    continue;
                 }
 
-                if (fileExists) {
-                    const answer = await vscode.window.showWarningMessage(
-                        `${fileName} already exists. Overwrite?`,
-                        'Overwrite',
-                        'Skip'
-                    );
-                    if (answer !== 'Overwrite') {
-                        continue;
-                    }
-                }
-
-                // ファイルをコピー
                 await fs.promises.copyFile(sourcePath, targetPath);
                 copiedFiles.push(fileName);
             } catch (error) {
@@ -712,7 +776,37 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             }
         }
 
-        // コピー成功メッセージを表示
+        this.showCopyResult(copiedFiles);
+    }
+
+    /**
+     * 上書き確認を行い、書き込んでよいかを返す
+     */
+    private async confirmOverwrite(targetPath: string, fileName: string): Promise<boolean> {
+        let fileExists = false;
+        try {
+            await fs.promises.access(targetPath);
+            fileExists = true;
+        } catch {
+            fileExists = false;
+        }
+
+        if (!fileExists) {
+            return true;
+        }
+
+        const answer = await vscode.window.showWarningMessage(
+            `${fileName} already exists. Overwrite?`,
+            'Overwrite',
+            'Skip'
+        );
+        return answer === 'Overwrite';
+    }
+
+    /**
+     * コピー結果を表示してビューを更新する
+     */
+    private showCopyResult(copiedFiles: readonly string[]): void {
         if (copiedFiles.length > 0) {
             const message = copiedFiles.length === 1
                 ? `Copied: ${copiedFiles[0]}`

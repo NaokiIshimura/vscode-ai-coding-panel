@@ -8,6 +8,15 @@ const tooltipElement = document.getElementById('tooltip');
 // 内部ドラッグ用のMIMEタイプ（VS Codeのtext/uri-listと区別する）
 const INTERNAL_MIME = 'application/vnd.aicodingsidebar.paths';
 
+// 外部からのドロップでURI一覧が入りうるMIMEタイプ（先頭から順に確認する）
+const URI_LIST_MIMES = ['text/uri-list', 'application/vnd.code.uri-list'];
+
+// VS CodeがリソースURIのJSON配列を入れるMIMEタイプ（DataTransfers.RESOURCES）
+const RESOURCE_URLS_MIME = 'resourceurls';
+
+// 内容を読み取って転送するドロップファイルの上限サイズ（50MB）
+const MAX_DROP_FILE_SIZE = 50 * 1024 * 1024;
+
 let items = [];
 let selectedPath;
 
@@ -211,12 +220,19 @@ function createRow(item) {
         });
     }
 
-    // ディレクトリ・パス表示行はドロップ先になれる
+    // ディレクトリ・パス表示行は個別のドロップ先になれる
+    // （ファイル行や空白領域へのドロップはビュー全体のハンドラが現在のディレクトリとして受ける）
     if (item.kind === 'directory' || item.kind === 'path' || item.kind === 'parent') {
+        row.addEventListener('dragenter', (event) => {
+            event.preventDefault();
+        });
         row.addEventListener('dragover', (event) => {
             event.preventDefault();
+            event.stopPropagation();
             event.dataTransfer.dropEffect = 'copy';
             row.classList.add('drop-target');
+            // 行のハイライトとビュー全体のハイライトを二重に出さない
+            clearViewDropHighlight();
         });
         row.addEventListener('dragleave', () => {
             row.classList.remove('drop-target');
@@ -225,6 +241,7 @@ function createRow(item) {
             event.preventDefault();
             event.stopPropagation();
             row.classList.remove('drop-target');
+            clearViewDropHighlight();
             handleDrop(event, item.filePath);
         });
     }
@@ -341,27 +358,215 @@ function updateSelection() {
 }
 
 /**
+ * ビュー全体をドロップ先として登録する
+ * 行の上以外（空白領域・ファイル行）へのドロップは、現在表示中のディレクトリを対象にする
+ */
+function setupViewDropTarget() {
+    document.addEventListener('dragenter', (event) => {
+        event.preventDefault();
+    });
+
+    document.addEventListener('dragover', (event) => {
+        // preventDefaultしないとdropが発火せず、Webviewがドロップされたファイルへ遷移してしまう
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+        document.body.classList.add('drag-over');
+    });
+
+    document.addEventListener('dragleave', (event) => {
+        // 子要素間の移動でも発火するため、ビューの外へ出たときだけ解除する
+        if (!event.relatedTarget) {
+            clearViewDropHighlight();
+        }
+    });
+
+    document.addEventListener('dragend', clearViewDropHighlight);
+
+    document.addEventListener('drop', (event) => {
+        event.preventDefault();
+        clearViewDropHighlight();
+        // targetPathを渡さないことで、拡張側が現在のディレクトリを使う
+        handleDrop(event);
+    });
+}
+
+/**
+ * ビュー全体のドロップ中ハイライトを解除する
+ */
+function clearViewDropHighlight() {
+    document.body.classList.remove('drag-over');
+}
+
+/**
  * ドロップされた内容を拡張側へ送信する
+ * targetPathを省略した場合は現在表示中のディレクトリが対象になる
  */
 function handleDrop(event, targetPath) {
-    const internal = event.dataTransfer.getData(INTERNAL_MIME);
-    if (internal) {
-        try {
-            const sources = JSON.parse(internal);
-            if (Array.isArray(sources) && sources.length > 0) {
-                vscode.postMessage({ type: 'drop', targetPath, sources });
-                return;
+    const sources = readInternalSources(event.dataTransfer);
+    if (sources.length > 0) {
+        vscode.postMessage({ type: 'drop', targetPath, sources });
+        return;
+    }
+
+    // パスが分かる場合はそのままコピーさせる（内容の読み取りが不要で確実）
+    const uriList = readUriList(event.dataTransfer);
+    if (hasFileUri(uriList)) {
+        vscode.postMessage({ type: 'drop', targetPath, uriList });
+        return;
+    }
+
+    // FinderやVS Codeのエクスプローラーからのドロップは、Webviewからは絶対パスを取得できない
+    // （ElectronのFile.pathは廃止済み）ため、内容そのものを読み取って拡張側へ渡す
+    const dropped = readDroppedEntries(event.dataTransfer);
+    if (dropped.files.length > 0 || dropped.directories.length > 0) {
+        sendDroppedFileContents(dropped, targetPath);
+        return;
+    }
+
+    vscode.postMessage({ type: 'dropUnsupported' });
+}
+
+/**
+ * ドロップされたファイルをイベント処理中に同期的に取り出す
+ * DataTransferはハンドラを抜けると読めなくなるため、Fileオブジェクトをここで確保しておく
+ */
+function readDroppedEntries(dataTransfer) {
+    const files = [];
+    const directories = [];
+
+    if (dataTransfer.items && dataTransfer.items.length > 0) {
+        for (const item of dataTransfer.items) {
+            if (item.kind !== 'file') {
+                continue;
             }
+
+            // ディレクトリはFile APIから中身を読めないため対象外にする
+            const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
+            if (entry && entry.isDirectory) {
+                directories.push(entry.name);
+                continue;
+            }
+
+            const file = item.getAsFile();
+            if (file) {
+                files.push(file);
+            }
+        }
+
+        return { files, directories };
+    }
+
+    for (const file of dataTransfer.files || []) {
+        files.push(file);
+    }
+
+    return { files, directories };
+}
+
+/**
+ * ドロップされたファイルの内容を読み取って拡張側へ送る
+ */
+async function sendDroppedFileContents(dropped, targetPath) {
+    const files = [];
+    const skippedFiles = [];
+
+    for (const file of dropped.files) {
+        if (file.size > MAX_DROP_FILE_SIZE) {
+            skippedFiles.push(file.name);
+            continue;
+        }
+
+        try {
+            const buffer = await file.arrayBuffer();
+            files.push({ name: file.name, data: encodeBase64(buffer) });
         } catch {
-            // パースできない場合は外部ドロップとして扱う
+            skippedFiles.push(file.name);
         }
     }
 
-    // VS Codeのエクスプローラー等からのドロップはtext/uri-listで届く
-    const uriList = event.dataTransfer.getData('text/uri-list');
-    if (uriList) {
-        vscode.postMessage({ type: 'drop', targetPath, uriList });
+    vscode.postMessage({
+        type: 'dropFiles',
+        targetPath,
+        files,
+        skippedDirectories: dropped.directories,
+        skippedFiles
+    });
+}
+
+/**
+ * 内容をpostMessageで送れるようbase64へ変換する
+ */
+function encodeBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    // 一度に渡すと引数が多すぎてスタックが溢れるため分割する
+    const chunkSize = 0x8000;
+    let binary = '';
+
+    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + chunkSize));
     }
+
+    return btoa(binary);
+}
+
+/**
+ * URI一覧にfileスキームのURIが含まれるかを判定する
+ * リンクのドロップなどコピー元にできないURIしか無い場合は、内容の読み取りへ回す
+ */
+function hasFileUri(uriList) {
+    if (!uriList) {
+        return false;
+    }
+
+    return uriList
+        .split(/\r?\n/)
+        .some(line => line.trim().toLowerCase().startsWith('file:'));
+}
+
+/**
+ * ビュー内でのドラッグで設定したパス一覧を読み取る
+ */
+function readInternalSources(dataTransfer) {
+    const internal = dataTransfer.getData(INTERNAL_MIME);
+    if (!internal) {
+        return [];
+    }
+
+    try {
+        const parsed = JSON.parse(internal);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        // パースできない場合は外部ドロップとして扱う
+        return [];
+    }
+}
+
+/**
+ * 外部からのドロップに含まれるURI一覧を改行区切りで読み取る
+ * ドラッグ元によって使われるMIMEタイプが異なるため順に確認する
+ */
+function readUriList(dataTransfer) {
+    for (const mime of URI_LIST_MIMES) {
+        const value = dataTransfer.getData(mime);
+        if (value) {
+            return value;
+        }
+    }
+
+    // VS Codeのエクスプローラーはリソース一覧をJSON配列で渡すことがある
+    const resourceUrls = dataTransfer.getData(RESOURCE_URLS_MIME);
+    if (resourceUrls) {
+        try {
+            const parsed = JSON.parse(resourceUrls);
+            if (Array.isArray(parsed)) {
+                return parsed.join('\n');
+            }
+        } catch {
+            // パースできない場合は無視
+        }
+    }
+
+    return '';
 }
 
 /**
@@ -453,6 +658,8 @@ listElement.addEventListener('keydown', (event) => {
     }
     event.preventDefault();
 });
+
+setupViewDropTarget();
 
 // 拡張側へ準備完了を通知
 vscode.postMessage({ type: 'ready' });

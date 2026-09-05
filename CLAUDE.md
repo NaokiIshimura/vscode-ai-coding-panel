@@ -386,6 +386,72 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.9バグ修正: Plans Viewの外部ドラッグ&ドロップ（Webview化以降の制約と対応）
+
+v1.0.22でPlans ViewをWebview化して以降、ビューの外からファイルをドラッグしても配置できなくなっていた問題への対応：
+
+**原因: VS Codeがドラッグ中にWebviewのポインタイベントを無効化する**
+
+| 層 | 挙動 |
+|---|---|
+| workbench | window の `dragstart` / `drag` / `dragover` を監視し、`shiftKey` が押されていなければ webview の iframe に `pointerEvents: none` を設定する（`_startBlockingIframeDragEvents()`）。`shiftKey` 押下・`dragend`・ボタンを離したマウス移動で解除される |
+| webview内部（`pre/index.html`） | `dragenter` で、`e.defaultPrevented` でなくアイテムが全て `kind === 'file'` の場合にホストへ `drag-start` を通知し、同じブロックを発動させる |
+
+- つまり**外部からのドラッグはShiftキーを押しながらでないとWebviewに届かない**。これはVS Code側の仕様で、拡張から無効化する手段はない
+- TreeView時代（`TreeDragAndDropController`）はVS Code本体のDnD機構で処理されていたため、この制約を受けなかった
+- README.md / README-JA.md のドラッグ&ドロップの説明にShiftキーの注記を追加している
+- Shiftキーが必要なことは操作前には分からないため、ビュー右下に常設のヒント（`#footer` の `.footer-hint`）を表示している
+  - Editor Viewの `#footer` と同じ構成（`min-height: var(--button-bar-height)`・`border-top`・右寄せ）に揃えている
+  - ドラッグ中に強調表示する案は採れない。Shiftキーを押していない間はWebviewにドラッグイベント自体が届かないため
+  - ネイティブの `title` を使っている（`.row` と違い、`title` を持つ祖先が無いため期待どおり表示される）
+
+**実装した対応**
+
+| ファイル | 変更 |
+|---|---|
+| `resources/webview/plans/main.js` | `setupViewDropTarget()` を追加し、`document` で `dragenter` / `dragover` / `dragleave` / `dragend` / `drop` を処理。ドロップ先の行が無い場合は `targetPath` を送らない。URI読み取りを `readInternalSources()` / `readUriList()` / `hasFileUri()` に分離 |
+| `resources/webview/plans/style.css` | `body.drag-over #list` のハイライトを追加 |
+| `src/providers/PlansProvider.ts` | `_handleDrop()` の `targetPath` をオプショナル化し、未指定なら `getCurrentPath()` を使う |
+
+**ドロップ受け入れ範囲を旧実装に戻した**
+- Webview化以前の `handleDrop()` は、`target` が `undefined`（ビューの空白領域）なら `activeFolderPath || rootPath`、ファイル行なら親ディレクトリへコピーしていた
+- Webview版はディレクトリ・パス表示・親（`..`）の行しかドロップ先にしていなかったため、空白領域とファイル行へのドロップが無反応だった
+- 行にドロップした場合はその行を、それ以外は拡張側で現在表示中のディレクトリを対象にする
+
+**外部アプリからのドロップは絶対パスが取れないため内容を転送する**
+
+| ドラッグ元 | Webviewで取得できるもの | 処理 |
+|---|---|---|
+| ビュー内の行 | `application/vnd.aicodingsidebar.paths`（自前のMIME） | パスをそのままコピー |
+| fileスキームのURIを含むドロップ | `text/uri-list` 等 | URIのパスからコピー |
+| Finder・VS Codeのエクスプローラー | `dataTransfer.files`（Fileオブジェクトのみ） | 内容を読み取って書き出す |
+
+- ElectronはFile.pathを廃止しており（代替の `webUtils.getPathForFile()` はWebviewから呼べない）、Webviewは絶対パスを一切取得できない。当初は警告（`dropUnsupported`）を出す実装にしたが、Finderからドロップすると必ずこの警告になったため、内容を転送する方式へ変更した
+- `readDroppedEntries()` は drop イベント中に**同期的に** `DataTransfer` を読む。ハンドラを抜けると `DataTransfer` は読めなくなる（取り出し済みのFileオブジェクトはその後も読める）
+- 内容は `encodeBase64()` でbase64化してから `postMessage` する。VS CodeのWebviewメッセージはJSONシリアライズされるためUint8Arrayをそのまま渡せない。`String.fromCharCode.apply` は引数が多すぎるとスタックが溢れるので0x8000バイトずつ分割している
+- ディレクトリは `item.webkitGetAsEntry().isDirectory` で判定して除外し、警告を表示する（File APIから中身を辿れない。TreeView時代の `copyExternalFiles` も `fs.copyFile` のみでディレクトリ非対応だった）
+- 転送するファイルサイズの上限は `MAX_DROP_FILE_SIZE`（50MB）。超えるものはスキップして警告する
+- 拡張側は受け取った名前を `path.basename()` で正規化してから結合する（Webview由来の文字列をそのまま `path.join()` に渡さない）
+- `hasFileUri()` でURI一覧にfileスキームが含まれるかを先に判定する。リンクのドロップなどコピー元にできないURIしか無い場合に、無反応にせず内容の読み取りへ回すため
+
+**ドロップ処理の共通化（`PlansProvider`）**
+
+| メソッド | 責務 |
+|---|---|
+| `_resolveDropTargetDir()` | ドロップ先ディレクトリの決定（未指定なら `getCurrentPath()`、ファイルならその親） |
+| `confirmOverwrite()` | 同名ファイルの上書き確認 |
+| `showCopyResult()` | コピー結果の表示とビュー更新 |
+
+パス指定の `copyFiles()` と内容指定の `_handleDroppedFileContents()` の双方から利用する。
+
+**設計上の注意点**
+- **`dragenter` での `preventDefault()`**: webview内部の `handleInnerDragStartEvent` が `e.defaultPrevented` で早期returnするため、Shiftキーを離した瞬間に再ブロックされるのを防げる
+- **`document` に登録している理由**: バブリングは `document` → `window` の順で、VS Code側のハンドラは `window` に登録されている。`document` 側で先に `preventDefault()` を呼ぶ必要がある
+- **行の `dragover` での `stopPropagation()`**: 行のハイライトとビュー全体のハイライトが二重に出ないようにしている
+- **URI一覧のMIMEタイプ**: ドラッグ元によって異なるため `text/uri-list` → `application/vnd.code.uri-list` → `resourceurls`（VS CodeがURIのJSON配列を入れる `DataTransfers.RESOURCES`）の順に確認する
+- **`text/uri-list` のパース**: 改行は `\r\n` の場合があり、`#` で始まる行はコメントのため除外する
+- **`dropUnsupported`**: `dataTransfer.files` しか取れないドロップはWebviewから絶対パスを取得できないため、警告メッセージを表示してエクスプローラーからのドラッグを案内する
+
 ### v1.1.8新機能: Plans Viewインラインアクションのツールチップ
 
 Plans Viewの行に表示されるインラインアクションアイコン（Archive等）にマウスオーバーすると、アクション名が表示されるようにした：

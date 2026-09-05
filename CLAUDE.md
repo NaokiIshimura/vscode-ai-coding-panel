@@ -385,6 +385,43 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.2新機能: Plans Viewのファイルアーカイブ
+
+Plans Viewのファイル行から `archived/` へ退避できる `aiCodingSidebar.archiveFile` コマンドを追加：
+
+**背景**
+- 従来のアーカイブ（`aiCodingSidebar.archiveDirectory`）はディレクトリのみが対象で、Plans Viewのルート直下に置いたMarkdownファイルは削除するか手動で移動するしかなかった
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/commands/plans.ts` | `aiCodingSidebar.archiveFile` を追加し、アーカイブ処理の共通部分をモジュール関数へ切り出し |
+| `package.json` | `contributes.commands` に `aiCodingSidebar.archiveFile`（`$(archive)`）を追加 |
+| `resources/webview/plans/main.js` | `CONTEXT_MENUS.file` と `INLINE_ACTIONS.file` に Archive を追加 |
+| `src/test/suite/extension.test.ts` | コマンド登録テストに `aiCodingSidebar.archiveFile` を追加 |
+
+- 移動先はディレクトリのアーカイブと同じ `<plans>/archived/`
+- Editor Viewで開いているファイルをアーカイブした場合は `editorProvider.clearFile()` で表示をクリアする
+- 同名衝突時のタイムスタンプは、**ディレクトリは名前の末尾**、**ファイルは拡張子の前**に付与する（`foo.md_20260905_131144` では拡張子が壊れるため）
+
+**アーカイブ処理の共通化**
+
+`plans.ts` の末尾に3つのモジュール関数を配置し、`archiveDirectory` / `archiveFile` の両方から利用する：
+
+| 関数 | 責務 |
+|---|---|
+| `ensureArchivedDirectory()` | `<plans>/archived` のパス解決と、未作成時の作成。失敗時はエラーメッセージを表示して `undefined` を返す |
+| `resolveArchiveDestination()` | 移動先パスの決定と同名衝突の回避。`isDirectory` でタイムスタンプの付与位置を切り替える |
+| `formatArchiveTimestamp()` | `YYYYMMDD_HHmmss` 形式のサフィックス生成（`TemplateService` のタイムスタンプとは形式が異なるためローカルに保持） |
+
+`archiveDirectory` の外部から見た挙動（ルートディレクトリの拒否、`pathDisplayNonRoot` によるカレントディレクトリ判定、アーカイブ後のルートへの移動）は変更していない。
+
+**スコープに関する注意**
+- Webviewのファイル行は root / サブディレクトリで `contextValue` が共通の `'file'` のため、Archive はサブディレクトリ内のファイルにも表示される
+- 既存の `archiveDirectory` も階層を問わず表示され、いずれも top-level の `archived/` へフラットに移動する挙動のため、それに合わせている
+- root のファイルのみに限定する場合は、`PlansProvider.buildItems()` で `contextValue` を分ける必要がある
+
 ### v1.1.1変更: Editor Viewのレイアウト再編とcodicon化
 
 Editor Viewのボタン配置を3段構成に整理し、全ボタンをVS Code標準のcodiconに統一：

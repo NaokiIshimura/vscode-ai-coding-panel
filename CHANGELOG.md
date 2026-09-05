@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-09-05
+
+### Added
+- **Archive Files in Plans View**: Files can now be archived, not just directories
+  - Added the `aiCodingSidebar.archiveFile` command, available from the right-click menu and the inline archive icon on file rows
+  - Moves the file to the same `archived` folder used by directory archiving, so loose Markdown files in the root of Plans View no longer have to be deleted or moved by hand
+  - Archiving the file currently open in Editor view clears the editor
+  - On a name conflict the timestamp is inserted before the extension (`foo_20260905_131144.md`) so the file keeps its extension, whereas directories keep appending it to the end of the name
+
+### Technical
+- **Shared Archive Logic**: Extracted the code shared by `archiveDirectory` and `archiveFile` into module-level helpers in `src/commands/plans.ts`
+  - `ensureArchivedDirectory()` resolves the `archived` folder and creates it when missing
+  - `resolveArchiveDestination()` decides the destination path and handles name conflicts, switching where the timestamp is placed based on whether the entry is a directory
+  - `formatArchiveTimestamp()` generates the `YYYYMMDD_HHmmss` suffix
+  - The observable behavior of `archiveDirectory` is unchanged
+
 ## [1.1.1] - 2026-09-05
 
 ### Changed
@@ -2222,3 +2238,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.0.22]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.21...v1.0.22
 [1.1.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.22...v1.1.0
 [1.1.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.0...v1.1.1
+[1.1.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.1...v1.1.2

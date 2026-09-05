@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.1.2-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 A powerful VS Code panel extension designed to maximize your productivity with Claude Code.
 
@@ -201,7 +201,7 @@ Use the following variables inside a template:
 | Delete | Delete files and folders (moved to trash). |
 | Copy / Cut / Paste | Perform standard clipboard operations. |
 | Drag & Drop | Copy files by dragging them within the Plans view or from external sources. Displays a success message after copying. |
-| Archive | Archive task directories to keep your workspace organized. Click the archive icon (inline button) on a directory row, or right-click and select "Archive" to move it to the `archived` folder. When inside a non-root directory, an archive button also appears in the path display header - clicking it archives the current directory and returns to root. If a directory with the same name already exists, a timestamp is automatically added to avoid conflicts. |
+| Archive | Archive task directories and individual files to keep your workspace organized. Click the archive icon (inline button) on a directory or file row, or right-click and select "Archive" to move it to the `archived` folder. When inside a non-root directory, an archive button also appears in the path display header - clicking it archives the current directory and returns to root. Archiving the file currently open in Editor view clears the editor. If an entry with the same name already exists, a timestamp is automatically added to avoid conflicts (appended to a directory name, inserted before the extension for a file). |
 | Checkout Branch | Right-click a directory to checkout a git branch using the directory name. Creates the branch if it doesn't exist, or switches to it if it already exists. |
 | Insert Path to Editor | Insert relative path into the Editor view. Click the edit icon on file rows, or right-click and select "Insert Path to Editor". Supports multiple selection. |
 | Insert Path to Terminal | Insert relative path into the Terminal view. Click the terminal icon on file rows, or right-click and select "Insert Path to Terminal". Supports multiple selection. Paths are separated by spaces. |
@@ -340,14 +340,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.1.vsix
+   code --install-extension ai-coding-sidebar-1.1.2.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.1.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.2.vsix
 ```
 
 #### Build the package yourself
@@ -361,7 +361,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.1.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.1.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.2.vsix
    ```
 4. Restart VS Code.
 

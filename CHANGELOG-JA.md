@@ -5,6 +5,22 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.2] - 2026-09-05
+
+### 追加
+- **Plans Viewのファイルアーカイブ**: ディレクトリだけでなくファイルもアーカイブできるように
+  - `aiCodingSidebar.archiveFile`コマンドを追加し、ファイル行の右クリックメニューとインラインのアーカイブアイコンから実行可能に
+  - 移動先はディレクトリのアーカイブと同じ`archived`フォルダ。Plans Viewのルートに置いたMarkdownファイルを、手動で削除・移動せずに整理できる
+  - Editorビューで開いているファイルをアーカイブした場合は、Editorビューの表示をクリア
+  - 同名衝突時のタイムスタンプは拡張子の前に挿入するため（`foo_20260905_131144.md`）、ファイルの拡張子が保たれる。ディレクトリは従来どおり名前の末尾に付与
+
+### 技術的変更
+- **アーカイブ処理の共通化**: `archiveDirectory`と`archiveFile`で重複する処理を`src/commands/plans.ts`のモジュール関数へ切り出し
+  - `ensureArchivedDirectory()`: `archived`フォルダのパス解決と、未作成時の作成
+  - `resolveArchiveDestination()`: 移動先パスの決定と同名衝突の回避。ディレクトリかどうかでタイムスタンプの付与位置を切り替え
+  - `formatArchiveTimestamp()`: `YYYYMMDD_HHmmss`形式のサフィックス生成
+  - `archiveDirectory`の外部から見た挙動は変更なし
+
 ## [1.1.1] - 2026-09-05
 
 ### 変更
@@ -1693,3 +1709,4 @@ v0.8.33以前からアップグレードする場合:
 [1.0.22]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.21...v1.0.22
 [1.1.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.22...v1.1.0
 [1.1.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.0...v1.1.1
+[1.1.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.1...v1.1.2

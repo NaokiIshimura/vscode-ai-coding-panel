@@ -64,8 +64,9 @@ export function registerFilesCommands(
 
                 if (result.success) {
                     plansProvider.refresh();
-                    await editorProvider.showFile(filePath);
                     await vscode.commands.executeCommand('markdownEditor.focus');
+                    // 作成直後は入力できるようエディタにフォーカスを当てる
+                    await editorProvider.showFile(filePath, { focusEditor: true });
                     vscode.window.showInformationMessage(`Created markdown file ${fileName}`);
                 } else {
                     throw result.error || new Error('Failed to create file');

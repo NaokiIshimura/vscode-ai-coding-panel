@@ -28,6 +28,16 @@ const setFilePath = (filePath) => {
 
 setFilePath('');
 
+// エディタにフォーカスを当て、カーソルを先頭へ移動する
+const focusEditor = () => {
+    // 描画完了後にフォーカスを当てる（内容反映前だとカーソル位置がずれるため）
+    requestAnimationFrame(() => {
+        editor.focus();
+        editor.setSelectionRange(0, 0);
+        editor.scrollTop = 0;
+    });
+};
+
 // メッセージを受信
 window.addEventListener('message', event => {
     const message = event.data;
@@ -49,6 +59,11 @@ window.addEventListener('message', event => {
                 editor.removeAttribute('readonly');
                 readonlyIndicator.classList.remove('show');
                 editButton.classList.remove('active');
+            }
+
+            // 新規作成直後などはエディタにフォーカスを当て、先頭から入力できるようにする
+            if (message.focusEditor) {
+                focusEditor();
             }
             break;
         case 'updateDirtyState':

@@ -5,6 +5,18 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.3] - 2026-09-05
+
+### 変更
+- **プロンプトファイル作成後のフォーカス**: `PROMPT.md`を新規作成すると、Editor Viewの入力エリアにカーソルが移動するように
+  - **Next**ボタン、`Cmd+M` / `Ctrl+M`、Plans Viewのコンテキストメニューの「New PROMPT.md」が対象。エディタをクリックし直さずにそのまま入力を開始できる
+  - プロンプトのテンプレートは本文が空のため、カーソルはファイルの先頭に配置
+
+### 技術的変更
+- **フォーカス指定のオプトイン化**: `EditorProvider.showFile()`にオプション引数`{ focusEditor }`を追加し、`showContent`メッセージ経由でWebviewへ伝達
+  - 渡すのは`aiCodingSidebar.createMarkdownFile`コマンドのみ。Plans Viewでのファイル選択は従来どおりフォーカスを奪わないため、キーボード操作の挙動は変わらない
+  - Webview側では`requestAnimationFrame`内でフォーカスを当てる。内容の代入と同一フレームで選択範囲を設定するとカーソル位置がずれるため
+
 ## [1.1.2] - 2026-09-05
 
 ### 追加
@@ -1710,3 +1722,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.22...v1.1.0
 [1.1.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.0...v1.1.1
 [1.1.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.1...v1.1.2
+[1.1.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.2...v1.1.3

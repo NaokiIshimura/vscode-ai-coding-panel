@@ -58,7 +58,7 @@ Markdownプロンプトファイルを編集し、パネルから直接Claude Co
 | 自動表示 | タイムスタンプ形式のMarkdownファイル（形式: `YYYY_MMDD_HHMM_SS_PROMPT.md`、`..._TASK.md`、`..._SPEC.md`、`..._QUICK_START.md`）を選択すると自動的に表示。その他のMarkdownファイルは通常のエディタで開く |
 | Saveボタン | ヘッダーに表示され、未保存の変更がある場合は色が変わる。ファイル未開時は現在のPlansディレクトリに新規作成 |
 | **3段構成のレイアウト** | 1段目に開いているファイルのパス（未オープン時は案内文）、2段目の左にEdit / Save・右にSpec / Plan / Run、最下段にNextボタンを配置 |
-| **Nextボタン** | ビュー最下部の専用領域に配置された赤い**Next**ボタン。タイムスタンプ付きの`PROMPT.md`を新規作成して開くため、Editorから離れずに次のプロンプトへ進める。`Cmd+M` / `Ctrl+M`でも実行可能 |
+| **Nextボタン** | ビュー最下部の専用領域に配置された赤い**Next**ボタン。タイムスタンプ付きの`PROMPT.md`を新規作成して開き、入力エリアにカーソルを移すため、そのまま入力を開始できる。`Cmd+M` / `Ctrl+M`でも実行可能 |
 | ボタンのアイコン | すべてのボタンにVS Code標準のcodiconを表示（Spec: 本、Plan: チェックリスト、Run: 再生、Next: 新規ファイル、Edit: 鉛筆、Save: フロッピー）。Plans ViewのQuick Startボタンと見た目を統一 |
 | カスタマイズ可能なコマンド | ワークフローに合わせてRun、Plan、Specコマンドを設定で変更可能 |
 | 読み取り専用モード | VSCodeエディタでファイルがアクティブになると自動的に読み取り専用モードに切り替わる |
@@ -214,7 +214,7 @@ created: {{datetime}}
 | Quick Start | Plans View最上部の⚡ Quick Startボタンをクリック<br>フォルダ名の入力を求めずに、タイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成します<br>作成されたファイルはEditor Viewで開かれ、Plansで選択状態になります。同名ディレクトリが既に存在する場合は連番サフィックス（`_2`, `_3`, ...）が付与されます |
 | New Task | パネルにフォーカスした状態で`Cmd+S` / `Ctrl+S`を押す<br>Plans Viewで現在開いているディレクトリ配下に新しいディレクトリを作成し、タイムスタンプ付きのMarkdownファイルを自動生成します<br>作成されたファイルはPlansで「editing」ラベルとともに選択され、Editor Viewで開かれます<br>現在のパスが取得できない場合は、デフォルトパス配下に作成されます |
 | 新規ディレクトリ | パス表示行のフォルダアイコンをクリック<br>現在開いているディレクトリ配下に新しいディレクトリを作成します（Markdownファイルは作成しない） |
-| PROMPT.md作成 | Editor Viewの**Next**ボタン、パス表示行のファイルアイコン、または`Cmd+M` / `Ctrl+M`<br>タイムスタンプ付きのMarkdownファイルが作成され、Editor Viewで開かれます（例: `2025_1229_1430_25_PROMPT.md`） |
+| PROMPT.md作成 | Editor Viewの**Next**ボタン、パス表示行のファイルアイコン、または`Cmd+M` / `Ctrl+M`<br>タイムスタンプ付きのMarkdownファイルが作成され、Editor Viewで開かれます（例: `2025_1229_1430_25_PROMPT.md`）。カーソルはファイル先頭に配置されます |
 | TASK.md作成 | パス表示行のTASK.mdアイコンをクリック<br>タイムスタンプ付きのTASK.mdファイルが作成され、Editor Viewで開かれます |
 | SPEC.md作成 | パス表示行のSPEC.mdアイコンをクリック<br>タイムスタンプ付きのSPEC.mdファイルが作成され、Editor Viewで開かれます |
 
@@ -339,14 +339,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.2.vsix
+   code --install-extension ai-coding-sidebar-1.1.3.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.1.2.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.3.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -360,7 +360,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.2.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.2.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.3.vsix
    ```
 4. VS Codeを再起動
 

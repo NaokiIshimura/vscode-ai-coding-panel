@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2026-09-05
+
+### Changed
+- **Focus After Creating a Prompt File**: Creating a new `PROMPT.md` now moves the caret into the Editor View text area
+  - Applies to the **Next** button, `Cmd+M` / `Ctrl+M`, and "New PROMPT.md" in the Plans View context menu, so you can start typing immediately instead of clicking into the editor first
+  - The caret is placed at the top of the file, where the prompt template leaves the body empty
+
+### Technical
+- **Opt-in Editor Focus**: `EditorProvider.showFile()` takes an optional `{ focusEditor }` argument and forwards it to the webview through the `showContent` message
+  - Only the `aiCodingSidebar.createMarkdownFile` command passes it, so selecting a file in Plans View still keeps focus where it is and does not break keyboard navigation there
+  - The webview focuses the text area inside `requestAnimationFrame`, because setting the selection in the same frame as the content assignment leaves the caret in the wrong place
+
 ## [1.1.2] - 2026-09-05
 
 ### Added
@@ -2239,3 +2251,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.0.22...v1.1.0
 [1.1.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.0...v1.1.1
 [1.1.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.1...v1.1.2
+[1.1.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.2...v1.1.3

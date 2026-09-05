@@ -3,6 +3,7 @@ import { CommandDependencies } from './types';
 import { registerSettingsCommands } from './settings';
 import { registerDocumentationCommands } from './documentation';
 import { registerTerminalCommands } from './terminal';
+import { registerBrowserCommands } from './browser';
 import { registerPlansCommands } from './plans';
 import { registerFilesCommands } from './files';
 
@@ -21,6 +22,9 @@ export function registerAllCommands(
 
     // ターミナル関連のコマンドを登録
     registerTerminalCommands(context, deps);
+
+    // ブラウザ関連のコマンドを登録
+    registerBrowserCommands(context, deps);
 
     // Plans関連のコマンドを登録
     registerPlansCommands(context, deps);

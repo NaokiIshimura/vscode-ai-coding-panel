@@ -67,6 +67,14 @@ suite('Extension Test Suite', () => {
 		});
 	});
 
+	test('Browser commands should be registered', async () => {
+		const commands = await vscode.commands.getCommands(true);
+		assert.ok(
+			commands.includes('aiCodingSidebar.openIntegratedBrowser'),
+			'Command aiCodingSidebar.openIntegratedBrowser should be registered'
+		);
+	});
+
 	test('File operation commands should be registered', async () => {
 		const commands = await vscode.commands.getCommands(true);
 		const fileCommands = [

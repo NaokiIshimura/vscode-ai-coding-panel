@@ -34,6 +34,7 @@ src/
 │   ├── settings.ts       # 設定関連コマンド（8コマンド）
 │   ├── documentation.ts  # ドキュメント関連コマンド（6コマンド）
 │   ├── terminal.ts       # ターミナル関連コマンド（6コマンド）
+│   ├── browser.ts        # ブラウザ関連コマンド（1コマンド、v1.1.5で新設）
 │   ├── plans.ts          # Plans View関連コマンド（13コマンド）
 │   ├── files.ts          # ファイル操作関連コマンド（12コマンド）
 │   └── index.ts          # 統合コマンドレジストリ
@@ -384,6 +385,39 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `package.json`: 設定スキーマのデフォルト値
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
+
+### v1.1.5新機能: Menu Viewへの統合ブラウザ追加と表示遅延の解消
+
+**Quick actionsへの「Open Integrated Browser」追加**
+
+| ファイル | 変更 |
+|---|---|
+| `src/commands/browser.ts`（新規） | `aiCodingSidebar.openIntegratedBrowser` を登録。設定値のURLを `simpleBrowser.show` に渡してVS Code組み込みのSimple Browserを開く |
+| `src/commands/index.ts` | `registerBrowserCommands()` を登録処理に追加 |
+| `src/providers/MenuProvider.ts` | Quick actionsに `globe` アイコンの項目を追加（Git Pull と Duplicate Workspace の間） |
+| `package.json` | `contributes.commands` にコマンド定義、設定 `aiCodingSidebar.browser.defaultUrl`（既定値 `about:blank`）を追加 |
+
+- **URLは必ず渡す**: `simpleBrowser.show` に引数を渡さないとSimple Browser側が自前の入力ボックスを表示する。入力なしで空タブを開くには `about:blank` を明示的に渡す必要がある。開いた後はSimple Browserのアドレスバーからページを移動できる
+- **`normalizeUrl()` のスキーム判定**: `^[a-zA-Z][a-zA-Z0-9+.-]*:` で判定している。`scheme://` を要求すると `about:blank` が `http://about:blank` に変換されてしまうため、`//` を持たないスキームも対象にしている
+- **専用モジュールを新設した理由**: 既存のQuick Actionsコマンド（`openTerminal` / `gitPull` 等）は `commands/terminal.ts` にあるが、ブラウザはターミナル関連ではないため `commands/browser.ts` を分けている
+- READMEはMenuビューの構成を「Quick shortcuts」から「Quick actions」に改め、設定表に `browser.defaultUrl` を追加した
+
+**Quick actionsを既定で展開**
+- `MenuProvider` のQuick actions項目に渡す `collapsibleState` を `Collapsed` → `Expanded` に変更（他の3項目は `Collapsed` のまま）
+- VS CodeはTreeViewの展開状態をワークスペースごとに記憶するため、手動で折りたたんだ環境ではその状態が優先される
+
+**Menu Viewの表示遅延を解消（`src/providers/MenuProvider.ts`）**
+
+| 変更 | 内容 |
+|---|---|
+| 300ms遅延の削除 | `_isInitialLoad` フィールドとローダー用の `setTimeout` を削除 |
+| `getChildren()` の同期化 | `async` / `Promise<MenuItem[]>` をやめて `MenuItem[]` を同期で返す |
+| ルート項目のキャッシュ化 | 構築処理を `_buildRootItems()` に切り出し、`_rootItems` にキャッシュ |
+
+- Menu View（`workspaceSettings`）は `package.json` で `"visibility": "collapsed"` が指定されており、**ユーザーが最初に開いたタイミングで初めて `getChildren()` が呼ばれる**。そのためローダー用の300msがそのまま体感のタイムラグになっていた
+- メニュー項目は静的なオブジェクト生成のみで、待つべき非同期処理は元々存在しない。`TreeDataProvider.getChildren()` は `ProviderResult<T[]>` を受け付けるため、同期の配列を返しても問題ない
+- `refresh()` ではキャッシュを破棄してから `onDidChangeTreeData` を発火するため、将来メニュー内容を動的にした場合も再構築される
+- 既存の `MenuProvider.test.ts` は `await menuProvider.getChildren()` の形で呼んでいるため、同期化後もそのまま通る
 
 ### v1.1.4変更: Terminal Viewショートカットの整理とボタンフォントの統一
 
@@ -1011,6 +1045,7 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 - `aiCodingSidebar.editor.runCommandWithoutFile`: ファイルなし時のRunコマンド
 - `aiCodingSidebar.editor.planCommand`: Planボタン実行コマンド
 - `aiCodingSidebar.editor.specCommand`: Specボタン実行コマンド
+- `aiCodingSidebar.browser.defaultUrl`: 統合ブラウザで開くURL（デフォルト: `about:blank`）
 - `aiCodingSidebar.terminal.*`: ターミナル設定（shell, fontSize, fontFamily, cursorStyle, cursorBlink, scrollback）
 
 ## テストフレームワーク

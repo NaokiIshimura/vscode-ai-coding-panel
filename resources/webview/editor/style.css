@@ -107,6 +107,7 @@ body.focused {
     align-items: center;
     gap: 4px;
     font-family: inherit;
+    font-weight: normal;
 }
 
 /* アイコンのサイズはPlans ViewのQuick Startボタンと揃える */

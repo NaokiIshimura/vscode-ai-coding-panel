@@ -25,7 +25,7 @@ This extension is purpose-built to enhance your Claude Code experience:
 | **Plans** | Browse and manage prompt files in a flat list view with directory navigation |
 | **Editor** | Command center for executing Claude Code with Run/Plan/Spec buttons |
 | **Terminal** | Claude Code-optimized terminal with auto-detection, context-aware shortcuts, and persistent sessions |
-| **Menu** | Quick access to settings and common operations |
+| **Menu** | Quick access to settings and documentation |
 
 ## Feature Details
 
@@ -93,13 +93,12 @@ The embedded terminal is purpose-built for Claude Code with intelligent automati
 
 ### Menu
 
-Quick access to settings and common operations.
+Quick access to settings and documentation.
 
 | Feature | Description |
 | --- | --- |
 | Settings | Open user or global settings |
 | Templates | Customize templates |
-| Quick actions | Open terminal, Checkout default branch, Git pull, Open integrated browser, Duplicate workspace in new window (expanded by default) |
 
 ## Typical Claude Code Workflow
 
@@ -341,14 +340,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.6.vsix
+   code --install-extension ai-coding-sidebar-1.1.7.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.6.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.7.vsix
 ```
 
 #### Build the package yourself
@@ -362,7 +361,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.6.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.6.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.7.vsix
    ```
 4. Restart VS Code.
 

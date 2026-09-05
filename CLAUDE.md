@@ -386,6 +386,23 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.7削除: Menu Viewからの「Quick actions」削除
+
+Menu View（`workspaceSettings`）から「Quick actions」セクションを削除し、Usage Guide / Global / Workspace の3項目構成に変更：
+
+| ファイル | 変更 |
+|---|---|
+| `src/providers/MenuProvider.ts` | `_buildRootItems()` から Quick actions の親項目と5つの子項目を削除 |
+| `README.md` / `README-JA.md` | Menuビューの機能表からQuick actionsの行を削除し、説明文を「設定やドキュメントへのクイックアクセス」に変更 |
+
+**コマンド登録は残している**
+- `aiCodingSidebar.openTerminal` / `checkoutDefaultBranch` / `gitPull`（`commands/terminal.ts`）と `aiCodingSidebar.openIntegratedBrowser`（`commands/browser.ts`）の `registerCommand` と `contributes.commands` はそのまま
+- v1.1.0でタイトルバーのボタンを削除した際と同じ方針で、コマンドパレットやキーバインドからは引き続き実行できる
+- `workbench.action.duplicateWorkspaceInNewWindow` はVS Code組み込みコマンドのため元から本拡張の管理外
+
+**テストへの影響なし**
+- `src/test/suite/providers/MenuProvider.test.ts` はルート項目の件数を固定せず「子を持つ項目が存在すること」を確認する構成のため、項目削除後もそのまま通る
+
 ### v1.1.6バグ修正: Terminal Viewで折り返されたURLのリンク化
 
 Terminal View内で2行に折り返されたURLをクリックすると、クリックした行の断片だけがブラウザで開かれる問題を修正：

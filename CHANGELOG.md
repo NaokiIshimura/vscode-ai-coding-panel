@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.7] - 2026-09-05
+
+### Removed
+- **Quick Actions in Menu View**: Removed the "Quick actions" section from the Menu view
+  - Open Terminal, Checkout Default Branch, Git Pull, Open Integrated Browser and Duplicate Workspace in New Window are no longer listed in the Menu view
+  - The commands themselves are still registered and can be run from the Command Palette
+  - The Menu view now consists of Usage Guide, Global and Workspace
+
 ## [1.1.6] - 2026-09-05
 
 ### Fixed
@@ -2302,3 +2310,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.3...v1.1.4
 [1.1.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.4...v1.1.5
 [1.1.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.5...v1.1.6
+[1.1.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.6...v1.1.7

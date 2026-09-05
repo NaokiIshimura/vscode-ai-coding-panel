@@ -5,6 +5,14 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.7] - 2026-09-05
+
+### 削除
+- **Menuビューのクイックアクション**: Menuビューから「Quick actions」セクションを削除
+  - Open Terminal、Checkout Default Branch、Git Pull、Open Integrated Browser、Duplicate Workspace in New Window はMenuビューに表示されなくなった
+  - コマンド自体は登録されたままのため、コマンドパレットから実行できる
+  - Menuビューの構成は Usage Guide / Global / Workspace の3項目になった
+
 ## [1.1.6] - 2026-09-05
 
 ### 修正
@@ -1773,3 +1781,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.3...v1.1.4
 [1.1.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.4...v1.1.5
 [1.1.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.5...v1.1.6
+[1.1.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.6...v1.1.7

@@ -5,6 +5,29 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.9] - 2026-09-06
+
+### Fixed
+- **Plans Viewへのドラッグ&ドロップ**: ビューの外からドロップしたファイルを再び配置できるように修正
+  - 一覧の下の空白領域やファイル行へドロップした場合も、現在表示中のディレクトリへコピーされるようになり、Webview化する前の挙動に戻した
+  - FinderやVS Codeのエクスプローラーからドラッグしたファイルは、内容を読み取ってコピーするように変更（Webviewは絶対パスを取得できないため）
+  - 従来はこの場合「Could not determine the dropped file path」という警告が出るだけだった
+  - フォルダのドロップには非対応のため、スキップしたフォルダ名を通知するようにした
+
+### Added
+- **Plans Viewのドラッグ&ドロップの案内**: ビュー右下に注意書きを常時表示
+  - VS Codeはドラッグ中、Shiftキーを押していないとWebviewベースのビューへのドロップを無効化するが、これは試すまで分からないため
+  - Editor Viewのフッターと同じレイアウトに揃え、サイドバーの幅が狭いときは末尾を省略する
+
+### Technical
+- **Shiftキーが必要な理由**: VS Codeはドラッグ中、Shiftキーが押されていなければWebviewのiframeに `pointerEvents: none` を設定する
+  - ビュー側で `dragenter` に `preventDefault()` を呼び、Webviewホスト自身がブロックを始めないようにした
+  - v1.0.22以前のTreeViewはVS Code本体のドラッグ&ドロップ機構で処理されていたため、この影響を受けなかった
+- **ドロップされたファイルの処理**: `readDroppedEntries()` がdropイベント中に同期的に `DataTransfer` を読み取り、内容をbase64で拡張側へ送る
+  - URI一覧は `text/uri-list`・`application/vnd.code.uri-list`・`resourceurls` の順に確認し、パスが分かる場合はそのままコピーする
+  - 50MBを超えるファイルはスキップし、ファイル名は `path.basename()` で正規化してから結合する
+- **ドロップ処理の共通化**: `_resolveDropTargetDir()`・`confirmOverwrite()`・`showCopyResult()` を、パス指定と内容指定の双方のコピー経路で共用する
+
 ## [1.1.8] - 2026-09-05
 
 ### 追加
@@ -1796,3 +1819,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.5...v1.1.6
 [1.1.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.6...v1.1.7
 [1.1.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.7...v1.1.8
+[1.1.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.8...v1.1.9

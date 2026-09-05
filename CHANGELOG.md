@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.9] - 2026-09-06
+
+### Fixed
+- **Drag & Drop into Plans View**: Dropping files from outside the view works again
+  - Dropping onto the empty area below the list or onto a file row now copies into the directory currently shown, matching the behavior before the view became a webview
+  - Files dragged from Finder or the VS Code Explorer are now copied by reading their contents, because a webview cannot resolve absolute paths
+  - Previously such a drop only showed a "Could not determine the dropped file path" warning
+  - Dropping a folder is not supported and now reports which folders were skipped
+
+### Added
+- **Drag & Drop Hint in Plans View**: A reminder is shown at the bottom right of the view
+  - VS Code disables drops into webview-based views unless Shift is held while dragging, and this is not discoverable before trying
+  - The footer follows the same layout as the one in Editor view, and is truncated when the sidebar is narrow
+
+### Technical
+- **Why Shift Is Required**: VS Code sets `pointerEvents: none` on the webview iframe while a drag is in progress unless Shift is held
+  - The view now calls `preventDefault()` on `dragenter` so that the webview host does not start blocking on its own
+  - The tree view used before v1.0.22 was handled by the drag and drop machinery of VS Code itself and was not affected
+- **Dropped File Handling**: `readDroppedEntries()` reads the `DataTransfer` synchronously during the drop event, and the contents are sent to the extension as base64
+  - URI lists are read from `text/uri-list`, `application/vnd.code.uri-list` and `resourceurls` in that order, and paths are used directly whenever they are available
+  - Files over 50 MB are skipped, and file names are normalized with `path.basename()` before they are joined to the target directory
+- **Shared Drop Logic**: `_resolveDropTargetDir()`, `confirmOverwrite()` and `showCopyResult()` are now shared by the path based and content based copy paths
+
 ## [1.1.8] - 2026-09-05
 
 ### Added
@@ -2325,3 +2348,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.5...v1.1.6
 [1.1.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.6...v1.1.7
 [1.1.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.7...v1.1.8
+[1.1.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.8...v1.1.9

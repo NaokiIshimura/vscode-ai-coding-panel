@@ -45,6 +45,7 @@ Browse and manage files in a flat list view with directory navigation.
 | **Editor target file icons** | Files opened in Editor view (TASK.md, PROMPT.md, SPEC.md, QUICK_START.md) display an `edit` icon to distinguish them from regular Markdown files |
 | Sorting | Files are sorted by creation date (ascending) by default |
 | Drag & Drop | Copy files by dragging them within the view or from external sources |
+| **Inline action tooltips** | Hovering an inline action icon on a row (Archive, New PROMPT.md, Rename..., Insert Path to Editor and so on) shows the name of the action |
 | **Keyboard navigation** | Use ↑ / ↓ to move the selection and Enter to open the selected item |
 | Auto-refresh | Automatically updates when files are created, modified, or deleted (even when the view is hidden) |
 | Settings icon | Quick access to default path and sort configuration |
@@ -340,14 +341,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.7.vsix
+   code --install-extension ai-coding-sidebar-1.1.8.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.7.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.8.vsix
 ```
 
 #### Build the package yourself
@@ -361,7 +362,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.7.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.7.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.8.vsix
    ```
 4. Restart VS Code.
 

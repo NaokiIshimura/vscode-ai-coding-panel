@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2026-09-05
+
+### Added
+- **Open Integrated Browser**: Added an "Open Integrated Browser" action to Quick actions in the Menu view
+  - Opens VS Code's built-in Simple Browser in an empty tab, so you can browse a local dev server without leaving the editor
+  - The URL is typed in the Simple Browser's own address bar; the extension does not prompt for one
+  - The new `aiCodingSidebar.browser.defaultUrl` setting (default `about:blank`) can be set to a URL such as `http://localhost:3000` to always open that page instead
+
+### Changed
+- **Quick Actions Expanded by Default**: The Quick actions section of the Menu view now starts expanded
+  - Usage Guide, Global and Workspace still start collapsed
+  - VS Code remembers the expanded state per workspace, so a section collapsed by hand stays collapsed
+
+### Fixed
+- **Menu View Load Delay**: Removed the artificial 300 ms delay that ran the first time the Menu view was expanded
+  - The Menu view is contributed with `visibility: collapsed`, so the delay was paid exactly when the user first opened it, making the menu look slow to appear
+  - Menu items are plain objects with nothing to wait for, so `MenuProvider.getChildren()` is now synchronous and the root items are built once and cached
+
 ## [1.1.4] - 2026-09-05
 
 ### Removed
@@ -2265,3 +2283,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.1...v1.1.2
 [1.1.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.2...v1.1.3
 [1.1.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.3...v1.1.4
+[1.1.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.4...v1.1.5

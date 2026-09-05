@@ -5,6 +5,24 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.5] - 2026-09-05
+
+### 追加
+- **統合ブラウザを開く**: Menuビューのクイックアクションに「Open Integrated Browser」を追加
+  - VS Code組み込みのSimple Browserを空のタブで開く。エディタを離れずにローカルの開発サーバーを確認できる
+  - URLはSimple Browser自身のアドレスバーに入力する方式のため、拡張機能側では入力を求めない
+  - 新設した`aiCodingSidebar.browser.defaultUrl`設定（既定値`about:blank`）に`http://localhost:3000`などを指定すると、常にそのURLで開く
+
+### 変更
+- **クイックアクションを既定で展開**: Menuビューの「Quick actions」を最初から開いた状態に変更
+  - Usage Guide・Global・Workspaceは従来どおり折りたたんだ状態で開始する
+  - VS Codeは展開状態をワークスペースごとに記憶するため、手動で閉じた場合はその状態が優先される
+
+### 修正
+- **Menuビューの表示遅延**: 初回展開時に実行されていた300msの人為的な遅延を削除
+  - Menuビューは`visibility: collapsed`で登録されているため、この待ち時間はユーザーが最初に開いた瞬間にそのまま体感の遅延となっていた
+  - メニュー項目は待機の必要がない素のオブジェクトのため、`MenuProvider.getChildren()`を同期化し、ルート項目は初回のみ構築してキャッシュするようにした
+
 ## [1.1.4] - 2026-09-05
 
 ### 削除
@@ -1736,3 +1754,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.1...v1.1.2
 [1.1.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.2...v1.1.3
 [1.1.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.3...v1.1.4
+[1.1.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.4...v1.1.5

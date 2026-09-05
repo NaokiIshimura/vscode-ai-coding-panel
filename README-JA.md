@@ -97,7 +97,7 @@ Claude Code向けに設計された、インテリジェントな自動化とコ
 | --- | --- |
 | 設定 | ユーザ設定、グローバル設定を開く |
 | テンプレート | テンプレートをカスタマイズ |
-| ショートカット | ターミナルを開く、デフォルトブランチへ切り替え、Git pull、新しいウィンドウでワークスペースを複製 |
+| クイックアクション | ターミナルを開く、デフォルトブランチへ切り替え、Git pull、統合ブラウザを開く、新しいウィンドウでワークスペースを複製（既定で展開） |
 
 ## 典型的なClaude Codeワークフロー
 
@@ -254,6 +254,7 @@ created: {{datetime}}
 | `editor.runCommandWithoutFile` | ファイル未開時にrunボタンで実行されるコマンドテンプレート | string | `claude "${editorContent}"` | `${editorContent}`をエディタ内容のプレースホルダーとして使用 |
 | `editor.planCommand` | Planボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
 | `editor.specCommand` | Specボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
+| `browser.defaultUrl` | Menuビューの「Open Integrated Browser」で開くURL | string | `"about:blank"` | `"about:blank"`で空のタブを開く。`"http://localhost:3000"`などを設定すると常にそのURLを開く |
 | `terminal.shell` | Terminalビューのシェル実行パス | string | `""` | 空欄の場合はシステムのデフォルトシェルを使用 |
 | `terminal.fontSize` | Terminalビューのフォントサイズ | number | `12` | 任意の正の数値 |
 | `terminal.fontFamily` | Terminalビューのフォントファミリー | string | `"monospace"` | 任意の有効なフォントファミリー |
@@ -339,14 +340,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.4.vsix
+   code --install-extension ai-coding-sidebar-1.1.5.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.1.4.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.5.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -360,7 +361,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.4.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.4.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.5.vsix
    ```
 4. VS Codeを再起動
 

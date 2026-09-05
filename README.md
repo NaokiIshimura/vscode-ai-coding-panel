@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.1.4-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.1.5-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue.svg)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 A powerful VS Code panel extension designed to maximize your productivity with Claude Code.
 
@@ -99,7 +99,7 @@ Quick access to settings and common operations.
 | --- | --- |
 | Settings | Open user or global settings |
 | Templates | Customize templates |
-| Quick shortcuts | Open terminal, Checkout default branch, Git pull, Duplicate workspace in new window |
+| Quick actions | Open terminal, Checkout default branch, Git pull, Open integrated browser, Duplicate workspace in new window (expanded by default) |
 
 ## Typical Claude Code Workflow
 
@@ -255,6 +255,7 @@ If the default relative path doesn't exist, Plans displays a "Create directory" 
 | `editor.runCommandWithoutFile` | Command template to execute when clicking the Run button without a file open | string | `claude "${editorContent}"` | Use `${editorContent}` as placeholder for the editor content |
 | `editor.planCommand` | Command template to execute when clicking the Plan button | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
 | `editor.specCommand` | Command template to execute when clicking the Spec button | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
+| `browser.defaultUrl` | URL opened by the Open Integrated Browser action in the Menu view | string | `"about:blank"` | `"about:blank"` opens an empty tab; set a URL such as `"http://localhost:3000"` to always open it |
 | `terminal.shell` | Shell executable path for Terminal view | string | `""` | Leave empty to use system default shell |
 | `terminal.fontSize` | Font size for Terminal view | number | `12` | Any positive number |
 | `terminal.fontFamily` | Font family for Terminal view | string | `"monospace"` | Any valid font family |
@@ -340,14 +341,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.4.vsix
+   code --install-extension ai-coding-sidebar-1.1.5.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.4.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.5.vsix
 ```
 
 #### Build the package yourself
@@ -361,7 +362,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.4.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.4.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.5.vsix
    ```
 4. Restart VS Code.
 

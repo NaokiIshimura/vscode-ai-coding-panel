@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.6] - 2026-09-05
+
+### Fixed
+- **Wrapped URLs in Terminal View**: Clicking a URL that wraps onto a second line now opens the whole URL instead of the fragment on the clicked line
+  - The problem appeared with URLs printed by Claude Code running inside the Terminal View. Claude Code inserts its own line breaks and indents the continuation line, so xterm.js never marked the line as wrapped and the link stopped at the break
+  - URLs wrapped by the terminal itself were unaffected, which is why the issue only showed up with Claude Code output
+  - Lines are now joined when the previous line reaches the right edge and the characters on both sides of the break can appear in a URL; the leading indent and box border of the continuation line are skipped, and box borders at the end of a line are ignored
+
+### Removed
+- **Web Links Addon**: Replaced `@xterm/addon-web-links` with a built-in link provider
+  - The addon works on a single buffer line at a time and cannot detect a URL that spans two lines
+  - The dependency, the copied `media/xterm/xterm-addon-web-links.js`, and its script tag were removed
+
+### Technical
+- **URL Pattern**: Box drawing and block element characters (U+2500-U+259F) are now excluded from the URL pattern so TUI borders are not absorbed into a link
+- **False Join Guard**: Lines are joined only when the break sits between two characters that can appear in a URL, so a short line ending with a URL is not merged with the following sentence
+
 ## [1.1.5] - 2026-09-05
 
 ### Added
@@ -2284,3 +2301,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.2...v1.1.3
 [1.1.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.3...v1.1.4
 [1.1.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.4...v1.1.5
+[1.1.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.5...v1.1.6

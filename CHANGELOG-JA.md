@@ -5,6 +5,23 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.6] - 2026-09-05
+
+### 修正
+- **Terminal Viewで折り返されたURL**: 2行に折り返されたURLをクリックした際、クリックした行の断片ではなくURL全体が開くように修正
+  - Terminal View内で起動したClaude Codeが表示するURLで発生していた。Claude Codeは自前で改行を挿入し折り返し行にインデントを付けるため、xterm.jsが折り返し行として記録せず、リンクが改行位置で途切れていた
+  - ターミナル自身が折り返したURLでは発生しないため、Claude Codeの出力に限って問題が現れていた
+  - 前の行が右端に達しており、かつ改行位置の前後の文字がいずれもURLに現れうる場合に行を結合するようにした。折り返し行の先頭のインデントと罫線は読み飛ばし、行末の罫線も無視する
+
+### 削除
+- **Web Links Addon**: `@xterm/addon-web-links` を自前のリンクプロバイダーに置き換え
+  - このアドオンはバッファの1行単位で動作するため、2行に跨るURLを検出できない
+  - 依存関係、コピー先の `media/xterm/xterm-addon-web-links.js`、およびscriptタグを削除した
+
+### 技術的変更
+- **URL検出パターン**: 罫線・ブロック要素の文字（U+2500-U+259F）をURLパターンから除外し、TUIの枠線がリンクに取り込まれないようにした
+- **誤結合の抑止**: 改行位置の前後がいずれもURLに現れうる文字の場合のみ行を結合するため、URLで終わる短い行が次の文と繋がることはない
+
 ## [1.1.5] - 2026-09-05
 
 ### 追加
@@ -1755,3 +1772,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.2...v1.1.3
 [1.1.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.3...v1.1.4
 [1.1.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.4...v1.1.5
+[1.1.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.5...v1.1.6

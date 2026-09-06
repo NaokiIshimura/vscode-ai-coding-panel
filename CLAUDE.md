@@ -386,6 +386,61 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.16変更: テンプレートのメタデータセクション見直しと`datetime`書式の統一
+
+組み込みテンプレートが共通で持つ末尾メタデータブロックに見出しを追加し、`memory` 項目をリネームした。あわせて生成経路ごとに異なっていた `datetime` の書式を統一した：
+
+**メタデータブロックの新形式**
+
+```markdown
+---
+
+# metadata
+dir     : {{dirpath}}
+prompt  : {{filename}}
+datetime: {{datetime}}
+```
+
+| 変更 | 内容 |
+|---|---|
+| 見出しの追加 | `---` の下・項目一覧の上に `# metadata` を追加。ブロックが何であるかを明示する |
+| `memory` → `dir` | 値は `{{dirpath}}`（ワークスペースルートからのディレクトリ相対パス）であり、`memory` というラベルからは意図も実態も読み取れなかった。`dir` + `prompt` でフルパスを構成する関係が読み取れる |
+| パディングの調整 | 最長ラベル `datetime`（8文字）に合わせ `dir     :` とする |
+
+- 対象は `templates/prompt.md` / `task.md` / `spec.md` / `quick_start.md` の4ファイル。**4ファイルは完全に同一のブロックを持つ**（共通化の仕組みは無く手動同期に依存しているため、変更時は必ず4ファイルまとめて更新する）
+- 見出しは H1（`#`）とした。`task.md` の `# task` と同階層になるが、`---`（水平線）で本文と区切られているため実害は無いと判断している
+- `quick_start.md` の `# update dir name` は「本ファイルに記録されたディレクトリ名も更新せよ」とAIエージェントに指示しており、メタデータの項目名を間接参照している唯一の箇所。`dir` の値を明示的に指すよう文言を修正した
+
+**`datetime` の書式統一**
+
+生成経路によって `{{datetime}}` の書式が異なっていた（同一ディレクトリ内のファイル間で表記が揺れる状態だった）。
+
+| 生成対象 | 変更前 | 出力例 |
+|---|---|---|
+| PROMPT / TASK / SPEC | `now.toLocaleString()` | `2026/9/6 21:50:31`（ゼロ埋めなし・ロケール依存） |
+| QUICK_START | `templateService.formatDateTime()` | `2026/09/06 21:46:07` |
+
+`toLocaleString()` はロケール依存のため、環境によっては `9/6/2026, 9:50:31 PM` のような全く異なる書式にもなり得た。全経路を `formatDateTime()` に統一し、常に `YYYY/MM/DD HH:MM:SS` 形式にした。
+
+| ファイル | 変更 |
+|---|---|
+| `src/services/TemplateService.ts` | `formatDateTime(date?: Date)` としてオプション引数を追加。省略時は従来どおり現在時刻を使う |
+| `src/commands/files.ts` | 4箇所（PROMPT / TASK / SPEC / SPEC別コマンド）の `now.toLocaleString()` を `templateService.formatDateTime(now)` に置換。`deps` の分割代入に `templateService` を追加 |
+| `src/commands/plans.ts` | 1箇所（TASK）を `deps.templateService.formatDateTime(now)` に置換 |
+
+**`formatDateTime()` に `now` を渡している理由**
+- 各コマンドはファイル名用のタイムスタンプを `now` から組み立てている。`formatDateTime()` が内部で別の `new Date()` を呼ぶと、秒をまたいだ際にファイル名と `datetime` が1秒ずれる
+- 既存の `now` をそのまま渡すことでこのずれを解消している
+- `plans.ts` で `deps.templateService` と書いているのは、同ファイル内の他コマンドがローカルに `new TemplateService(context)` を生成しており、分割代入で受けるとシャドウイングして紛らわしくなるため
+
+**移行に関する注意**
+- `.claude/plans/` 配下の既存ファイルは変換していない（当時の作業記録として当時の形式のまま残す方針）
+- `.vscode/ai-coding-panel/templates/` のワークスペーステンプレートは `setupTemplate()` が「存在しない場合のみ作成」する仕様のため上書きされない。カスタマイズ済みのユーザーは従来形式のまま
+
+**今回のスコープ外（別タスク）**
+- `TemplateService.getDefaultTemplate()` が旧形式（`working dir:` を先頭ヘッダとして出力）のまま残っている。`loadTemplate()` の探索先も `.vscode/templates/` で `templateUtils.ts` の `.vscode/ai-coding-panel/templates/` と食い違う。いずれも本体からの呼び出しが無くデッドコードの疑いがある
+- `setupTemplate()` のコピー対象に `quick_start.md` が含まれていない
+
 ### v1.1.15新機能: Editor Viewの送信履歴記録
 
 Editor Viewで Spec / Plan / Run を実行した際、開いているMarkdownファイルへ送信日時を追記するようにした：
@@ -459,6 +514,7 @@ datetime: 2026/09/06 21:16:17
 - VS Code 1.136 のmacOS向けバンドルは実行ファイル名が `Electron` から `Code` に変わっており、`@vscode/test-electron@2.5.2` からは起動できない
 - `src/test/runTest.ts` はCLIパスへフォールバックするが、macOSの `code` は起動を委譲して即座に終了するため、**mochaの結果が親プロセスへ返らず、テストが失敗していても `npm test` が成功扱いになる**
 - 本バージョンの実装では、`appendSendHistoryLine()` をNode上で直接呼び出して検証している（8ケース）。CI（`test.yml`）は別環境のため影響の有無は未確認
+
 
 ### v1.1.14新機能: Terminal ViewのRunショートカット
 

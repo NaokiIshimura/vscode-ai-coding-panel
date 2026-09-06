@@ -12,7 +12,7 @@ export function registerFilesCommands(
     context: vscode.ExtensionContext,
     deps: CommandDependencies
 ): void {
-    const { plansProvider, editorProvider, terminalProvider, fileOperationService } = deps;
+    const { plansProvider, editorProvider, terminalProvider, fileOperationService, templateService } = deps;
 
     // 1. createMarkdownFile - PROMPTファイル作成
     context.subscriptions.push(
@@ -52,7 +52,7 @@ export function registerFilesCommands(
                 const relativeDirPath = workspaceRoot ? path.relative(workspaceRoot, targetPath) : targetPath;
 
                 const variables = {
-                    datetime: now.toLocaleString(),
+                    datetime: templateService.formatDateTime(now),
                     filename: fileName,
                     timestamp: timestamp,
                     filepath: relativeFilePath,
@@ -115,7 +115,7 @@ export function registerFilesCommands(
                 const relativeDirPath = workspaceRoot ? path.relative(workspaceRoot, targetPath) : targetPath;
 
                 const variables = {
-                    datetime: now.toLocaleString(),
+                    datetime: templateService.formatDateTime(now),
                     filename: fileName,
                     timestamp: timestamp,
                     filepath: relativeFilePath,
@@ -177,7 +177,7 @@ export function registerFilesCommands(
                 const relativeDirPath = workspaceRoot ? path.relative(workspaceRoot, targetPath) : targetPath;
 
                 const variables = {
-                    datetime: now.toLocaleString(),
+                    datetime: templateService.formatDateTime(now),
                     filename: fileName,
                     timestamp: timestamp,
                     filepath: relativeFilePath,
@@ -589,7 +589,7 @@ export function registerFilesCommands(
                 const relativeDirPath = workspaceRoot ? path.relative(workspaceRoot, folderPath) : folderPath;
 
                 const variables = {
-                    datetime: now.toLocaleString(),
+                    datetime: templateService.formatDateTime(now),
                     filename: fileName,
                     timestamp: timestamp,
                     filepath: relativeFilePath,

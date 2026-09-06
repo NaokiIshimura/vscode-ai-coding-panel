@@ -165,22 +165,24 @@ AIコーディングで使用するmarkdownファイルの構造を統一し、�
 4. テンプレートを編集して保存
 
 ### デフォルトテンプレート
-初回作成時には以下のテンプレートが設定されます：
+各テンプレートは末尾に共通の `metadata` セクションを持ちます：
 
 ```markdown
-file: {{filename}}
-created: {{datetime}}
+# task
+
 
 ---
 
-# task
-
+# metadata
+dir     : {{dirpath}}
+prompt  : {{filename}}
+datetime: {{datetime}}
 ```
 
 ### 使用可能な変数
 テンプレート内で以下の変数が使用できます：
 
-- `{{datetime}}`: 作成日時（例: 2025/11/3 12:27:13）
+- `{{datetime}}`: 作成日時（例: 2026/09/06 21:46:07）
 - `{{filename}}`: ファイル名（拡張子を含む、例: 2025_1229_1430_25_PROMPT.md）
 - `{{timestamp}}`: タイムスタンプ（例: 2025_1229_1430_25）
 - `{{filepath}}`: ワークスペースルートからのファイルパス（例: .claude/plans/2025_1229_1430_25_PROMPT.md）

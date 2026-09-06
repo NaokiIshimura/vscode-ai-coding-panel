@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.16] - 2026-09-06
+
+### Changed
+- **Template Metadata Section**: The trailing metadata block shared by all built-in templates now has a heading and a clearer item name
+  - Added a `# metadata` heading above the item list
+  - Renamed `memory` to `dir`, which matches the value it actually holds (the directory path relative to the workspace root)
+  - Applies to `prompt.md`, `task.md`, `spec.md` and `quick_start.md`, which all share an identical block
+
+```markdown
+---
+
+# metadata
+dir     : {{dirpath}}
+prompt  : {{filename}}
+datetime: {{datetime}}
+```
+
+- **Quick Start Instructions**: The `# update dir name` section in `quick_start.md` now refers to the `dir` value explicitly
+
+### Fixed
+- **Inconsistent `datetime` Format**: The `{{datetime}}` value differed depending on which command created the file
+  - PROMPT / TASK / SPEC files used `Date.toLocaleString()`, producing locale-dependent output without zero padding (for example `2026/9/6 21:50:31`)
+  - Quick Start files used `TemplateService.formatDateTime()`, producing `2026/09/06 21:46:07`
+  - All creation paths now use `TemplateService.formatDateTime()`, so the format is always `YYYY/MM/DD HH:MM:SS`
+  - The date used for the filename timestamp is passed to `formatDateTime()`, so the filename and the `datetime` value can no longer disagree across a second boundary
+
+### Technical
+- `TemplateService.formatDateTime()` accepts an optional `Date` argument; omitting it keeps the previous behavior of using the current time
+- Replaced `now.toLocaleString()` in `src/commands/files.ts` (4 places) and `src/commands/plans.ts` (1 place)
+
+### Note
+- Existing files under `.claude/plans/` are not migrated and keep the previous `memory` label
+- Workspace templates in `.vscode/ai-coding-panel/templates/` are never overwritten, so existing customized templates keep the previous format. Delete a template file and re-run "Customize template" to pick up the new default
+
 ## [1.1.15] - 2026-09-06
 
 ### Added

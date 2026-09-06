@@ -2,6 +2,7 @@
 
 ---
 
-memory  : {{dirpath}}
+# metadata
+dir     : {{dirpath}}
 prompt  : {{filename}}
 datetime: {{datetime}}

@@ -65,7 +65,7 @@ Customize file creation templates:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `{{datetime}}` | Creation date/time | 2025/11/3 12:27:13 |
+| `{{datetime}}` | Creation date/time | 2026/09/06 21:46:07 |
 | `{{filename}}` | File name with extension | 2025_1229_1430_25_PROMPT.md |
 | `{{timestamp}}` | Timestamp | 2025_1229_1430_25 |
 | `{{filepath}}` | File path from workspace root | .claude/tasks/2025_1229_1430_25_PROMPT.md |

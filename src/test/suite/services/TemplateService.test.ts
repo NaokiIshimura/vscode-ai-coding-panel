@@ -217,7 +217,8 @@ suite('TemplateService Test Suite', () => {
 				'',
 				'---',
 				'',
-				'memory  : .claude/plans/2026_0906_2116_17',
+				'# metadata',
+				'dir     : .claude/plans/2026_0906_2116_17',
 				'prompt  : 2026_0906_2116_17_QUICK_START.md',
 				'datetime: 2026/09/06 21:16:17',
 				''
@@ -225,7 +226,8 @@ suite('TemplateService Test Suite', () => {
 
 			const result = templateService.appendSendHistoryLine(content, 'run', dateTime);
 
-			assert.ok(result.includes('memory  : .claude/plans/2026_0906_2116_17'));
+			assert.ok(result.includes('# metadata'));
+			assert.ok(result.includes('dir     : .claude/plans/2026_0906_2116_17'));
 			assert.ok(result.includes('prompt  : 2026_0906_2116_17_QUICK_START.md'));
 			assert.ok(result.includes('datetime: 2026/09/06 21:16:17'));
 			assert.ok(result.endsWith('## sent history\n- run : 2026/09/06 21:27:29\n'));

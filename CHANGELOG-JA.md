@@ -5,6 +5,40 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.16] - 2026-09-06
+
+### Changed
+- **テンプレートのメタデータセクション**: 組み込みテンプレートが共通で持つ末尾のメタデータブロックに見出しを追加し、項目名を見直した
+  - 項目一覧の上に `# metadata` 見出しを追加
+  - `memory` を `dir` にリネーム。値の実態（ワークスペースルートからのディレクトリ相対パス）と一致させた
+  - 対象は `prompt.md` / `task.md` / `spec.md` / `quick_start.md` の4ファイル（いずれも同一のブロックを持つ）
+
+```markdown
+---
+
+# metadata
+dir     : {{dirpath}}
+prompt  : {{filename}}
+datetime: {{datetime}}
+```
+
+- **Quick Startの指示文**: `quick_start.md` の `# update dir name` セクションが `dir` の値を明示的に指すようにした
+
+### Fixed
+- **`datetime` の書式が生成経路によって異なる問題**: どのコマンドでファイルを作成したかによって `{{datetime}}` の書式が変わっていた
+  - PROMPT / TASK / SPEC ファイルは `Date.toLocaleString()` を使用しており、ロケール依存かつゼロ埋めなしの出力になっていた（例: `2026/9/6 21:50:31`）
+  - Quick Startファイルは `TemplateService.formatDateTime()` を使用し `2026/09/06 21:46:07` を出力していた
+  - すべての作成経路を `TemplateService.formatDateTime()` に統一し、常に `YYYY/MM/DD HH:MM:SS` 形式になるようにした
+  - ファイル名のタイムスタンプ生成に使う日時を `formatDateTime()` に渡すため、秒をまたいでもファイル名と `datetime` がずれない
+
+### Technical
+- `TemplateService.formatDateTime()` がオプションの `Date` 引数を受け取るようにした。引数を省略した場合は従来どおり現在時刻を使用する
+- `src/commands/files.ts`（4箇所）と `src/commands/plans.ts`（1箇所）の `now.toLocaleString()` を置き換え
+
+### Note
+- `.claude/plans/` 配下の既存ファイルは移行対象外で、従来の `memory` 表記のまま残る
+- `.vscode/ai-coding-panel/templates/` のワークスペーステンプレートは上書きされないため、カスタマイズ済みのテンプレートは従来の形式のまま。新しいデフォルトを取り込むには、該当ファイルを削除してから「テンプレートをカスタマイズ」を再実行する
+
 ## [1.1.15] - 2026-09-06
 
 ### Added

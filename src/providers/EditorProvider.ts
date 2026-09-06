@@ -269,70 +269,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                     break;
                 case 'runTask':
                     // Run button clicked - save file if needed, then send command to terminal
-                    if (this._currentFilePath) {
-                        // Save file first if content is provided
-                        if (data.content) {
-                            try {
-                                await fs.promises.writeFile(this._currentFilePath, data.content, 'utf8');
-                                this._currentContent = data.content;
-                                this._pendingContent = undefined;
-                                this._isDirty = false;
-                                // Update dirty state in webview
-                                this._view?.webview.postMessage({
-                                    type: 'updateDirtyState',
-                                    isDirty: false
-                                });
-                            } catch (error) {
-                                vscode.window.showErrorMessage(`Failed to save file: ${error}`);
-                                return;
-                            }
-                        }
-
-                        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-                        let relativeFilePath: string;
-
-                        if (workspaceRoot) {
-                            // Calculate relative path from workspace root
-                            relativeFilePath = path.relative(workspaceRoot, this._currentFilePath);
-                        } else {
-                            // If no workspace, use the full path
-                            relativeFilePath = this._currentFilePath;
-                        }
-
-                        // Get the run command template from settings
-                        const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
-                        const commandTemplate = config.get<string>('editor.runCommand', '${commandPrefix} "Execute the instructions described in the file at ${filePath}"');
-
-                        // Replace placeholders with safely escaped values
-                        const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
-                        let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
-                        command = command.replace(/\$\{filePath\}/g, escapedPath);
-
-                        // Send command to Terminal view
-                        if (this._terminalProvider) {
-                            this._terminalProvider.focus();
-                            await this._terminalProvider.sendCommand(command, true, this._currentFilePath, 'run');
-                        }
-                    } else if (data.editorContent && data.editorContent.trim()) {
-                        // No file open - use the editor content directly
-                        const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-                        const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
-                        const commandTemplate = config.get<string>('editor.runCommandWithoutFile', '${commandPrefix} "${editorContent}"');
-
-                        // Replace placeholders with safely escaped values
-                        const escapedContent = this._escapeShellArgument(data.editorContent.trim());
-                        let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
-                        command = command.replace(/\$\{editorContent\}/g, escapedContent);
-
-                        // Send command to Terminal view
-                        if (this._terminalProvider) {
-                            this._terminalProvider.focus();
-                            await this._terminalProvider.sendCommand(command);
-                        }
-                    } else {
-                        vscode.window.showWarningMessage('Please enter some text in the editor to run a task.');
-                    }
+                    await this._runTask(data.content, data.editorContent);
                     break;
                 case 'openInVSCode':
                     // Edit button clicked - save if needed, then open in VS Code editor
@@ -461,6 +398,95 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                 }
             })
         );
+    }
+
+    /**
+     * Runコマンドを実行する
+     * ファイルが開いている場合は必要に応じて保存してからコマンドを送信し、
+     * ファイルが無い場合はエディタの内容をそのままコマンドに埋め込む
+     */
+    private async _runTask(content?: string | null, editorContent?: string): Promise<void> {
+        if (this._currentFilePath) {
+            // Save file first if content is provided
+            if (content) {
+                try {
+                    await fs.promises.writeFile(this._currentFilePath, content, 'utf8');
+                    this._currentContent = content;
+                    this._pendingContent = undefined;
+                    this._isDirty = false;
+                    // Update dirty state in webview
+                    this._view?.webview.postMessage({
+                        type: 'updateDirtyState',
+                        isDirty: false
+                    });
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to save file: ${error}`);
+                    return;
+                }
+            }
+
+            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            let relativeFilePath: string;
+
+            if (workspaceRoot) {
+                // Calculate relative path from workspace root
+                relativeFilePath = path.relative(workspaceRoot, this._currentFilePath);
+            } else {
+                // If no workspace, use the full path
+                relativeFilePath = this._currentFilePath;
+            }
+
+            // Get the run command template from settings
+            const config = vscode.workspace.getConfiguration('aiCodingSidebar');
+            const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
+            const commandTemplate = config.get<string>('editor.runCommand', '${commandPrefix} "Execute the instructions described in the file at ${filePath}"');
+
+            // Replace placeholders with safely escaped values
+            const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
+            let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
+            command = command.replace(/\$\{filePath\}/g, escapedPath);
+
+            // Send command to Terminal view
+            if (this._terminalProvider) {
+                this._terminalProvider.focus();
+                await this._terminalProvider.sendCommand(command, true, this._currentFilePath, 'run');
+            }
+        } else if (editorContent && editorContent.trim()) {
+            // No file open - use the editor content directly
+            const config = vscode.workspace.getConfiguration('aiCodingSidebar');
+            const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
+            const commandTemplate = config.get<string>('editor.runCommandWithoutFile', '${commandPrefix} "${editorContent}"');
+
+            // Replace placeholders with safely escaped values
+            const escapedContent = this._escapeShellArgument(editorContent.trim());
+            let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
+            command = command.replace(/\$\{editorContent\}/g, escapedContent);
+
+            // Send command to Terminal view
+            if (this._terminalProvider) {
+                this._terminalProvider.focus();
+                await this._terminalProvider.sendCommand(command);
+            }
+        } else {
+            vscode.window.showWarningMessage('Please enter some text in the editor to run a task.');
+        }
+    }
+
+    /**
+     * Editor View以外（Terminal Viewのショートカット等）からRunコマンドを実行する
+     * Editor ViewのRunボタン・Cmd+Rと同じ内容（未保存の編集内容を含む）で実行する
+     */
+    public async runTask(): Promise<void> {
+        const latestContent = this._pendingContent ?? this._currentContent;
+
+        if (this._currentFilePath) {
+            // 未保存の変更がある場合のみ保存対象として渡す（VS Codeのタブで開いている間は保存しない）
+            const isReadOnly = this._isFileOpenInTab(this._currentFilePath);
+            const unsavedContent = this._isDirty && !isReadOnly ? latestContent : undefined;
+            await this._runTask(unsavedContent);
+        } else {
+            await this._runTask(undefined, latestContent ?? '');
+        }
     }
 
     /**

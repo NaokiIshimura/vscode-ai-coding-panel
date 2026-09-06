@@ -8,6 +8,7 @@ interface IEditorProvider {
     getCurrentFilePath(): string | undefined;
     clearFile(): Promise<void>;
     showFile(filePath: string): Promise<void>;
+    runTask(): Promise<void>;
 }
 
 // Mock PlansProvider interface
@@ -81,7 +82,8 @@ suite('TerminalProvider Integration Test Suite', () => {
 			const mockEditorProvider: IEditorProvider = {
 				getCurrentFilePath: () => undefined,
 				clearFile: async () => {},
-				showFile: async (filePath: string) => {}
+				showFile: async (filePath: string) => {},
+				runTask: async () => {}
 			};
 
 			terminalProvider.setEditorProvider(mockEditorProvider);

@@ -5,6 +5,19 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.14] - 2026-09-06
+
+### Added
+- **Terminal ViewのRunショートカット**: Terminal Viewにフォーカスがある状態で `Cmd+R` / `Ctrl+R` を押すと、Editor ViewのRunコマンドが実行されるようになった
+  - Runボタン押下時と同様に、未保存の編集内容は先に保存される
+  - ファイルを開いていない場合はエディタの内容をコマンドとして送信する（Editor Viewと同じ挙動）
+  - ターミナル本体・タブバーのどちらにフォーカスがあっても動作し、押下したキーはシェルへ送信されない
+
+### Technical
+- **Run処理の切り出し**: `EditorProvider` の `runTask` メッセージ処理を `_runTask()` に切り出し、公開メソッド `runTask()` から呼び出せるようにした
+  - Terminal Viewは `IEditorProvider` 経由で呼び出すため、Runの実装は1箇所に集約されている
+- **ターミナルのキー処理**: Terminal Viewは `document` の keydown ハンドラから `runEditorTask` メッセージを送信し、xterm.js側は `attachCustomKeyEventHandler()` で該当キーの送信のみ抑止する
+
 ## [1.1.13] - 2026-09-06
 
 ### Added
@@ -1865,3 +1878,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.9...v1.1.10
 [1.1.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.10...v1.1.11
 [1.1.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.12...v1.1.13
+[1.1.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.13...v1.1.14

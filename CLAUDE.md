@@ -386,6 +386,34 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.14新機能: Terminal ViewのRunショートカット
+
+Terminal Viewにフォーカスがある状態で `Cmd+R` / `Ctrl+R` を押すと、Editor ViewのRunコマンドが実行されるようにした：
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `resources/webview/terminal/main.js` | `isRunShortcut()` を追加。`document` の `keydown` で `runEditorTask` を postMessage し、`term.attachCustomKeyEventHandler()` で該当キーのPTY送信のみ抑止 |
+| `src/providers/TerminalProvider.ts` | `runEditorTask` メッセージを追加し `editorProvider.runTask()` を呼び出す。`IEditorProvider` に `runTask()` を追加 |
+| `src/providers/EditorProvider.ts` | `runTask` メッセージ処理を `_runTask()` に切り出し、外部から呼べる `public runTask()` を追加 |
+| `src/test/suite/providers/TerminalProvider.test.ts` | モックの `IEditorProvider` に `runTask` を追加 |
+
+**Runの実装を1箇所に集約している**
+- Editor Viewの `runTask` メッセージハンドラをそのまま `_runTask(content, editorContent)` に切り出し、Webviewからの呼び出しと外部からの呼び出しで同じ処理を通す
+- `public runTask()` は `_pendingContent` / `_isDirty` / `_isFileOpenInTab()` から、Webview側 `runTask()` が組み立てるのと同じ引数を再現する
+  - 未保存の変更がある場合のみ保存対象として渡す。VS Codeのタブで開いている（読み取り専用）間は保存しない
+  - ファイル未オープン時は `editorContent` として最新の内容を渡し、空ならEditor Viewと同じ警告が出る
+
+**`document` で受けて xterm では送信のみ抑止する理由**
+- ターミナル本体だけでなくタブバーにフォーカスがある場合も動作させたいため、キー処理は `document` の `keydown` に置いている
+- `attachCustomKeyEventHandler` が `false` を返すとxterm.jsは処理・PTYへの送信を行わないが、`stopPropagation()` はしないためイベントは `document` まで到達する。したがって二重実行にはならない
+
+**キー割り当ての制約**
+- Editor View（`resources/webview/editor/main.js`）に合わせ、macOSは `metaKey`、Windows/Linuxは `ctrlKey` を対象にしている（`navigator.platform` で判定）
+- macOSでは `Ctrl+R`（シェルのreverse-i-search、Claude CodeのCtrl+R）はそのまま使える
+- Windows/Linuxでは `Ctrl+R` を横取りするため、シェルのreverse-i-searchが使えなくなる。macOSの `Cmd+R` のみに限定する場合は `isRunShortcut()` の判定を変更する
+
 ### v1.1.13新機能: Editor ViewのURLリンク化と右クリックメニュー
 
 Editor View（textarea）に書かれたURLをクリックで標準ブラウザで開けるようにし、右クリックで標準ブラウザ／統合ブラウザ（Simple Browser）を選べるメニューを追加した：

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.14] - 2026-09-06
+
+### Added
+- **Run Shortcut in Terminal View**: Pressing `Cmd+R` / `Ctrl+R` while the Terminal view is focused now runs the Editor view's Run command
+  - Unsaved editor changes are saved first, exactly as when the Run button is pressed
+  - When no file is open, the editor content is sent as the command, matching the Editor view behavior
+  - The shortcut works whether the terminal itself or the tab bar has focus, and the key is no longer forwarded to the shell
+
+### Technical
+- **Run Logic Extraction**: The `runTask` message handler in `EditorProvider` was extracted into `_runTask()` and exposed through a new public `runTask()` method
+  - Terminal view calls it through the `IEditorProvider` interface, so the Run behavior has a single implementation
+- **Terminal Key Handling**: The terminal webview posts a `runEditorTask` message from a `document` keydown handler and suppresses the key in xterm.js via `attachCustomKeyEventHandler()`
+
 ## [1.1.13] - 2026-09-06
 
 ### Added
@@ -2394,3 +2407,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.9...v1.1.10
 [1.1.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.10...v1.1.11
 [1.1.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.12...v1.1.13
+[1.1.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.13...v1.1.14

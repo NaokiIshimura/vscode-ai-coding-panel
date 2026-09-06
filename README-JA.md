@@ -250,6 +250,7 @@ created: {{datetime}}
 | `plans.defaultRelativePath` | Plansのデフォルト相対パス | string | `".claude/plans"` | `"src"`, `".claude/plans"`, `"docs/api"` |
 | `plans.sortBy` | Plansのファイル・ディレクトリのソート基準 | string | `"created"` | `"name"`: ファイル名<br>`"created"`: 作成日時<br>`"modified"`: 更新日時 |
 | `plans.sortOrder` | Plansのファイル・ディレクトリのソート順序 | string | `"ascending"` | `"ascending"`: 昇順<br>`"descending"`: 降順 |
+| `editor.commandPrefix` | 以下のコマンドテンプレート内の`${commandPrefix}`に展開されるコマンドプレフィックス | string | `"claude"` | `"claude"`, `"claude --permission-mode auto"`, `"claude --model opus"` |
 | `editor.runCommand` | Editorビューのrunボタンで実行されるコマンドテンプレート | string | `claude "Execute the instructions described in the file at ${filePath}"` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
 | `editor.runCommandWithoutFile` | ファイル未開時にrunボタンで実行されるコマンドテンプレート | string | `claude "${editorContent}"` | `${editorContent}`をエディタ内容のプレースホルダーとして使用 |
 | `editor.planCommand` | Planボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
@@ -271,7 +272,7 @@ created: {{datetime}}
   "aiCodingSidebar.plans.defaultRelativePath": ".claude/plans",
   "aiCodingSidebar.plans.sortBy": "created",
   "aiCodingSidebar.plans.sortOrder": "ascending",
-  "aiCodingSidebar.editor.commandPrefix": "claude --permission-mode auto",
+  "aiCodingSidebar.editor.commandPrefix": "claude",
   "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"Execute the instructions described in the file at ${filePath}\"",
   "aiCodingSidebar.editor.runCommandWithoutFile": "${commandPrefix} \"${editorContent}\"",
   "aiCodingSidebar.editor.planCommand": "${commandPrefix} \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",
@@ -340,14 +341,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.9.vsix
+   code --install-extension ai-coding-sidebar-1.1.10.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.1.9.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.10.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -361,7 +362,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.9.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.9.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.10.vsix
    ```
 4. VS Codeを再起動
 

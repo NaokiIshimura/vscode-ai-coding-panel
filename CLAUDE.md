@@ -386,6 +386,31 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.10変更: commandPrefixデフォルト値の変更（`--permission-mode auto` の削除）
+
+`aiCodingSidebar.editor.commandPrefix` のデフォルト値から `--permission-mode auto` を削除：
+
+**変更内容**
+- デフォルト値: `claude --permission-mode auto` → `claude`
+- v1.0.17で `--enable-auto-mode` を、v1.0.19で `--permission-mode auto` を既定に含めていたが、権限モードは既定に含めずユーザーの設定に委ねる方針に戻した
+- 従来の挙動が必要な場合は、設定で `claude --permission-mode auto` を指定する
+
+**変更箇所**
+
+| ファイル | 箇所 |
+|---|---|
+| `package.json` | `aiCodingSidebar.editor.commandPrefix` 設定スキーマの `default` |
+| `src/services/ConfigurationProvider.ts` | `getCommandPrefix()` のフォールバック値 |
+| `src/providers/EditorProvider.ts` | Run / RunWithoutFile / Plan / Spec のフォールバック値（4箇所） |
+| `README.md` / `README-JA.md` | 設定例のJSONと設定表 |
+
+**READMEの設定表に `editor.commandPrefix` を追加**
+- 設定表には `editor.runCommand` 以降のテンプレート系設定しか記載がなく、テンプレート内の `${commandPrefix}` が何に展開されるかを表から辿れなかったため、`editor.runCommand` の直前に行を追加した
+
+**変更していない箇所**
+- Terminal Viewのショートカットバー: v1.1.4で `claude --permission-mode auto` ボタンを削除済みのため該当なし
+- `editor.planCommand` / `editor.specCommand` の既定値に含まれる `--permission-mode plan`: `${commandPrefix}` とは別に各テンプレートが持つオプションであり、今回の変更対象外
+
 ### v1.1.9バグ修正: Plans Viewの外部ドラッグ&ドロップ（Webview化以降の制約と対応）
 
 v1.0.22でPlans ViewをWebview化して以降、ビューの外からファイルをドラッグしても配置できなくなっていた問題への対応：

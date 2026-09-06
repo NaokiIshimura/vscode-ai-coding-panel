@@ -5,6 +5,16 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.10] - 2026-09-06
+
+### Changed
+- **コマンドプレフィックスのデフォルト値**: `aiCodingSidebar.editor.commandPrefix` のデフォルト値を `claude --permission-mode auto` から `claude` に変更
+  - Run・Plan・Specボタンは、明示的に設定しない限りauto permission modeを有効にしなくなった
+  - 従来の挙動を維持する場合は、設定値を `claude --permission-mode auto` に戻す
+
+### Technical
+- **ドキュメント**: READMEの設定表に、これまで記載が漏れていた `editor.commandPrefix` の行を追加
+
 ## [1.1.9] - 2026-09-06
 
 ### Fixed
@@ -1820,3 +1830,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.6...v1.1.7
 [1.1.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.7...v1.1.8
 [1.1.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.8...v1.1.9
+[1.1.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.9...v1.1.10

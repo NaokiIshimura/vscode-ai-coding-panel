@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.13] - 2026-09-06
+
+### Added
+- **Clickable URLs in Editor View**: URLs written in the editor are underlined and open in the default browser on click
+  - Right-clicking a URL offers **Open in Default Browser** and **Open in Integrated Browser** (VS Code's Simple Browser)
+  - Right-clicking anywhere other than a URL still shows the standard VS Code context menu
+  - The pointer changes to a hand cursor over a URL
+  - A URL is not opened while text is selected by dragging, so releasing a selection over a URL does not launch a browser
+  - The menu closes on a click outside it, `Escape`, scrolling the editor, or losing window focus
+
+### Technical
+- **Link Overlay**: A textarea cannot render links, so a mirror element (`#link-overlay`) is layered over it and only the URL parts become elements
+  - The overlay keeps `pointer-events: none` and click positions are resolved against `getClientRects()`, so the caret can still be placed inside a URL
+  - Only the underline is drawn on the overlay (`color: transparent` with an explicit `text-decoration-color`), so the characters are never painted twice
+  - Wrapping is matched by setting the overlay width from `editor.clientWidth`, mirroring the padding and font, and following resizes with a `ResizeObserver`
+- **Editor Provider Messages**: Added `openUrl` and `openUrlInIntegratedBrowser`, reusing `src/utils/browserUtils.ts`
+
 ## [1.1.11] - 2026-09-06
 
 ### Added
@@ -2376,3 +2393,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.8...v1.1.9
 [1.1.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.9...v1.1.10
 [1.1.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.10...v1.1.11
+[1.1.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.12...v1.1.13

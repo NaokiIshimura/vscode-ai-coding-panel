@@ -62,6 +62,7 @@ Markdownプロンプトファイルを編集し、パネルから直接Claude Co
 | **Nextボタン** | ビュー最下部の専用領域に配置された赤い**Next**ボタン。タイムスタンプ付きの`PROMPT.md`を新規作成して開き、入力エリアにカーソルを移すため、そのまま入力を開始できる。`Cmd+M` / `Ctrl+M`でも実行可能 |
 | ボタンのアイコン | すべてのボタンにVS Code標準のcodiconを表示（Spec: 本、Plan: チェックリスト、Run: 再生、Next: 新規ファイル、Edit: 鉛筆、Save: フロッピー）。Plans ViewのQuick Startボタンと見た目を統一 |
 | カスタマイズ可能なコマンド | ワークフローに合わせてRun、Plan、Specコマンドを設定で変更可能 |
+| **クリック可能なURL** | 本文中のURLに下線を表示し、クリックすると標準ブラウザで開く。右クリックすると「Open in Default Browser」「Open in Integrated Browser」（VS Code標準のSimple Browser）を選択できる。URL以外の場所を右クリックした場合はVS Code標準のメニューを表示 |
 | 読み取り専用モード | VSCodeエディタでファイルがアクティブになると自動的に読み取り専用モードに切り替わる |
 | 自動保存 | ファイル切替、ディレクトリ移動、ビューを閉じる際に自動保存 |
 | 編集ファイル復元 | 別の拡張機能から戻ってきたときに編集中のファイルを復元 |
@@ -342,14 +343,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.11.vsix
+   code --install-extension ai-coding-sidebar-1.1.13.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.1.11.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.13.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -363,7 +364,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.11.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.11.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.13.vsix
    ```
 4. VS Codeを再起動
 

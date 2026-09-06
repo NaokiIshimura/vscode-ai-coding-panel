@@ -28,6 +28,7 @@
     <div id="editor-container">
         <span class="readonly-indicator" id="readonly-indicator">Editing in VS Code</span>
         <textarea id="editor" placeholder="Enter prompt here..."></textarea>
+        <div id="link-overlay" aria-hidden="true"></div>
         <div id="shortcuts-overlay">Cmd+M / Ctrl+M - Create new markdown file
 Cmd+R / Ctrl+R - Run task in terminal</div>
     </div>
@@ -36,6 +37,7 @@ Cmd+R / Ctrl+R - Run task in terminal</div>
             <button class="next-button" id="next-button" title="Create new PROMPT.md (Cmd+M / Ctrl+M)"><span class="codicon codicon-new-file"></span><span>Next</span></button>
         </div>
     </div>
+    <div id="context-menu" class="context-menu hidden"></div>
     <script src="{{scriptUri}}"></script>
 </body>
 </html>

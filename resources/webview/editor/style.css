@@ -308,6 +308,78 @@ body.focused {
     cursor: not-allowed;
 }
 
+/*
+ * URLリンク表示用のオーバーレイ
+ * textareaはリンクを描画できないため、同じ折り返しになるミラー要素を重ねて
+ * URL部分にだけ下線を引く。文字自体はtextarea側の描画を見せるためtransparentにする
+ */
+#link-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 5;
+    overflow: hidden;
+    padding: 10px;
+    box-sizing: border-box;
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+    line-height: normal;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    color: transparent;
+    /* クリック・キャレット操作はtextareaに届かせる（当たり判定は矩形計算で行う） */
+    pointer-events: none;
+}
+
+.overlay-link {
+    text-decoration: underline;
+    text-decoration-color: var(--vscode-textLink-foreground);
+}
+
+/* URL右クリック時のコンテキストメニュー */
+.context-menu {
+    position: fixed;
+    z-index: 10000;
+    min-width: 180px;
+    padding: 4px 0;
+    background-color: var(--vscode-menu-background, var(--vscode-editor-background));
+    color: var(--vscode-menu-foreground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    border-radius: 4px;
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
+    font-size: 12px;
+}
+
+.context-menu.hidden {
+    display: none;
+}
+
+.context-menu-header {
+    padding: 4px 12px;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--vscode-descriptionForeground);
+}
+
+.context-menu-item {
+    padding: 4px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.context-menu-item:hover {
+    background-color: var(--vscode-menu-selectionBackground, var(--vscode-list-activeSelectionBackground));
+    color: var(--vscode-menu-selectionForeground, var(--vscode-list-activeSelectionForeground));
+}
+
+.context-menu-separator {
+    height: 1px;
+    margin: 4px 0;
+    background-color: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+}
+
 .empty-state {
     display: flex;
     align-items: center;

@@ -8,6 +8,8 @@ const specButton = document.getElementById('spec-button');
 const planButton = document.getElementById('plan-button');
 const runButton = document.getElementById('run-button');
 const nextButton = document.getElementById('next-button');
+const linkOverlay = document.getElementById('link-overlay');
+const contextMenuElement = document.getElementById('context-menu');
 let originalContent = '';
 let currentFilePath = '';
 let isReadOnly = false;
@@ -38,6 +40,191 @@ const focusEditor = () => {
     });
 };
 
+// URL検出パターン（Terminal Viewのリンク検出と同じ定義）
+const URL_PATTERN = /(?:https?|HTTPS?):\/\/[^\s"'!*(){}|\\\^<>`]*[^\s"':,.!?{}|\\\^~\[\]`()<>]/g;
+
+// コンテキストメニューの見出しに表示するURLの最大文字数
+const URL_LABEL_MAX_LENGTH = 60;
+
+// URL右クリック時のメニュー項目
+const URL_CONTEXT_MENU = [
+    { title: 'Open in Default Browser', messageType: 'openUrl' },
+    { title: 'Open in Integrated Browser', messageType: 'openUrlInIntegratedBrowser' }
+];
+
+// オーバーレイ上のURL要素（クリック位置の判定に使用）
+let linkElements = [];
+let overlayRenderHandle = null;
+
+/**
+ * オーバーレイの位置・サイズ・スクロール量をtextareaに合わせる
+ * 幅はclientWidth（スクロールバーを除いた幅）に合わせないと折り返し位置がずれる
+ */
+const syncLinkOverlay = () => {
+    linkOverlay.style.width = `${editor.clientWidth}px`;
+    linkOverlay.style.height = `${editor.clientHeight}px`;
+    linkOverlay.scrollTop = editor.scrollTop;
+    linkOverlay.scrollLeft = editor.scrollLeft;
+};
+
+/**
+ * textareaの内容からオーバーレイを再構築する
+ * URL部分だけを要素化し、その矩形をクリック位置の判定に使う
+ */
+const renderLinkOverlay = () => {
+    const text = editor.value;
+    linkOverlay.textContent = '';
+    linkElements = [];
+
+    URL_PATTERN.lastIndex = 0;
+    let lastIndex = 0;
+    let match;
+    while ((match = URL_PATTERN.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+            linkOverlay.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+        }
+        const link = document.createElement('span');
+        link.className = 'overlay-link';
+        link.textContent = match[0];
+        link.dataset.url = match[0];
+        linkOverlay.appendChild(link);
+        linkElements.push(link);
+        lastIndex = match.index + match[0].length;
+    }
+    // 末尾に改行を足す。pre-wrapでは末尾の改行が潰れ、textareaと行数がずれるため
+    linkOverlay.appendChild(document.createTextNode(text.slice(lastIndex) + '\n'));
+
+    syncLinkOverlay();
+};
+
+// 連続入力時は1フレームに1回だけ再構築する
+const scheduleLinkOverlayRender = () => {
+    if (overlayRenderHandle !== null) {
+        return;
+    }
+    overlayRenderHandle = requestAnimationFrame(() => {
+        overlayRenderHandle = null;
+        renderLinkOverlay();
+    });
+};
+
+/**
+ * 指定座標にあるURLを返す（無ければnull）
+ * オーバーレイはpointer-events: noneのため、要素の矩形と座標を突き合わせて判定する
+ */
+const findUrlAtPoint = (x, y) => {
+    for (const link of linkElements) {
+        // 折り返されたURLは複数の矩形になる
+        for (const rect of link.getClientRects()) {
+            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                return link.dataset.url;
+            }
+        }
+    }
+    return null;
+};
+
+const hideContextMenu = () => {
+    contextMenuElement.classList.add('hidden');
+};
+
+/**
+ * URLのコンテキストメニューを表示する
+ */
+const showUrlContextMenu = (event, url) => {
+    contextMenuElement.textContent = '';
+
+    // 対象URLを見出しとして表示する
+    const header = document.createElement('div');
+    header.className = 'context-menu-header';
+    header.textContent = url.length > URL_LABEL_MAX_LENGTH
+        ? url.slice(0, URL_LABEL_MAX_LENGTH) + '…'
+        : url;
+    header.title = url;
+    contextMenuElement.appendChild(header);
+
+    const separator = document.createElement('div');
+    separator.className = 'context-menu-separator';
+    contextMenuElement.appendChild(separator);
+
+    for (const entry of URL_CONTEXT_MENU) {
+        const menuItem = document.createElement('div');
+        menuItem.className = 'context-menu-item';
+        menuItem.textContent = entry.title;
+        menuItem.addEventListener('click', () => {
+            hideContextMenu();
+            vscode.postMessage({ type: entry.messageType, url: url });
+        });
+        contextMenuElement.appendChild(menuItem);
+    }
+
+    contextMenuElement.classList.remove('hidden');
+
+    // 画面外にはみ出さないように位置を調整
+    const menuRect = contextMenuElement.getBoundingClientRect();
+    const left = Math.min(event.clientX, window.innerWidth - menuRect.width - 4);
+    const top = Math.min(event.clientY, window.innerHeight - menuRect.height - 4);
+    contextMenuElement.style.left = `${Math.max(0, left)}px`;
+    contextMenuElement.style.top = `${Math.max(0, top)}px`;
+};
+
+// URL上での右クリックのみ自前のメニューを表示する
+// preventDefault() を呼ばない場合はVSCode標準のメニューが表示される
+// documentに登録するのは、VSCode側がwindowで監視しているため先に処理する必要があるため
+document.addEventListener('contextmenu', (event) => {
+    if (contextMenuElement.contains(event.target)) {
+        return;
+    }
+    hideContextMenu();
+
+    if (event.target !== editor) {
+        return;
+    }
+    const url = findUrlAtPoint(event.clientX, event.clientY);
+    if (!url) {
+        return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    showUrlContextMenu(event, url);
+});
+
+document.addEventListener('click', (event) => {
+    if (!contextMenuElement.contains(event.target)) {
+        hideContextMenu();
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        hideContextMenu();
+    }
+});
+
+window.addEventListener('blur', hideContextMenu);
+
+// URL上ではポインターカーソルにしてリンクであることを示す
+editor.addEventListener('mousemove', (event) => {
+    editor.style.cursor = findUrlAtPoint(event.clientX, event.clientY) ? 'pointer' : '';
+});
+
+editor.addEventListener('mouseleave', () => {
+    editor.style.cursor = '';
+});
+
+// textareaのスクロールにオーバーレイを追従させる
+editor.addEventListener('scroll', () => {
+    syncLinkOverlay();
+    hideContextMenu();
+});
+
+// ビューの幅が変わると折り返し位置が変わるため、サイズ変更に追従する
+if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(() => syncLinkOverlay()).observe(editor);
+}
+
+renderLinkOverlay();
+
 // メッセージを受信
 window.addEventListener('message', event => {
     const message = event.data;
@@ -48,6 +235,7 @@ window.addEventListener('message', event => {
             currentFilePath = message.filePath;
             setFilePath(message.filePath);
             saveButton.classList.remove('dirty');
+            renderLinkOverlay();
 
             // Handle read-only mode
             isReadOnly = message.isReadOnly || false;
@@ -98,6 +286,7 @@ window.addEventListener('message', event => {
             currentFilePath = '';
             setFilePath('');
             saveButton.classList.remove('dirty');
+            renderLinkOverlay();
             readonlyIndicator.classList.remove('show');
             editButton.classList.remove('active');
             editor.removeAttribute('readonly');
@@ -112,6 +301,7 @@ window.addEventListener('message', event => {
             // カーソルを挿入テキストの後に移動
             editor.selectionStart = editor.selectionEnd = start + text.length;
             editor.focus();
+            renderLinkOverlay();
             // 変更を通知
             vscode.postMessage({ type: 'contentChanged', content: editor.value });
             if (editor.value !== originalContent) {
@@ -123,6 +313,7 @@ window.addEventListener('message', event => {
 
 // エディタの内容変更を検知
 editor.addEventListener('input', () => {
+    scheduleLinkOverlayRender();
     if (isReadOnly) {
         return;
     }
@@ -234,8 +425,16 @@ editButton.addEventListener('click', () => {
     });
 });
 
-// Editor click handler when readonly - focus the tab in VS Code
-editor.addEventListener('click', () => {
+// Editor click handler - open URL, or focus the tab in VS Code when readonly
+editor.addEventListener('click', (event) => {
+    // URL上のクリックは標準ブラウザで開く
+    // ドラッグでの範囲選択の終端がURLに重なった場合は開かない
+    const hasSelection = editor.selectionStart !== editor.selectionEnd;
+    const url = hasSelection ? null : findUrlAtPoint(event.clientX, event.clientY);
+    if (url) {
+        vscode.postMessage({ type: 'openUrl', url: url });
+        return;
+    }
     if (isReadOnly && currentFilePath) {
         vscode.postMessage({
             type: 'focusTabInVSCode',

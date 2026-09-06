@@ -55,6 +55,7 @@ Markdownプロンプトファイルを編集し、パネルから直接Claude Co
 | 機能 | 説明 |
 | --- | --- |
 | **Run/Plan/Specコマンド** | 事前設定されたコマンドでClaude Codeを実行：<br>- **Run** (`Cmd+R` / `Ctrl+R`): `claude "Execute the instructions described in the file at ${filePath}"`<br>- **Plan**: `claude --permission-mode plan "Review ... create an implementation plan ..."`<br>- **Spec**: `claude --permission-mode plan "Review ... create specification documents ..."`<br>実行前に自動保存、ファイル未開でも実行可能 |
+| **送信履歴の記録** | Spec / Plan / Run を実行すると、開いているファイル末尾の`## sent history`セクションへ送信日時を追記する（例: `- run : 2026/09/06 21:27:29`）。2回目以降は同じセクションへ追記され、`editor.recordSendTimestamp`で無効にできる |
 | **自動ターミナル統合** | コマンドはTerminalビューに送信され、シームレスなワークフローのためにファイル-タブの自動関連付けが行われる |
 | 自動表示 | タイムスタンプ形式のMarkdownファイル（形式: `YYYY_MMDD_HHMM_SS_PROMPT.md`、`..._TASK.md`、`..._SPEC.md`、`..._QUICK_START.md`）を選択すると自動的に表示。その他のMarkdownファイルは通常のエディタで開く |
 | Saveボタン | ヘッダーに表示され、未保存の変更がある場合は色が変わる。ファイル未開時は現在のPlansディレクトリに新規作成 |
@@ -258,6 +259,7 @@ created: {{datetime}}
 | `editor.runCommandWithoutFile` | ファイル未開時にrunボタンで実行されるコマンドテンプレート | string | `claude "${editorContent}"` | `${editorContent}`をエディタ内容のプレースホルダーとして使用 |
 | `editor.planCommand` | Planボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
 | `editor.specCommand` | Specボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
+| `editor.recordSendTimestamp` | Spec / Plan / Run の実行時に、開いているファイルへ送信日時を追記するか | boolean | `true` | ファイル末尾の`## sent history`セクションに追記される |
 | `browser.defaultUrl` | Menuビューの「Open Integrated Browser」で開くURL | string | `"about:blank"` | `"about:blank"`で空のタブを開く。`"http://localhost:3000"`などを設定すると常にそのURLを開く |
 | `terminal.shell` | Terminalビューのシェル実行パス | string | `""` | 空欄の場合はシステムのデフォルトシェルを使用 |
 | `terminal.fontSize` | Terminalビューのフォントサイズ | number | `12` | 任意の正の数値 |
@@ -344,14 +346,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.14.vsix
+   code --install-extension ai-coding-sidebar-1.1.15.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.1.14.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.15.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -365,7 +367,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.14.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.14.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.15.vsix
    ```
 4. VS Codeを再起動
 

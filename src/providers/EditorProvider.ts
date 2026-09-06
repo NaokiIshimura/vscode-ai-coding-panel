@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { PlansProvider } from './PlansProvider';
-import { TemplateService } from '../services/TemplateService';
+import { TemplateService, SendCommandType } from '../services/TemplateService';
 import { openInIntegratedBrowser } from '../utils/browserUtils';
 
 // Forward declaration for TerminalProvider to avoid circular dependency
@@ -107,6 +107,83 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     private _escapeShellArgument(arg: string): string {
         // シングルクォートで囲み、内部のシングルクォートを '\'' に置換
         return `'${arg.replace(/'/g, "'\\''")}'`;
+    }
+
+    /**
+     * Spec / Plan / Run の送信履歴を現在のファイルへ追記する
+     *
+     * 追記に失敗してもコマンドの送信は継続するため、エラーは記録のみ行う
+     * @param commandType 送信するコマンドの種別
+     */
+    private async _appendSendHistory(commandType: SendCommandType): Promise<void> {
+        if (!this._currentFilePath) {
+            // ファイル未オープン時のRunは記録対象外
+            return;
+        }
+
+        const config = vscode.workspace.getConfiguration('aiCodingSidebar');
+        if (!config.get<boolean>('editor.recordSendTimestamp', true)) {
+            return;
+        }
+
+        const filePath = this._currentFilePath;
+        const dateTime = this.templateService.formatDateTime();
+
+        try {
+            if (this._isFileOpenInTab(filePath)) {
+                // VS Codeのタブで開いている場合、ディスクへ直接書き込むと標準エディタの
+                // 未保存の変更と競合するため、ドキュメント経由で書き換える
+                const document = await vscode.workspace.openTextDocument(filePath);
+                const wasDirty = document.isDirty;
+                const original = document.getText();
+                const updated = this.templateService.appendSendHistoryLine(original, commandType, dateTime);
+
+                const edit = new vscode.WorkspaceEdit();
+                edit.replace(
+                    document.uri,
+                    new vscode.Range(document.positionAt(0), document.positionAt(original.length)),
+                    updated
+                );
+
+                const applied = await vscode.workspace.applyEdit(edit);
+                if (!applied) {
+                    console.error('Failed to append send history: applyEdit was rejected');
+                    return;
+                }
+
+                this._applySendHistory(updated);
+
+                // 元々未保存の変更が無かった場合のみ保存する（編集中の状態を勝手に確定させない）
+                if (!wasDirty) {
+                    await document.save();
+                }
+            } else {
+                // 直前の保存結果を正とするため、ディスク上の内容を読み直す
+                const original = await fsPromises.readFile(filePath, 'utf8');
+                const updated = this.templateService.appendSendHistoryLine(original, commandType, dateTime);
+                await fsPromises.writeFile(filePath, updated, 'utf8');
+                this._applySendHistory(updated);
+            }
+        } catch (error) {
+            console.error(`Failed to append send history: ${error}`);
+        }
+    }
+
+    /**
+     * 送信履歴の追記結果を保持中の状態とWebviewへ反映する
+     *
+     * Webviewへ反映しないとEditor Viewの内容が古いままとなり、
+     * 次の保存操作で履歴行が失われる
+     */
+    private _applySendHistory(content: string): void {
+        this._currentContent = content;
+        this._pendingContent = undefined;
+        this._isDirty = false;
+
+        this._view?.webview.postMessage({
+            type: 'updateContent',
+            content: content
+        });
     }
 
     private _checkAndUpdateReadOnlyState(editor: vscode.TextEditor | undefined) {
@@ -221,6 +298,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
                         command = command.replace(/\$\{filePath\}/g, escapedPath);
 
+                        // 送信した記録としてファイルへ日時を追記する
+                        await this._appendSendHistory('plan');
+
                         // Send command to Terminal view
                         if (this._terminalProvider) {
                             this._terminalProvider.focus();
@@ -259,6 +339,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
                         let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
                         command = command.replace(/\$\{filePath\}/g, escapedPath);
+
+                        // 送信した記録としてファイルへ日時を追記する
+                        await this._appendSendHistory('spec');
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {
@@ -445,6 +528,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
             let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
             command = command.replace(/\$\{filePath\}/g, escapedPath);
+
+            // 送信した記録としてファイルへ日時を追記する
+            await this._appendSendHistory('run');
 
             // Send command to Terminal view
             if (this._terminalProvider) {

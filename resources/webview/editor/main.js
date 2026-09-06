@@ -254,6 +254,19 @@ window.addEventListener('message', event => {
                 focusEditor();
             }
             break;
+        case 'updateContent':
+            // 拡張側でファイルが書き換わった場合の再同期
+            // （送信履歴の追記など）。カーソル位置とスクロール位置は維持する
+            const selectionStart = editor.selectionStart;
+            const selectionEnd = editor.selectionEnd;
+            const scrollTop = editor.scrollTop;
+            editor.value = message.content;
+            originalContent = message.content;
+            saveButton.classList.remove('dirty');
+            editor.setSelectionRange(selectionStart, selectionEnd);
+            editor.scrollTop = scrollTop;
+            renderLinkOverlay();
+            break;
         case 'updateDirtyState':
             if (message.isDirty) {
                 saveButton.classList.add('dirty');

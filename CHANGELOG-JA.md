@@ -5,6 +5,21 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.15] - 2026-09-06
+
+### Added
+- **Editor Viewの送信履歴記録**: Spec / Plan / Run を実行すると、Editor Viewで開いているファイルへ送信日時を記録するようにしました
+  - ファイル末尾の `## sent history` セクションに `- run : 2026/09/06 21:27:29` のような行が追記されます
+  - セクションは初回の送信時に作成され、以降は同じセクションへ追記されるため見出しが重複しません
+  - テンプレートが出力するメタデータセクション（`memory` / `prompt` / `datetime`）は変更されません
+  - 新しい設定 `aiCodingSidebar.editor.recordSendTimestamp` で記録を無効にできます
+  - ファイルを開かずにRunを実行した場合は、従来どおりエディタの内容が送信され、記録は行われません
+
+### Technical
+- **履歴行の生成**: 追記位置の判定を `TemplateService.appendSendHistoryLine()` に切り出し、ファイルシステムに触れずにテストできるようにしました
+- **Webviewの再同期**: Editor Viewに `updateContent` メッセージを追加し、カーソル位置とスクロール位置を保ったまま内容を差し替えます。これにより追記後の保存で履歴行が失われることを防いでいます
+- **書き込み方法**: 対象ファイルがVS Codeのタブでも開かれている場合は、直接書き込まずに `WorkspaceEdit` で追記し、未保存の変更が無かった場合のみ保存します
+
 ## [1.1.14] - 2026-09-06
 
 ### Added
@@ -1879,3 +1894,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.10...v1.1.11
 [1.1.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.12...v1.1.13
 [1.1.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.13...v1.1.14
+[1.1.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.14...v1.1.15

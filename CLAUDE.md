@@ -386,6 +386,80 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.15新機能: Editor Viewの送信履歴記録
+
+Editor Viewで Spec / Plan / Run を実行した際、開いているMarkdownファイルへ送信日時を追記するようにした：
+
+**記録の形式**
+
+ファイル末尾の `## sent history` セクションへ1行ずつ追加する。
+
+```markdown
+（本文）
+
+---
+
+memory  : .claude/plans/2026_0906_2116_17
+prompt  : 2026_0906_2116_17_QUICK_START.md
+datetime: 2026/09/06 21:16:17
+
+## sent history
+- run : 2026/09/06 21:27:29
+- plan: 2026/09/06 21:31:02
+```
+
+- 日時は `TemplateService.formatDateTime()`（`YYYY/MM/DD HH:MM:SS`）を再利用し、テンプレートが出力する `datetime` 行と揃えている
+- ラベルは `run ` / `plan` / `spec` と幅を揃え、日時の開始位置を合わせている
+- テンプレートのメタデータセクション（`---` 以降）は書き換えず、その後ろに独立したセクションを追加する
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/services/TemplateService.ts` | `SendCommandType` / `SENT_HISTORY_HEADING` と、追記位置を決める純粋関数 `appendSendHistoryLine()` を追加 |
+| `src/providers/EditorProvider.ts` | `_appendSendHistory()` / `_applySendHistory()` を追加し、plan / spec / `_runTask()` の送信直前に呼ぶ |
+| `resources/webview/editor/main.js` | `updateContent` メッセージを追加 |
+| `package.json` | 設定 `aiCodingSidebar.editor.recordSendTimestamp`（既定 `true`）を追加 |
+| `src/test/suite/services/TemplateService.test.ts` | `appendSendHistoryLine()` のテストを追加 |
+
+**Webviewへの再送が必須（最も壊れやすい箇所）**
+- 拡張側でファイルへ追記しても、Editor Viewの `editor.value` は古いままとなる。この状態で保存すると**追記した履歴行が消える**
+- そのため追記後は `updateContent` を送り、`editor.value` と `originalContent` の両方を差し替える。`originalContent` を更新しないとdirty判定が狂う
+- `showContent` を再利用しなかったのは、カーソル位置とスクロール位置がリセットされるため。`updateContent` は `selectionStart` / `selectionEnd` / `scrollTop` を保存して復元する
+- v1.1.13のリンクオーバーレイと本文がずれるため、`renderLinkOverlay()` の呼び出しを忘れないこと
+
+**書き込み方法をファイルの状態で分ける**
+
+| 状態 | 書き込み方法 |
+|---|---|
+| VS Codeのタブで開いていない | `fsPromises.readFile` で読み直してから `fsPromises.writeFile` |
+| VS Codeのタブで開いている | `document.getText()` を入力に `WorkspaceEdit` で全置換し、`applyEdit()` |
+
+- ディスクへ直接書き込むと、標準エディタ側の未保存の変更と競合する。`document.getText()` を入力にすることで、未保存の変更を保持したまま追記できる
+- `document.save()` は**編集前に未保存の変更が無かった場合のみ**実行する。ユーザーが編集中の内容を勝手に確定させないため（`applyEdit()` 後は必ずdirtyになるので、`isDirty` は編集前に控えておく）
+- 保存すると `onDidSaveTextDocument` リスナーが発火するため、`_applySendHistory()` で `_currentContent` を更新してから `save()` を呼ぶ。順序を逆にするとリスナー側が差分ありと判断して `showContent` を送り、カーソル位置がリセットされる
+
+**追記のタイミング**
+- 「保存の完了後・`sendCommand()` の前」に固定している
+- 保存より前に追記すると、直後の保存がWebviewの古い内容でファイルを上書きし、履歴が消える
+- 送信より前にするのは、AIエージェントが読むファイルに履歴が含まれている方が自然なため
+- 追記に失敗してもコマンド送信は継続する（`try/catch` で `console.error` に記録するのみ）。履歴は補助情報であり、送信を止める理由にならない
+
+**セクションの検出と挿入位置（`appendSendHistoryLine()`）**
+- 見出しは**行全体の完全一致**（`line.trim() === '## sent history'`）で判定する。本文中の類似表記へ誤って追記しないため
+- 見出しが見つかった場合は、次の見出し（`#{1,6}` + 空白）または水平線（`---`）の手前までをセクションとみなし、末尾の空行を飛ばして最後の内容行の直後へ挿入する
+- 見出しが無い場合は、末尾の空白を除去してから `\n\n## sent history\n` + 1行を追加する
+- ファイルシステムに触れない純粋関数のため、privateメソッドを避けつつテストできる
+
+**記録対象外**
+- ファイル未オープンでのRun（`runCommandWithoutFile`）は追記先が無いためスキップする。警告も出さない
+- 設定 `aiCodingSidebar.editor.recordSendTimestamp` が `false` の場合
+
+**ローカルでのテスト実行について**
+- VS Code 1.136 のmacOS向けバンドルは実行ファイル名が `Electron` から `Code` に変わっており、`@vscode/test-electron@2.5.2` からは起動できない
+- `src/test/runTest.ts` はCLIパスへフォールバックするが、macOSの `code` は起動を委譲して即座に終了するため、**mochaの結果が親プロセスへ返らず、テストが失敗していても `npm test` が成功扱いになる**
+- 本バージョンの実装では、`appendSendHistoryLine()` をNode上で直接呼び出して検証している（8ケース）。CI（`test.yml`）は別環境のため影響の有無は未確認
+
 ### v1.1.14新機能: Terminal ViewのRunショートカット
 
 Terminal Viewにフォーカスがある状態で `Cmd+R` / `Ctrl+R` を押すと、Editor ViewのRunコマンドが実行されるようにした：

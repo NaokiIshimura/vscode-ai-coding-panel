@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.15] - 2026-09-06
+
+### Added
+- **Send History in Editor View**: Pressing Spec, Plan, or Run now records the date and time in the file that is open in the Editor view
+  - The line is appended to a `## sent history` section at the end of the file, for example `- run : 2026/09/06 21:27:29`
+  - The section is created on the first send and reused afterwards, so the heading is never duplicated
+  - The metadata section written by the templates (`memory` / `prompt` / `datetime`) is left untouched
+  - Recording can be turned off with the new `aiCodingSidebar.editor.recordSendTimestamp` setting
+  - Running without a file open sends the editor content as before and records nothing
+
+### Technical
+- **History Line Building**: `TemplateService.appendSendHistoryLine()` decides where the line goes, so the logic is covered by tests without touching the file system
+- **Webview Resync**: The Editor webview handles a new `updateContent` message that replaces the content while keeping the caret and scroll position, which keeps a later save from dropping the history
+- **Write Path**: When the file is also open in a VS Code tab, the line is applied through a `WorkspaceEdit` instead of a direct write, and the document is only saved when it had no unsaved changes
+
 ## [1.1.14] - 2026-09-06
 
 ### Added
@@ -2408,3 +2423,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.10...v1.1.11
 [1.1.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.12...v1.1.13
 [1.1.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.13...v1.1.14
+[1.1.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.14...v1.1.15

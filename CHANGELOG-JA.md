@@ -5,7 +5,7 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
-## [1.1.12] - 2026-09-06
+## [1.1.14] - 2026-09-06
 
 ### Added
 - **Terminal ViewのRunショートカット**: Terminal Viewにフォーカスがある状態で `Cmd+R` / `Ctrl+R` を押すと、Editor ViewのRunコマンドが実行されるようになった
@@ -17,6 +17,23 @@
 - **Run処理の切り出し**: `EditorProvider` の `runTask` メッセージ処理を `_runTask()` に切り出し、公開メソッド `runTask()` から呼び出せるようにした
   - Terminal Viewは `IEditorProvider` 経由で呼び出すため、Runの実装は1箇所に集約されている
 - **ターミナルのキー処理**: Terminal Viewは `document` の keydown ハンドラから `runEditorTask` メッセージを送信し、xterm.js側は `attachCustomKeyEventHandler()` で該当キーの送信のみ抑止する
+
+## [1.1.13] - 2026-09-06
+
+### Added
+- **Editor Viewのクリック可能なURL**: エディタに書かれたURLに下線を表示し、クリックすると標準ブラウザで開くようにしました
+  - URLを右クリックすると「Open in Default Browser」「Open in Integrated Browser」（VS Code標準のSimple Browser）を選択できます
+  - URL以外の場所を右クリックした場合は、従来どおりVS Code標準のコンテキストメニューが表示されます
+  - URL上ではカーソルがポインター（手の形）に変わります
+  - ドラッグでの範囲選択中はURLを開きません。選択の終端がURLに重なった場合に誤ってブラウザが開くのを防ぎます
+  - メニューはメニュー外のクリック、`Escape`、エディタのスクロール、ウィンドウのフォーカス喪失で閉じます
+
+### Technical
+- **リンク用オーバーレイ**: textareaはリンクを描画できないため、ミラー要素（`#link-overlay`）を重ね、URL部分だけを要素化しています
+  - オーバーレイは`pointer-events: none`のままにし、クリック位置は`getClientRects()`との突き合わせで判定するため、URL上にもキャレットを置けます
+  - オーバーレイでは下線のみを描画するため（`color: transparent`と明示的な`text-decoration-color`）、文字が二重に描画されることはありません
+  - 折り返し位置は、オーバーレイの幅を`editor.clientWidth`から設定し、パディングとフォントを揃え、`ResizeObserver`でサイズ変更に追従することで一致させています
+- **EditorProviderのメッセージ**: `openUrl`と`openUrlInIntegratedBrowser`を追加し、`src/utils/browserUtils.ts`を再利用しています
 
 ## [1.1.11] - 2026-09-06
 
@@ -1860,4 +1877,5 @@ v0.8.33以前からアップグレードする場合:
 [1.1.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.8...v1.1.9
 [1.1.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.9...v1.1.10
 [1.1.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.10...v1.1.11
-[1.1.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.11...v1.1.12
+[1.1.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.12...v1.1.13
+[1.1.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.13...v1.1.14

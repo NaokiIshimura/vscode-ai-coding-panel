@@ -4,6 +4,7 @@ import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { PlansProvider } from './PlansProvider';
 import { TemplateService } from '../services/TemplateService';
+import { openInIntegratedBrowser } from '../utils/browserUtils';
 
 // Forward declaration for TerminalProvider to avoid circular dependency
 export interface ITerminalProvider {
@@ -175,6 +176,18 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                     break;
                 case 'showWarning':
                     vscode.window.showWarningMessage(data.message);
+                    break;
+                case 'openUrl':
+                    // URLを標準ブラウザで開く
+                    if (data.url) {
+                        vscode.env.openExternal(vscode.Uri.parse(data.url));
+                    }
+                    break;
+                case 'openUrlInIntegratedBrowser':
+                    // URLを統合ブラウザ（Simple Browser）で開く
+                    if (data.url) {
+                        await openInIntegratedBrowser(data.url as string);
+                    }
                     break;
                 case 'planTask':
                     // Plan button clicked - save file if needed, then send plan command to terminal

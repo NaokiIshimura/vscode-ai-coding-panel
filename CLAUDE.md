@@ -386,6 +386,54 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.13新機能: Editor ViewのURLリンク化と右クリックメニュー
+
+Editor View（textarea）に書かれたURLをクリックで標準ブラウザで開けるようにし、右クリックで標準ブラウザ／統合ブラウザ（Simple Browser）を選べるメニューを追加した：
+
+**textareaはリンクを描画できないため、ミラー要素を重ねる**
+
+| 層 | 役割 |
+|---|---|
+| `#editor`（textarea） | 従来どおり文字の描画・編集・キャレット操作を担当 |
+| `#link-overlay`（div） | textareaと同じ折り返しでテキストを複製し、URL部分だけを`.overlay-link`要素にする。文字色は`transparent`で下線だけ見せる |
+
+- overlayは`pointer-events: none`のままにし、**クリック位置の判定は`getClientRects()`との突き合わせで行う**（`findUrlAtPoint()`）。overlayにマウス操作を受けさせるとURL上でキャレットを置けなくなり、編集の妨げになるため
+- 折り返されたURLは矩形が複数になるため、`getClientRects()`を全て走査する
+- 文字を二重に描画しないよう、overlay側は`color: transparent`＋`text-decoration-color`だけを指定する。`text-decoration-color`を明示しているため、文字色が透明でも下線は描画される
+
+**折り返し位置を一致させるための条件**
+
+| 項目 | 対応 |
+|---|---|
+| 幅 | `editor.clientWidth`（スクロールバーを除いた幅）をJSで設定する。`width: 100%`ではスクロールバー出現時に折り返し位置がずれる |
+| パディング・フォント | `padding: 10px` / `box-sizing: border-box` / `--vscode-editor-font-family` / `--vscode-editor-font-size` / `line-height: normal` をtextareaと揃える |
+| 折り返し規則 | Chromeのtextareaの既定に合わせて `white-space: pre-wrap` / `overflow-wrap: break-word` を指定 |
+| スクロール | `overflow: hidden` のまま `overlay.scrollTop = editor.scrollTop` で追従させる（`overflow: hidden`でもプログラムからはスクロールできる） |
+| 末尾の改行 | `pre-wrap`では末尾の改行が潰れて行数がずれるため、複製時に改行を1つ補う |
+
+再構築のタイミングは `showContent` / `clearContent` / `insertText` / `input`。`input`は`requestAnimationFrame`で1フレーム1回に間引く。幅の変化には`ResizeObserver`で追従する。
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `resources/webview/editor/index.html` | `#link-overlay`（`#editor-container`内）と`#context-menu`を追加 |
+| `resources/webview/editor/style.css` | `#link-overlay` / `.overlay-link` と、Terminal Viewと同じ`.context-menu`系のスタイルを追加 |
+| `resources/webview/editor/main.js` | オーバーレイの生成・同期・当たり判定、URLのクリック／右クリック処理を追加 |
+| `src/providers/EditorProvider.ts` | `openUrl` / `openUrlInIntegratedBrowser` メッセージを追加（`utils/browserUtils.ts`を利用） |
+
+**クリック時の挙動**
+- URL上の左クリックで標準ブラウザを開く。**ドラッグでの範囲選択中（`selectionStart !== selectionEnd`）は開かない**。選択の終端がURLに重なった場合に誤って開くのを防ぐため
+- 読み取り専用時の既存処理（`focusTabInVSCode`）はURL判定の後に実行する。URLをクリックした場合はVS Codeのタブにフォーカスを移さない
+- `mousemove`でURL上かを判定して`cursor: pointer`に切り替える。overlayが`pointer-events: none`のためCSSの`:hover`では実現できない
+
+**右クリックメニュー**
+- Terminal View（v1.1.11）・Plans View（v1.0.22）と同じ構成。`document`に`contextmenu`を登録し、**URL上のときだけ**`preventDefault()`する（VS Code側は`window`で監視しているため、`document`側で先に止める必要がある）
+- 閉じるタイミング: メニュー外のクリック、`Escape`、`window`の`blur`、textareaのスクロール
+
+**CSPについて**
+- Editor ViewのCSPは`style-src {{cspSource}}`のまま（`'unsafe-inline'`は追加していない）。`element.style.left = ...` のようなCSSOM経由の指定はCSPの対象外で、Plans Viewでも同じ方法でメニュー位置を指定している
+
 ### v1.1.11新機能: Terminal ViewのURL右クリックメニュー
 
 Terminal View内のURLを右クリックすると、標準ブラウザ／統合ブラウザ（Simple Browser）のどちらで開くかを選べるメニューを表示するようにした：

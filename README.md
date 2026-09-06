@@ -64,6 +64,7 @@ Edit Markdown prompt files and execute Claude Code commands directly from the pa
 | **Next button** | Red **Next** button in a dedicated bar at the bottom of the view. Creates a new timestamped `PROMPT.md`, opens it, and puts the caret in the text area so you can start typing right away. Also available with `Cmd+M` / `Ctrl+M` |
 | Button icons | Every button uses a VS Code codicon (Spec: book, Plan: checklist, Run: play, Next: new file, Edit: pencil, Save: floppy disk), matching the Quick Start button in Plans View |
 | Customizable commands | Configure Run, Plan, and Spec commands in settings to match your workflow |
+| **Clickable URLs** | URLs in the text are underlined and open in the default browser on click. Right-click a URL to choose **Open in Default Browser** or **Open in Integrated Browser** (VS Code's Simple Browser). Right-clicking anywhere else shows the standard VS Code menu |
 | Read-only mode | Automatically switches to read-only mode when the file is active in VSCode editor |
 | Auto-save | Automatically saves when switching files, navigating directories, or closing the view |
 | Restore editing | Restores the editing file when returning from another extension |
@@ -343,14 +344,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.11.vsix
+   code --install-extension ai-coding-sidebar-1.1.13.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.11.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.13.vsix
 ```
 
 #### Build the package yourself
@@ -364,7 +365,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.11.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.11.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.13.vsix
    ```
 4. Restart VS Code.
 

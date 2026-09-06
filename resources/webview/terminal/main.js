@@ -4,6 +4,7 @@
     const terminalsContainer = document.getElementById('terminals-container');
     const errorMessage = document.getElementById('error-message');
     const scrollToBottomBtn = document.getElementById('scroll-to-bottom-btn');
+    const contextMenuElement = document.getElementById('context-menu');
 
     // タブとターミナルの管理
     const tabs = new Map(); // tabId -> { tabEl, wrapperEl, term, fitAddon }
@@ -248,6 +249,95 @@
         return value || fallback;
     }
 
+    // 現在マウスが乗っているURL（リンクプロバイダーのhover/leaveで更新）
+    // 右クリック時にどのURLに対するメニューかを判定するために保持する
+    let hoveredUrl = null;
+
+    // URL右クリック時のメニュー項目
+    const URL_CONTEXT_MENU = [
+        { title: 'Open in Default Browser', messageType: 'openUrl' },
+        { title: 'Open in Integrated Browser', messageType: 'openUrlInIntegratedBrowser' }
+    ];
+
+    // メニューに表示するURLの最大文字数
+    const URL_LABEL_MAX_LENGTH = 60;
+
+    /**
+     * URLのコンテキストメニューを表示する
+     */
+    function showUrlContextMenu(event, url) {
+        contextMenuElement.textContent = '';
+
+        // 対象URLを見出しとして表示する
+        const header = document.createElement('div');
+        header.className = 'context-menu-header';
+        header.textContent = url.length > URL_LABEL_MAX_LENGTH
+            ? url.slice(0, URL_LABEL_MAX_LENGTH) + '…'
+            : url;
+        header.title = url;
+        contextMenuElement.appendChild(header);
+
+        const separator = document.createElement('div');
+        separator.className = 'context-menu-separator';
+        contextMenuElement.appendChild(separator);
+
+        for (const entry of URL_CONTEXT_MENU) {
+            const menuItem = document.createElement('div');
+            menuItem.className = 'context-menu-item';
+            menuItem.textContent = entry.title;
+            menuItem.addEventListener('click', () => {
+                hideContextMenu();
+                vscode.postMessage({ type: entry.messageType, url: url });
+            });
+            contextMenuElement.appendChild(menuItem);
+        }
+
+        contextMenuElement.classList.remove('hidden');
+
+        // 画面外にはみ出さないように位置を調整
+        const menuRect = contextMenuElement.getBoundingClientRect();
+        const left = Math.min(event.clientX, window.innerWidth - menuRect.width - 4);
+        const top = Math.min(event.clientY, window.innerHeight - menuRect.height - 4);
+        contextMenuElement.style.left = `${Math.max(0, left)}px`;
+        contextMenuElement.style.top = `${Math.max(0, top)}px`;
+    }
+
+    function hideContextMenu() {
+        contextMenuElement.classList.add('hidden');
+    }
+
+    // URL上での右クリックのみ自前のメニューを表示する
+    // preventDefault() を呼ばない場合はVSCode標準のメニューが表示される
+    document.addEventListener('contextmenu', (event) => {
+        if (contextMenuElement.contains(event.target)) {
+            return;
+        }
+        hideContextMenu();
+        if (!hoveredUrl) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        showUrlContextMenu(event, hoveredUrl);
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!contextMenuElement.contains(event.target)) {
+            hideContextMenu();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            hideContextMenu();
+        }
+    });
+
+    window.addEventListener('blur', hideContextMenu);
+
+    // ユーザー操作によるスクロールでは閉じる（出力による自動スクロールでは閉じない）
+    document.addEventListener('wheel', hideContextMenu, { passive: true });
+
     // ターミナル設定（bodyのdata属性から読み取る）
     const terminalConfigStr = document.body.dataset.terminalConfig;
 
@@ -362,6 +452,14 @@
                         },
                         activate: () => {
                             vscode.postMessage({ type: 'openUrl', url: url });
+                        },
+                        hover: () => {
+                            hoveredUrl = url;
+                        },
+                        leave: () => {
+                            if (hoveredUrl === url) {
+                                hoveredUrl = null;
+                            }
                         }
                     });
                 }
@@ -530,6 +628,8 @@
 
     // タブをアクティブ化
     function activateTab(tabId) {
+        hideContextMenu();
+        hoveredUrl = null;
         const tabInfo = tabs.get(tabId);
         if (!tabInfo) return;
 

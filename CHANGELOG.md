@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.11] - 2026-09-06
+
+### Added
+- **URL Context Menu in Terminal View**: Right-clicking a URL now offers a choice of browser
+  - **Open in Default Browser** opens the URL in the system browser, the same as a left-click
+  - **Open in Integrated Browser** opens it in VS Code's built-in Simple Browser
+  - Right-clicking anywhere other than a URL still shows the standard VS Code context menu
+  - The menu closes on a click outside it, `Escape`, scrolling with the wheel, losing window focus, or switching tabs
+
+### Technical
+- **Integrated Browser Helper**: Extracted `normalizeUrl()` and the Simple Browser launch into `src/utils/browserUtils.ts`
+  - The logic was previously confined to `src/commands/browser.ts` and is now shared with Terminal view
+- **Hovered URL Tracking**: The URL link provider records the hovered URL through the `hover` and `leave` callbacks
+  - xterm.js exposes no public API for resolving a link from a coordinate, so the hover state is used instead
+
 ## [1.1.10] - 2026-09-06
 
 ### Changed
@@ -2360,3 +2375,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.7...v1.1.8
 [1.1.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.8...v1.1.9
 [1.1.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.9...v1.1.10
+[1.1.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.10...v1.1.11

@@ -85,6 +85,7 @@ The embedded terminal is purpose-built for Claude Code with intelligent automati
 | Multiple tabs | Create up to 5 independent terminal tabs. Click the "+" button to add a new tab, click a tab to switch. Close button (× Close) is located at the right end of the shortcut area |
 | Auto-scroll | Maintains scroll position at bottom when new output arrives or when view is resized (only if already at the bottom) |
 | Clickable links | URLs open in browser, file paths (e.g., `./src/file.ts:123`) open in editor with line navigation. A URL split across two lines by wrapping is rejoined before opening |
+| URL context menu | Right-click a URL to choose **Open in Default Browser** or **Open in Integrated Browser** (VS Code's Simple Browser). Left-click still opens the default browser |
 | Unicode support | Full CJK character support with proper width calculation |
 | Configurable | Customize shell path, font size, font family, cursor style, cursor blink, and scrollback lines |
 | WebView header | Tab bar with shell names, shortcut buttons, plus Clear and Kill buttons for the active tab |
@@ -342,14 +343,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.10.vsix
+   code --install-extension ai-coding-sidebar-1.1.11.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.10.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.11.vsix
 ```
 
 #### Build the package yourself
@@ -363,7 +364,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.10.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.10.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.11.vsix
    ```
 4. Restart VS Code.
 

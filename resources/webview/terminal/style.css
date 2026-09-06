@@ -257,3 +257,47 @@ body.focused {
     opacity: 0;
     pointer-events: none;
 }
+
+/* URL右クリック時のコンテキストメニュー */
+.context-menu {
+    position: fixed;
+    z-index: 10000;
+    min-width: 180px;
+    padding: 4px 0;
+    background-color: var(--vscode-menu-background, var(--vscode-editor-background));
+    color: var(--vscode-menu-foreground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    border-radius: 4px;
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
+    font-size: 12px;
+}
+
+.context-menu.hidden {
+    display: none;
+}
+
+.context-menu-header {
+    padding: 4px 12px;
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--vscode-descriptionForeground);
+}
+
+.context-menu-item {
+    padding: 4px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.context-menu-item:hover {
+    background-color: var(--vscode-menu-selectionBackground, var(--vscode-list-activeSelectionBackground));
+    color: var(--vscode-menu-selectionForeground, var(--vscode-list-activeSelectionForeground));
+}
+
+.context-menu-separator {
+    height: 1px;
+    margin: 4px 0;
+    background-color: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+}

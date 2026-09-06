@@ -3,6 +3,7 @@ import * as path from 'path';
 import { promises as fs } from 'fs';
 import { TerminalService } from '../services/TerminalService';
 import { ITerminalService } from '../interfaces/ITerminalService';
+import { openInIntegratedBrowser } from '../utils/browserUtils';
 
 // Forward declaration for EditorProvider to avoid circular dependency
 export interface IEditorProvider {
@@ -122,9 +123,15 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                     }
                     break;
                 case 'openUrl':
-                    // URLをブラウザで開く
+                    // URLを標準ブラウザで開く
                     if (data.url) {
                         vscode.env.openExternal(vscode.Uri.parse(data.url));
+                    }
+                    break;
+                case 'openUrlInIntegratedBrowser':
+                    // URLを統合ブラウザ（Simple Browser）で開く
+                    if (data.url) {
+                        await openInIntegratedBrowser(data.url as string);
                     }
                     break;
                 case 'openFile':

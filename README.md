@@ -78,6 +78,7 @@ The embedded terminal is purpose-built for Claude Code with intelligent automati
 | --- | --- |
 | **Claude Code Auto-Detection** | Process-based detection (checks every 1.5s) reliably identifies Claude Code sessions independent of prompt changes. Automatically switches UI and shortcuts when Claude Code starts/exits |
 | **Context-Aware Shortcuts** | Smart buttons that change based on state:<br>- Not running: `claude`, `claude -c`, `claude -r`, `↑`<br>- After `↑` (update commands): `claude update`, `←`<br>- Running: `/model sonnet`, `/model opus`, `/compact`, `/clear`, `←`<br>Enables quick model switching and update commands during Claude Code sessions |
+| **Run Shortcut** | Press `Cmd+R` / `Ctrl+R` while the Terminal view is focused to run the Editor view's Run command. Unsaved editor changes are saved first, and the key is not forwarded to the shell |
 | **Command Type Icons** | Tab names display icons indicating command origin:<br>▶️ Run button<br>📝 Plan button<br>📑 Spec button |
 | **Dynamic Process Names** | Like iTerm2, tab names update automatically to show the currently running process |
 | **Tab-File Association** | Commands from Editor view link the file to the terminal tab. Switching tabs automatically:<br>- Opens the associated file in Editor view<br>- Navigates to the file's directory in Plans view |
@@ -139,7 +140,7 @@ Quick access to settings and documentation.
 | `Cmd+Shift+A` (macOS)<br>`Ctrl+Shift+A` (Windows/Linux) | Focus AI Coding Panel |
 | `Cmd+S` (macOS)<br>`Ctrl+S` (Windows/Linux) | New Task (when panel is focused) |
 | `Cmd+M` (macOS)<br>`Ctrl+M` (Windows/Linux) | Create new Markdown file (when panel is focused) |
-| `Cmd+R` (macOS)<br>`Ctrl+R` (Windows/Linux) | Run task in Editor (auto-saves and sends command to terminal) |
+| `Cmd+R` (macOS)<br>`Ctrl+R` (Windows/Linux) | Run task in Editor (auto-saves and sends command to terminal). Also available while the Terminal view is focused |
 
 ### Basic actions
 1. Click the "AI Coding Panel" icon in the activity bar (or press `Cmd+Shift+A` / `Ctrl+Shift+A`).
@@ -343,14 +344,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.11.vsix
+   code --install-extension ai-coding-sidebar-1.1.12.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.11.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.12.vsix
 ```
 
 #### Build the package yourself
@@ -364,7 +365,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.11.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.11.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.12.vsix
    ```
 4. Restart VS Code.
 

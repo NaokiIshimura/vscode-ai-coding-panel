@@ -335,6 +335,29 @@
 
     window.addEventListener('blur', hideContextMenu);
 
+    // Editor ViewのRunコマンドを実行するショートカット（Editor View側と同じキー割り当て）
+    const IS_MAC = /mac/i.test(navigator.platform || navigator.userAgent);
+
+    function isRunShortcut(event) {
+        if (event.key !== 'r' && event.key !== 'R') {
+            return false;
+        }
+        if (event.altKey || event.shiftKey) {
+            return false;
+        }
+        return IS_MAC ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey;
+    }
+
+    // ターミナル以外（タブバー等）にフォーカスがある場合も動作させるため document で受ける
+    // xterm側は attachCustomKeyEventHandler でPTYへの送信のみ抑止する
+    document.addEventListener('keydown', (event) => {
+        if (!isRunShortcut(event)) {
+            return;
+        }
+        event.preventDefault();
+        vscode.postMessage({ type: 'runEditorTask' });
+    });
+
     // ユーザー操作によるスクロールでは閉じる（出力による自動スクロールでは閉じない）
     document.addEventListener('wheel', hideContextMenu, { passive: true });
 
@@ -396,6 +419,10 @@
                 selectionBackground: getCssVar('--vscode-terminal-selectionBackground', '#264f78')
             }
         });
+
+        // Cmd+R / Ctrl+R はEditor ViewのRun実行に使うため、PTYへは送信しない
+        // （メッセージ送信はdocumentのkeydownハンドラが担当する）
+        term.attachCustomKeyEventHandler((event) => !(event.type === 'keydown' && isRunShortcut(event)));
 
         // Fit Addonをロード
         const fitAddon = new FitAddon.FitAddon();

@@ -8,6 +8,7 @@ import { openInIntegratedBrowser } from '../utils/browserUtils';
 // Forward declaration for EditorProvider to avoid circular dependency
 export interface IEditorProvider {
     showFile(filePath: string): Promise<void>;
+    runTask(): Promise<void>;
 }
 
 // Forward declaration for PlansProvider to avoid circular dependency
@@ -209,6 +210,10 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                             });
                         }
                     }
+                    break;
+                case 'runEditorTask':
+                    // Cmd+R / Ctrl+R が押された - Editor ViewのRunコマンドを実行
+                    await this._editorProvider?.runTask();
                     break;
                 case 'reconnect':
                     await this._reconnectTab(data.tabId);

@@ -1,6 +1,5 @@
 const vscode = acquireVsCodeApi();
 const editor = document.getElementById('editor');
-const filePathElement = document.getElementById('file-path');
 const readonlyIndicator = document.getElementById('readonly-indicator');
 const editButton = document.getElementById('edit-button');
 const saveButton = document.getElementById('save-button');
@@ -13,22 +12,6 @@ const contextMenuElement = document.getElementById('context-menu');
 let originalContent = '';
 let currentFilePath = '';
 let isReadOnly = false;
-
-// ファイル未オープン時にヘッダーへ表示する案内文
-const FILE_PATH_PLACEHOLDER = 'No file open - select a file in Plans View';
-
-// ヘッダーのファイルパス表示を更新する（未オープン時は案内文を表示）
-const setFilePath = (filePath) => {
-    if (filePath) {
-        filePathElement.textContent = filePath;
-        filePathElement.classList.remove('placeholder');
-    } else {
-        filePathElement.textContent = FILE_PATH_PLACEHOLDER;
-        filePathElement.classList.add('placeholder');
-    }
-};
-
-setFilePath('');
 
 // エディタにフォーカスを当て、カーソルを先頭へ移動する
 const focusEditor = () => {
@@ -233,7 +216,6 @@ window.addEventListener('message', event => {
             editor.value = message.content;
             originalContent = message.content;
             currentFilePath = message.filePath;
-            setFilePath(message.filePath);
             saveButton.classList.remove('dirty');
             renderLinkOverlay();
 
@@ -297,7 +279,6 @@ window.addEventListener('message', event => {
             editor.value = '';
             originalContent = '';
             currentFilePath = '';
-            setFilePath('');
             saveButton.classList.remove('dirty');
             renderLinkOverlay();
             readonlyIndicator.classList.remove('show');

@@ -1403,39 +1403,9 @@ mainブランチへのプッシュで自動的に以下が実行される：
 2. VSIXパッケージ作成
 3. GitHub Releaseへアップロード（タグ: v{version}）
 
-## 実装時のワークフロー
-
-### git worktreeでの実装
-
-- **重要**: 実装作業は必ずgit worktreeを作成して、その中で実施すること
-- メインの作業ディレクトリ（`/Users/naoki/GitHub/vscode-ai-coding-sidebar`）で直接ファイルを変更しない
-- worktreeはmainブランチから作成する
-
-```bash
-# 最新のmainを取得
-git fetch origin main
-
-# worktreeを作成（ブランチ名はバージョンまたはチケット番号）
-git worktree add ../vscode-ai-coding-sidebar-<ブランチ名> -b <ブランチ名> origin/main
-
-# worktree内で依存関係をインストール
-cd ../vscode-ai-coding-sidebar-<ブランチ名>
-npm install
-```
-
-- worktree内で実装・コンパイル・テスト・VSIXパッケージ作成まで完結させる
-- 作業完了後、不要になったworktreeは削除する
-
-```bash
-git worktree remove ../vscode-ai-coding-sidebar-<ブランチ名>
-```
-
-- `node_modules`はworktreeごとに個別のインストールが必要（`npm install`を忘れない）
-
 ## 注意事項
 
 - `.claude`ディレクトリはコミット対象外
 - Git操作は明示的な指示がない限りコミットしない
-- 実装はgit worktreeを作成して実施すること
 - ブランチを作成する場合は、必ずmainブランチから切ること
 - ファイル末尾は必ず空行を含める

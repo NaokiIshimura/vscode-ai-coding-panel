@@ -5,6 +5,21 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.11] - 2026-09-06
+
+### Added
+- **Terminal ViewのURL右クリックメニュー**: URLを右クリックすると開き先のブラウザを選択できるようになった
+  - **Open in Default Browser**: 左クリック時と同じく、標準ブラウザでURLを開く
+  - **Open in Integrated Browser**: VS Code組み込みのSimple BrowserでURLを開く
+  - URL以外の場所での右クリックは、従来どおりVS Code標準のコンテキストメニューが表示される
+  - メニュー外のクリック・`Escape`・ホイールスクロール・ウィンドウのフォーカス喪失・タブ切り替えで閉じる
+
+### Technical
+- **統合ブラウザ処理の共通化**: `normalizeUrl()` とSimple Browserの起動処理を `src/utils/browserUtils.ts` に切り出し
+  - これまで `src/commands/browser.ts` に閉じていた処理を、Terminal Viewからも利用できるようにした
+- **ホバー中URLの保持**: URLリンクプロバイダーの `hover` / `leave` コールバックでホバー中のURLを記録
+  - xterm.jsには座標からリンクを解決する公開APIが無いため、ホバー状態を利用している
+
 ## [1.1.10] - 2026-09-06
 
 ### Changed
@@ -1831,3 +1846,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.7...v1.1.8
 [1.1.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.8...v1.1.9
 [1.1.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.9...v1.1.10
+[1.1.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.10...v1.1.11

@@ -386,6 +386,39 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.11新機能: Terminal ViewのURL右クリックメニュー
+
+Terminal View内のURLを右クリックすると、標準ブラウザ／統合ブラウザ（Simple Browser）のどちらで開くかを選べるメニューを表示するようにした：
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `resources/webview/terminal/index.html` | `#context-menu` 要素を追加 |
+| `resources/webview/terminal/style.css` | `.context-menu` / `.context-menu-header` / `.context-menu-item` / `.context-menu-separator` を追加 |
+| `resources/webview/terminal/main.js` | URLリンクに `hover` / `leave` を追加して `hoveredUrl` を保持し、`contextmenu` で自前メニューを表示 |
+| `src/providers/TerminalProvider.ts` | `openUrlInIntegratedBrowser` メッセージを追加 |
+| `src/utils/browserUtils.ts`（新規） | `normalizeUrl()` / `openInIntegratedBrowser()` / `DEFAULT_BROWSER_URL` を切り出し |
+| `src/commands/browser.ts` | 上記ユーティリティを利用するように変更 |
+
+**右クリック位置のURLを特定する方法**
+- xterm.jsには「座標からリンクを引く」公開APIが無く、ピクセル座標からセル座標への変換も内部APIに依存する
+- 代わりに `ILink` の `hover` / `leave` コールバックでホバー中のURLを `hoveredUrl` に保持し、右クリック時にその値を使う。右クリックではマウスが動かないためホバー状態はそのまま残る
+- `leave` では `hoveredUrl === url` を確認してからクリアする。別リンクへ移った直後に前のリンクの `leave` が届いても、新しい値を消さないため
+
+**VS Code標準のコンテキストメニューとの関係**
+- Webviewホスト側は `contextmenu` を `window` で監視し、`e.defaultPrevented` でなければ標準メニューを表示する
+- そのため `document` にリスナーを登録し（バブリングは `document` → `window`）、**URL上のときだけ** `preventDefault()` する。URL以外の場所では従来どおりVS Code標準のメニューが出る
+- この構成はPlans View（v1.0.22）のコンテキストメニューと同じ
+
+**メニューを閉じるタイミング**
+- メニュー外のクリック、`Escape`、`wheel`（ユーザー操作によるスクロール）、`window` の `blur`、タブ切り替え（`activateTab()`）
+- ターミナルの `onScroll` では閉じない。出力による自動スクロールで即座に閉じてしまうため
+
+**統合ブラウザ処理の共通化**
+- `commands/browser.ts` に閉じていた `normalizeUrl()` とSimple Browser起動処理を `utils/browserUtils.ts` へ移し、Menu Viewのコマンドと Terminal View の両方から使う
+- `simpleBrowser.show` にURLを渡さないとSimple Browser側が入力を求めるため、必ず正規化済みURLを渡す点は従来どおり
+
 ### v1.1.10変更: commandPrefixデフォルト値の変更（`--permission-mode auto` の削除）
 
 `aiCodingSidebar.editor.commandPrefix` のデフォルト値から `--permission-mode auto` を削除：

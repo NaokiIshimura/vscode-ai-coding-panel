@@ -180,6 +180,79 @@ suite('TemplateService Test Suite', () => {
 		});
 	});
 
+	suite('appendSendHistoryLine', () => {
+		const dateTime = '2026/09/06 21:27:29';
+
+		test('Should create a new section when no history section exists', () => {
+			const content = '# task\n\nDo something\n';
+
+			const result = templateService.appendSendHistoryLine(content, 'run', dateTime);
+
+			assert.strictEqual(result, '# task\n\nDo something\n\n## sent history\n- run : 2026/09/06 21:27:29\n');
+		});
+
+		test('Should append to the existing section without duplicating the heading', () => {
+			const content = '# task\n\n## sent history\n- run : 2026/09/06 21:27:29\n';
+
+			const result = templateService.appendSendHistoryLine(content, 'plan', '2026/09/06 21:31:02');
+
+			assert.strictEqual(
+				result,
+				'# task\n\n## sent history\n- run : 2026/09/06 21:27:29\n- plan: 2026/09/06 21:31:02\n'
+			);
+			assert.strictEqual(result.split('## sent history').length - 1, 1);
+		});
+
+		test('Should add a newline when the content does not end with one', () => {
+			const content = '# task';
+
+			const result = templateService.appendSendHistoryLine(content, 'spec', dateTime);
+
+			assert.strictEqual(result, '# task\n\n## sent history\n- spec: 2026/09/06 21:27:29\n');
+		});
+
+		test('Should keep the metadata section untouched', () => {
+			const content = [
+				'# task',
+				'',
+				'---',
+				'',
+				'memory  : .claude/plans/2026_0906_2116_17',
+				'prompt  : 2026_0906_2116_17_QUICK_START.md',
+				'datetime: 2026/09/06 21:16:17',
+				''
+			].join('\n');
+
+			const result = templateService.appendSendHistoryLine(content, 'run', dateTime);
+
+			assert.ok(result.includes('memory  : .claude/plans/2026_0906_2116_17'));
+			assert.ok(result.includes('prompt  : 2026_0906_2116_17_QUICK_START.md'));
+			assert.ok(result.includes('datetime: 2026/09/06 21:16:17'));
+			assert.ok(result.endsWith('## sent history\n- run : 2026/09/06 21:27:29\n'));
+		});
+
+		test('Should insert before a following section', () => {
+			const content = '## sent history\n- run : 2026/09/06 21:27:29\n\n# notes\n\nmemo\n';
+
+			const result = templateService.appendSendHistoryLine(content, 'spec', '2026/09/06 21:40:00');
+
+			assert.strictEqual(
+				result,
+				'## sent history\n- run : 2026/09/06 21:27:29\n- spec: 2026/09/06 21:40:00\n\n# notes\n\nmemo\n'
+			);
+		});
+
+		test('Should align the timestamp column for every command type', () => {
+			const run = templateService.appendSendHistoryLine('', 'run', dateTime);
+			const plan = templateService.appendSendHistoryLine('', 'plan', dateTime);
+			const spec = templateService.appendSendHistoryLine('', 'spec', dateTime);
+
+			assert.strictEqual(run, '## sent history\n- run : 2026/09/06 21:27:29\n');
+			assert.strictEqual(plan, '## sent history\n- plan: 2026/09/06 21:27:29\n');
+			assert.strictEqual(spec, '## sent history\n- spec: 2026/09/06 21:27:29\n');
+		});
+	});
+
 	suite('File name generation consistency', () => {
 		test('All file name generators should use the same timestamp format', () => {
 			const promptFile = templateService.generatePromptFileName();

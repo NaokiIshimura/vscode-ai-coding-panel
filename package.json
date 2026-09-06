@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.1.14",
+  "version": "1.1.15",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -421,6 +421,11 @@
           "type": "string",
           "default": "${commandPrefix} \"Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}.\"",
           "description": "Command template to execute when clicking the Spec button. Use ${filePath} as placeholder for the file path, ${commandPrefix} for the command prefix."
+        },
+        "aiCodingSidebar.editor.recordSendTimestamp": {
+          "type": "boolean",
+          "default": true,
+          "description": "Append the date and time to the open file when the Spec, Plan, or Run button is pressed in the Editor view."
         },
         "aiCodingSidebar.browser.defaultUrl": {
           "type": "string",

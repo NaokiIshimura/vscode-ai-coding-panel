@@ -15,6 +15,25 @@ export interface TemplateVariables {
 }
 
 /**
+ * Editor Viewから送信するコマンドの種別
+ */
+export type SendCommandType = 'run' | 'plan' | 'spec';
+
+/**
+ * 送信履歴セクションの見出し
+ */
+export const SENT_HISTORY_HEADING = '## sent history';
+
+/**
+ * 送信履歴行のラベル（幅を揃えて日時の開始位置を合わせる）
+ */
+const SEND_HISTORY_LABELS: Record<SendCommandType, string> = {
+    run: 'run ',
+    plan: 'plan',
+    spec: 'spec'
+};
+
+/**
  * テンプレート生成サービス
  */
 export class TemplateService {
@@ -189,6 +208,50 @@ datetime   : ${variables.datetime}
         }
 
         return { path: dirPath, name };
+    }
+
+    /**
+     * Spec / Plan / Run の送信履歴行を内容へ追記する
+     *
+     * 末尾の「## sent history」セクションへ1行追加する。
+     * セクションが無い場合は末尾に新規作成する。
+     *
+     * @param content 追記対象の内容
+     * @param commandType 送信したコマンドの種別
+     * @param dateTime 記録する日時（formatDateTime()の戻り値）
+     * @returns 追記後の内容
+     */
+    appendSendHistoryLine(content: string, commandType: SendCommandType, dateTime: string): string {
+        const historyLine = `- ${SEND_HISTORY_LABELS[commandType]}: ${dateTime}`;
+        const lines = content.split('\n');
+        // 見出しは行全体の完全一致で判定する（本文中の類似表記へ追記しないため）
+        const headingIndex = lines.findIndex(line => line.trim() === SENT_HISTORY_HEADING);
+
+        if (headingIndex === -1) {
+            // セクションが無い場合は末尾に新規作成する
+            const body = content.replace(/\s+$/, '');
+            const prefix = body ? `${body}\n\n` : '';
+            return `${prefix}${SENT_HISTORY_HEADING}\n${historyLine}\n`;
+        }
+
+        // セクションの終端（次の見出し、または水平線）を探す
+        let endIndex = lines.length;
+        for (let i = headingIndex + 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (/^#{1,6}\s/.test(line) || line === '---') {
+                endIndex = i;
+                break;
+            }
+        }
+
+        // 末尾の空行を飛ばし、セクション内の最後の内容行の直後へ挿入する
+        let insertIndex = endIndex;
+        while (insertIndex > headingIndex + 1 && lines[insertIndex - 1].trim() === '') {
+            insertIndex--;
+        }
+
+        lines.splice(insertIndex, 0, historyLine);
+        return lines.join('\n');
     }
 
     /**

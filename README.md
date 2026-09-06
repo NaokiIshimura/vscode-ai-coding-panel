@@ -166,22 +166,24 @@ When you create a file from Plans, you can automatically populate it with a temp
 4. Edit the templates and save them.
 
 ### Default template
-The first template contains the following:
+Each template ends with a shared `metadata` section:
 
 ```markdown
-file: {{filename}}
-created: {{datetime}}
+# task
+
 
 ---
 
-# task
-
+# metadata
+dir     : {{dirpath}}
+prompt  : {{filename}}
+datetime: {{datetime}}
 ```
 
 ### Available variables
 Use the following variables inside a template:
 
-- `{{datetime}}`: Creation date and time (for example, 2025/11/3 12:27:13)
+- `{{datetime}}`: Creation date and time (for example, 2026/09/06 21:46:07)
 - `{{filename}}`: Filename including extension (for example, 2025_1229_1430_25_PROMPT.md)
 - `{{timestamp}}`: Timestamp (for example, 2025_1229_1430_25)
 - `{{filepath}}`: File path relative to workspace root (for example, .claude/plans/2025_1229_1430_25_PROMPT.md)

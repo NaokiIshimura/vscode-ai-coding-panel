@@ -345,7 +345,7 @@ export function registerPlansCommands(
                 const relativeDirPath = workspaceRoot ? path.relative(workspaceRoot, folderPath) : folderPath;
 
                 const variables = {
-                    datetime: now.toLocaleString(),
+                    datetime: deps.templateService.formatDateTime(now),
                     filename: fileName,
                     timestamp: timestamp,
                     filepath: relativeFilePath,

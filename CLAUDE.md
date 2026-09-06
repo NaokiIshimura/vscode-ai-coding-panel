@@ -386,6 +386,44 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.17変更: Editor Viewのファイル名ブロック削除
+
+Editor View最上段の `#header`（開いているファイルのパス表示）を削除し、v1.1.1で導入した3段構成を2段構成に戻した：
+
+**変更後のレイアウト**
+
+| 段 | 要素 | 内容 |
+|---|---|---|
+| 1段目 | `#sub-header` | 左: Edit / Save、右: Spec / Plan / Run |
+| 最下段 | `#footer` | Next |
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `resources/webview/editor/index.html` | `#header` の `<div>` ブロックを削除 |
+| `resources/webview/editor/style.css` | `#header` / `.file-info` / `#file-path` / `#file-path.placeholder` の4ルールを削除 |
+| `resources/webview/editor/main.js` | `filePathElement` / `FILE_PATH_PLACEHOLDER` / `setFilePath()` の定義と全呼び出しを削除 |
+| `README.md` / `README-JA.md` | レイアウトの説明を2段構成へ修正 |
+
+**`#header` をブロックごと削除している理由**
+- `#header` の中身は `.file-info` > `#file-path` だけで、他に要素を持たない。中身のみを消すと `min-height: var(--button-bar-height)`（36px）の空バーが残るため、外側の `<div>` ごと削除している
+- `body` の `--button-bar-height` は `#sub-header` / `#footer` が参照し続けるため残している
+- Editor Viewは flexbox のみで構成されており、`#editor-container` の `flex: 1` が自動的に空いた高さを吸収する。Terminal Viewのようなヘッダー高さのハードコード計算（v1.1.0参照）は無いため、高さ調整は不要
+
+**`currentFilePath` は削除していない（最も間違えやすい箇所）**
+- 表示用の `setFilePath()` と、状態として保持する `currentFilePath` は別物
+- `currentFilePath` は Save / Run / Plan / Spec / `focusTabInVSCode` など計13行で参照されており、これを巻き込んで削除すると保存とコマンド送信が壊れる
+- `showContent` / `clearContent` の各ハンドラでは `currentFilePath` への代入行を残し、直後の `setFilePath()` 呼び出しのみを削除している
+
+**トレードオフ**
+- Editor View上でどのファイルを編集中かが判別できなくなる。Plans Viewの選択状態やTerminal Viewのタブから判断する
+- ファイル未オープン時の案内文（`No file open - select a file in Plans View`）も同時に消える
+
+**`src/` 配下は変更していない**
+- `EditorProvider` が送る `showContent` メッセージの `filePath` は、表示用ではなく `currentFilePath` の保持に必要なため、そのまま送信を続けている
+- `EditorProvider.test.ts` は `getCurrentFilePath()` を検証しており、Webviewの見た目には依存しないため影響なし
+
 ### v1.1.16変更: テンプレートのメタデータセクション見直しと`datetime`書式の統一
 
 組み込みテンプレートが共通で持つ末尾メタデータブロックに見出しを追加し、`memory` 項目をリネームした。あわせて生成経路ごとに異なっていた `datetime` の書式を統一した：

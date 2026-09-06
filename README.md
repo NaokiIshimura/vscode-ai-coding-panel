@@ -60,8 +60,8 @@ Edit Markdown prompt files and execute Claude Code commands directly from the pa
 | **Send History** | Pressing Spec / Plan / Run appends the send date and time to a `## sent history` section at the end of the open file (for example `- run : 2026/09/06 21:27:29`). The section is reused on later sends, and recording can be turned off with `editor.recordSendTimestamp` |
 | **Auto-Terminal Integration** | Commands are sent to Terminal view with automatic file-tab association for seamless workflow |
 | Auto-display | Automatically opens when selecting a timestamp-named Markdown file (format: `YYYY_MMDD_HHMM_SS_PROMPT.md`, `..._TASK.md`, `..._SPEC.md`, or `..._QUICK_START.md`). Other Markdown files open in the standard editor |
-| **Three-Row Layout** | The view is split into three bars: the top bar shows the open file path (or a guidance message when no file is open), the second bar holds Edit / Save on the left and Spec / Plan / Run on the right, and the bottom bar holds the Next button |
-| Save button | Displays in the second bar with a color change indicating unsaved changes. Creates new file if none is open (saves to current Plans directory) |
+| **Two-Row Layout** | The view is split into two bars: the top bar holds Edit / Save on the left and Spec / Plan / Run on the right, and the bottom bar holds the Next button |
+| Save button | Displays in the top bar with a color change indicating unsaved changes. Creates new file if none is open (saves to current Plans directory) |
 | **Next button** | Red **Next** button in a dedicated bar at the bottom of the view. Creates a new timestamped `PROMPT.md`, opens it, and puts the caret in the text area so you can start typing right away. Also available with `Cmd+M` / `Ctrl+M` |
 | Button icons | Every button uses a VS Code codicon (Spec: book, Plan: checklist, Run: play, Next: new file, Edit: pencil, Save: floppy disk), matching the Quick Start button in Plans View |
 | Customizable commands | Configure Run, Plan, and Spec commands in settings to match your workflow |

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.17] - 2026-09-06
+
+### Changed
+- **Editor View Layout**: Removed the file path block at the top of the Editor view, changing the three-row layout to a two-row layout
+  - The top bar now holds Edit / Save on the left and Spec / Plan / Run on the right
+  - The bottom bar still holds the Next button
+  - The `#header` element was removed entirely rather than emptied, so no blank 36px bar remains
+  - The guidance message shown when no file is open (`No file open - select a file in Plans View`) was removed along with it
+
+### Removed
+- `#header` / `.file-info` / `#file-path` / `#file-path.placeholder` styles from the Editor webview
+- `filePathElement`, `FILE_PATH_PLACEHOLDER` and `setFilePath()` from the Editor webview script
+
 ## [1.1.16] - 2026-09-06
 
 ### Changed

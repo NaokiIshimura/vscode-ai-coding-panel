@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.10] - 2026-09-06
+
+### Changed
+- **Default Command Prefix**: `aiCodingSidebar.editor.commandPrefix` now defaults to `claude` instead of `claude --permission-mode auto`
+  - The Run, Plan and Spec buttons no longer enable auto permission mode unless it is configured explicitly
+  - Set the value back to `claude --permission-mode auto` to keep the previous behavior
+
+### Technical
+- **Documentation**: Added an `editor.commandPrefix` row to the settings table in the README, which was missing until now
+
 ## [1.1.9] - 2026-09-06
 
 ### Fixed
@@ -2349,3 +2359,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.6...v1.1.7
 [1.1.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.7...v1.1.8
 [1.1.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.8...v1.1.9
+[1.1.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.9...v1.1.10

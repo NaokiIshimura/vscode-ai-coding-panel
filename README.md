@@ -251,6 +251,7 @@ If the default relative path doesn't exist, Plans displays a "Create directory" 
 | `plans.defaultRelativePath` | Default relative path for Plans | string | `".claude/plans"` | `"src"`, `.claude/plans`, `"docs/api"` |
 | `plans.sortBy` | Sort files and directories in Plans by | string | `"created"` | `"name"` (file name)<br>`"created"` (creation date)<br>`"modified"` (modified date) |
 | `plans.sortOrder` | Sort order for files and directories in Plans | string | `"ascending"` | `"ascending"` (ascending)<br>`"descending"` (descending) |
+| `editor.commandPrefix` | Command prefix substituted for `${commandPrefix}` in the command templates below | string | `"claude"` | `"claude"`, `"claude --permission-mode auto"`, `"claude --model opus"` |
 | `editor.runCommand` | Command template to execute when clicking the Run button in the Editor view | string | `claude "Execute the instructions described in the file at ${filePath}"` | Use `${filePath}` as placeholder for the file path |
 | `editor.runCommandWithoutFile` | Command template to execute when clicking the Run button without a file open | string | `claude "${editorContent}"` | Use `${editorContent}` as placeholder for the editor content |
 | `editor.planCommand` | Command template to execute when clicking the Plan button | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
@@ -272,7 +273,7 @@ Add the following to `.vscode/settings.json`:
   "aiCodingSidebar.plans.defaultRelativePath": ".claude/plans",
   "aiCodingSidebar.plans.sortBy": "created",
   "aiCodingSidebar.plans.sortOrder": "ascending",
-  "aiCodingSidebar.editor.commandPrefix": "claude --permission-mode auto",
+  "aiCodingSidebar.editor.commandPrefix": "claude",
   "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"Execute the instructions described in the file at ${filePath}\"",
   "aiCodingSidebar.editor.runCommandWithoutFile": "${commandPrefix} \"${editorContent}\"",
   "aiCodingSidebar.editor.planCommand": "${commandPrefix} \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",
@@ -341,14 +342,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.9.vsix
+   code --install-extension ai-coding-sidebar-1.1.10.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.9.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.10.vsix
 ```
 
 #### Build the package yourself
@@ -362,7 +363,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.9.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.9.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.10.vsix
    ```
 4. Restart VS Code.
 

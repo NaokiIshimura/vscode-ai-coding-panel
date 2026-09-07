@@ -1005,7 +1005,7 @@
     });
 
     // ショートカットボタンのイベントハンドラ
-    function sendShortcut(command, startsClaudeCode) {
+    function sendShortcut(command, startsClaudeCode, execute = true) {
         if (!activeTabId) return;
 
         const tabInfo = tabs.get(activeTabId);
@@ -1017,13 +1017,20 @@
         vscode.postMessage({
             type: 'sendShortcut',
             command: command,
-            startsClaudeCode: startsClaudeCode
+            startsClaudeCode: startsClaudeCode,
+            execute: execute
         });
+    }
+
+    // コマンドを挿入するだけで実行はしない（改行を送らない）
+    function insertShortcut(command) {
+        sendShortcut(command, false, false);
     }
 
     document.getElementById('btn-claude')?.addEventListener('click', () => sendShortcut('claude', true));
     document.getElementById('btn-claude-c')?.addEventListener('click', () => sendShortcut('claude -c', true));
     document.getElementById('btn-claude-r')?.addEventListener('click', () => sendShortcut('claude -r', true));
+    document.getElementById('btn-claude-from-pr')?.addEventListener('click', () => insertShortcut('claude --from-pr '));
     document.getElementById('btn-claude-update')?.addEventListener('click', () => sendShortcut('claude update', false));
     document.getElementById('btn-model-sonnet')?.addEventListener('click', () => sendShortcut('/model sonnet', false));
     document.getElementById('btn-model-opus')?.addEventListener('click', () => sendShortcut('/model opus', false));

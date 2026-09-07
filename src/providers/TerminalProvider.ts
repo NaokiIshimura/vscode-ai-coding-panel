@@ -177,7 +177,11 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                     this.killTerminal();
                     break;
                 case 'sendShortcut':
-                    this.handleShortcut(data.command as string, data.startsClaudeCode as boolean);
+                    this.handleShortcut(
+                        data.command as string,
+                        data.startsClaudeCode as boolean,
+                        data.execute === undefined ? true : (data.execute as boolean)
+                    );
                     break;
                 case 'resetClaudeCodeState':
                     if (this._activeTabId) {
@@ -569,8 +573,9 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
      * ショートカットコマンドを処理
      * @param command 実行するコマンド
      * @param startsClaudeCode Claude Codeを起動するコマンドかどうか
+     * @param execute 改行を送信してコマンドを実行するかどうか（falseの場合は挿入のみ）
      */
-    public handleShortcut(command: string, startsClaudeCode: boolean): void {
+    public handleShortcut(command: string, startsClaudeCode: boolean, execute: boolean = true): void {
         if (!command) {
             return;
         }
@@ -578,7 +583,10 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         if (this._activeTabId) {
             const tab = this._tabs.find(t => t.id === this._activeTabId);
             if (tab) {
-                if (tab.isClaudeCodeRunning) {
+                if (!execute) {
+                    // 挿入のみ: 改行を送らず、Claude Codeの起動状態も変更しない
+                    this._terminalService.write(tab.sessionId, command);
+                } else if (tab.isClaudeCodeRunning) {
                     // Claude Code起動中: コマンドテキストを送信後、Enterを別送信
                     this._terminalService.write(tab.sessionId, command);
                     setTimeout(() => {

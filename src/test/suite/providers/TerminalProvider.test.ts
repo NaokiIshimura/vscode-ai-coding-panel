@@ -331,6 +331,39 @@ suite('TerminalProvider Bracket Paste Mode Test Suite', () => {
 
 			assert.strictEqual(mockService.writeCalls.length, 0, 'write()が呼ばれないこと');
 		});
+
+		test('execute=falseの場合、改行を付けずにコマンドが挿入されること', () => {
+			terminalProvider.handleShortcut('claude --from-pr ', false, false);
+
+			assert.strictEqual(mockService.writeCalls.length, 1, 'write()が1回だけ呼ばれること');
+			assert.strictEqual(
+				mockService.writeCalls[0].data,
+				'claude --from-pr ',
+				'改行を付けずにコマンドが送信されること'
+			);
+		});
+
+		test('execute=falseの場合、Claude Code起動中でもEnterが送信されないこと', async () => {
+			const provider = terminalProvider as any;
+			provider._tabs[0].isClaudeCodeRunning = true;
+
+			terminalProvider.handleShortcut('claude --from-pr ', false, false);
+
+			await new Promise(resolve => setTimeout(resolve, 150));
+			const enterWrites = mockService.writeCalls.filter(c => c.data === '\r');
+			assert.strictEqual(enterWrites.length, 0, 'Enterが送信されないこと');
+		});
+
+		test('execute=falseの場合、Claude Codeの起動状態が変更されないこと', () => {
+			terminalProvider.handleShortcut('claude --from-pr ', true, false);
+
+			const provider = terminalProvider as any;
+			assert.strictEqual(
+				provider._tabs[0].isClaudeCodeRunning,
+				false,
+				'Claude Code起動状態が変更されないこと'
+			);
+		});
 	});
 
 	suite('Bracket Paste Mode - Integration with real TerminalService', () => {

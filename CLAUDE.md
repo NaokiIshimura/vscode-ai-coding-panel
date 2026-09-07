@@ -386,6 +386,36 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.18新機能: Terminal Viewの `claude --from-pr` ショートカット
+
+Terminal Viewのショートカットバーに `claude --from-pr` ボタンを追加した。**押下時はコマンドを挿入するだけで実行しない**点が他のショートカットと異なる：
+
+**変更後のClaude Code未起動時ショートカット**
+```
+[claude] [claude -c] [claude -r] [claude --from-pr] [↑]
+```
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `resources/webview/terminal/index.html` | `btn-claude-r` の直後に `btn-claude-from-pr` を追加 |
+| `resources/webview/terminal/main.js` | `sendShortcut()` に `execute` 引数を追加し、挿入専用の `insertShortcut()` を追加 |
+| `src/providers/TerminalProvider.ts` | `handleShortcut()` に `execute` 引数を追加。`sendShortcut` メッセージから受け渡す |
+| `src/test/suite/providers/TerminalProvider.test.ts` | `execute: false` の3ケースを追加 |
+
+**`execute: false` の分岐を最上位に置いている**
+- `handleShortcut()` は従来「Claude Code起動中 / シェル」の2分岐だったが、`!execute` の判定を**その手前**に置いている
+- 起動中の分岐に入ると「テキスト送信 → 100ms後に `\r`」（v1.0.12参照）が走ってコマンドが実行されてしまうため
+- 挿入のみの場合は `startsClaudeCode` に関わらず `isClaudeCodeRunning` / `isProcessing` を更新しない。実行していない以上、起動状態を立てるのは誤りになる
+
+**末尾の半角スペースはコマンド文字列側に持たせている**
+- Webview側が `'claude --from-pr '` を送信する。`handleShortcut()` の `if (!command)` は空文字のみを弾くため、末尾スペース付きの文字列はそのまま通る
+- PR番号をそのまま入力できるようにするための仕様であり、`trim()` を挟むと意図が壊れる
+
+**後方互換性**
+- `execute` はオプショナル（既定 `true`）。Webview側も `data.execute === undefined` を `true` として扱うため、既存の全ショートカットの挙動は変わらない
+
 ### v1.1.17変更: Editor Viewのファイル名ブロック削除
 
 Editor View最上段の `#header`（開いているファイルのパス表示）を削除し、v1.1.1で導入した3段構成を2段構成に戻した：

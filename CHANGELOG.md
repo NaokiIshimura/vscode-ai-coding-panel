@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.18] - 2026-09-07
+
+### Added
+- **Terminal View `claude --from-pr` Shortcut**: Added a `claude --from-pr` button next to `claude -r` in the Terminal view shortcut bar
+  - Pressing the button only inserts the command into the terminal - it does not run it
+  - The inserted text ends with a trailing space, so a PR number can be typed straight away
+  - The Claude Code running state is left untouched, because no command is executed
+
+### Technical
+- `TerminalProvider.handleShortcut()` now takes an optional `execute` argument (defaults to `true`). When it is `false`, the command text is written without a newline and no state update takes place
+- Added `insertShortcut()` to the Terminal webview script, which posts `sendShortcut` with `execute: false`
+- Added tests covering the `execute: false` path
+
 ## [1.1.17] - 2026-09-06
 
 ### Changed
@@ -2471,3 +2484,6 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.12...v1.1.13
 [1.1.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.13...v1.1.14
 [1.1.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.14...v1.1.15
+[1.1.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.15...v1.1.16
+[1.1.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.16...v1.1.17
+[1.1.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.17...v1.1.18

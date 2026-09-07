@@ -5,6 +5,32 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.18] - 2026-09-07
+
+### Added
+- **Terminal Viewの `claude --from-pr` ショートカット**: Terminal Viewのショートカットバーの `claude -r` の隣に `claude --from-pr` ボタンを追加
+  - ボタン押下時はターミナルにコマンドが挿入されるだけで、実行はしない
+  - 挿入されるテキストは末尾に半角スペースを含むため、そのままPR番号を入力できる
+  - コマンドを実行しないため、Claude Codeの起動状態は変更しない
+
+### Technical
+- `TerminalProvider.handleShortcut()` にオプション引数 `execute`（既定 `true`）を追加。`false` の場合は改行を付けずにコマンドテキストを書き込み、状態更新も行わない
+- Terminal Viewのwebviewスクリプトに `insertShortcut()` を追加。`sendShortcut` を `execute: false` で送信する
+- `execute: false` の経路に対するテストを追加
+
+## [1.1.17] - 2026-09-06
+
+### Changed
+- **Editor Viewのレイアウト**: Editor View最上段のファイルパス表示ブロックを削除し、3段構成を2段構成に変更
+  - 上段は左にEdit / Save、右にSpec / Plan / Runを配置
+  - 最下段は従来どおりNextボタンを配置
+  - `#header` 要素は中身だけを消すのではなくブロックごと削除しているため、36pxの空バーは残らない
+  - ファイル未オープン時の案内文（`No file open - select a file in Plans View`）も同時に削除
+
+### Removed
+- Editor Viewのwebviewから `#header` / `.file-info` / `#file-path` / `#file-path.placeholder` のスタイルを削除
+- Editor Viewのwebviewスクリプトから `filePathElement` / `FILE_PATH_PLACEHOLDER` / `setFilePath()` を削除
+
 ## [1.1.16] - 2026-09-06
 
 ### Changed
@@ -1929,3 +1955,6 @@ v0.8.33以前からアップグレードする場合:
 [1.1.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.12...v1.1.13
 [1.1.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.13...v1.1.14
 [1.1.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.14...v1.1.15
+[1.1.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.15...v1.1.16
+[1.1.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.16...v1.1.17
+[1.1.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.17...v1.1.18

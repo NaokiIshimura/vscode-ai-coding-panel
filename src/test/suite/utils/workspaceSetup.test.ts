@@ -1,8 +1,9 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import { setupSettingsJson, setupTemplate, setupClaudeFolder } from '../../../utils/workspaceSetup';
+import { setupSettingsJson, setupTemplate, setupGlobalTemplate, setupClaudeFolder } from '../../../utils/workspaceSetup';
 
 suite('workspaceSetup Test Suite', () => {
 	const testWorkspaceRoot = path.join(__dirname, '../../fixtures/testWorkspace');
@@ -176,6 +177,92 @@ suite('workspaceSetup Test Suite', () => {
 					}
 				}
 			}
+		});
+	});
+
+	suite('setupGlobalTemplate', () => {
+		// 同梱テンプレートを差し替えるため、一時ディレクトリをextensionPathに見立てる
+		const withGlobalFixture = async (
+			run: (context: vscode.ExtensionContext, globalTemplatesDir: string) => Promise<void>
+		): Promise<void> => {
+			const testExtensionPath = fs.mkdtempSync(path.join(os.tmpdir(), 'global-template-ext-'));
+			const globalRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'global-template-root-'));
+
+			try {
+				const extensionTemplatesDir = path.join(testExtensionPath, 'templates');
+				fs.mkdirSync(extensionTemplatesDir, { recursive: true });
+				fs.writeFileSync(path.join(extensionTemplatesDir, 'task.md'), '# Task Template', 'utf8');
+				fs.writeFileSync(path.join(extensionTemplatesDir, 'spec.md'), '# Spec Template', 'utf8');
+				fs.writeFileSync(path.join(extensionTemplatesDir, 'prompt.md'), '# Prompt Template', 'utf8');
+				fs.writeFileSync(path.join(extensionTemplatesDir, 'quick_start.md'), '# Quick Start Template', 'utf8');
+
+				const context = {
+					extensionPath: testExtensionPath,
+					globalStorageUri: vscode.Uri.file(globalRoot)
+				} as unknown as vscode.ExtensionContext;
+
+				await run(context, path.join(globalRoot, 'templates'));
+			} finally {
+				for (const dir of [testExtensionPath, globalRoot]) {
+					try {
+						fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+					} catch (error) {
+						if (process.platform === 'win32') {
+							console.warn(`Warning: Could not remove ${dir}:`, error);
+						} else {
+							throw error;
+						}
+					}
+				}
+			}
+		};
+
+		test('Should copy all template files into the global directory', async function () {
+			const configured = vscode.workspace
+				.getConfiguration('aiCodingSidebar')
+				.get<string>('globalTemplatesPath', '');
+			if (configured && configured.trim()) {
+				// 設定でコピー先が差し替えられている環境では対象外
+				this.skip();
+				return;
+			}
+
+			await withGlobalFixture(async (context, globalTemplatesDir) => {
+				await setupGlobalTemplate(context);
+
+				assert.ok(fs.existsSync(globalTemplatesDir));
+
+				for (const templateFile of ['task.md', 'spec.md', 'prompt.md', 'quick_start.md']) {
+					assert.ok(
+						fs.existsSync(path.join(globalTemplatesDir, templateFile)),
+						`Template file not copied: ${templateFile}`
+					);
+				}
+			});
+		});
+
+		test('Should not overwrite an existing template file', async function () {
+			const configured = vscode.workspace
+				.getConfiguration('aiCodingSidebar')
+				.get<string>('globalTemplatesPath', '');
+			if (configured && configured.trim()) {
+				this.skip();
+				return;
+			}
+
+			await withGlobalFixture(async (context, globalTemplatesDir) => {
+				fs.mkdirSync(globalTemplatesDir, { recursive: true });
+				fs.writeFileSync(path.join(globalTemplatesDir, 'task.md'), '# Customized', 'utf8');
+
+				await setupGlobalTemplate(context);
+
+				assert.strictEqual(
+					fs.readFileSync(path.join(globalTemplatesDir, 'task.md'), 'utf8'),
+					'# Customized'
+				);
+				// 他のファイルはコピーされる
+				assert.ok(fs.existsSync(path.join(globalTemplatesDir, 'prompt.md')));
+			});
 		});
 	});
 

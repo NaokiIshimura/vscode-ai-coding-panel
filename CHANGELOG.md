@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-09-20
+
+### Added
+- **Global templates**: The file templates and the prompt templates can now be managed globally, not only per workspace
+  - Added **Customize Global Template** and **Customize Global Prompt Templates** to the Global section of the Menu view, and the matching `aiCodingSidebar.setupGlobalTemplate` and `aiCodingSidebar.setupGlobalPromptTemplates` commands. Both run without a workspace
+  - Added the `aiCodingSidebar.globalTemplatesPath` setting (default empty). When empty, the global storage directory of this extension is used. A relative path is resolved from the home directory and `~` is expanded, so a dotfiles repository can hold the templates
+  - The global directory holds a `templates` sub directory for the file templates and a `prompts` sub directory for the prompt templates, mirroring the workspace layout
+  - **Customize Global Template** and **Customize Global Prompt Templates** open the global root in a new VS Code window instead of opening one of the files in the editor, because which one to edit depends on the user. Both `templates` and `prompts` are visible in that window. **Customize Template** and **Customize Prompt Templates** for a workspace keep opening the first file as before
+  - File templates now resolve as workspace -> global -> bundled. A workspace that has its own templates behaves exactly as before
+  - The **+** button in the Editor view prompt menu now asks where to create the template when both a workspace and a global directory are available, and creates it globally when no workspace is open
+
+### Changed
+- The Editor view prompt template menu now lists the workspace templates and the global templates together, instead of showing only one of them
+  - A file name present in both is taken from the workspace, so the id used to pick a template stays unique
+  - Global entries are marked `(global)` in the description
+  - The templates bundled with the extension are still shown only when neither location holds a template
+- Creating a prompt template copies the bundled templates first only when neither the workspace nor the global directory holds one. Previously it looked at the workspace alone, which would have dropped the bundled entries from the menu as soon as a workspace template existed alongside global ones
+
+### Technical
+- Added `src/utils/globalTemplatePaths.ts`, which resolves the global root, the `templates` directory, and the `prompts` directory. It returns `undefined` when the context has no `globalStorageUri`, so a mocked context keeps working
+- `globalStorageUri` is not created by VS Code, so every write path calls `mkdir` with `recursive: true`
+- Global directories are revealed with `revealFileInOS` instead of `revealInExplorer`, because a path outside the workspace cannot be shown in the VS Code explorer
+- Extracted `copyBundledTemplates()` in `workspaceSetup.ts`, shared by the workspace and the global setup. Its file list is now derived from `TEMPLATE_TYPES` in `templateUtils.ts`, so adding a template type can no longer miss the copy list (the cause of the v1.1.20 fix)
+- `loadTemplate()` now walks an ordered list of candidate paths instead of nesting the workspace check, and looks at the global directory even when no workspace is open
+- `PromptTemplate` gained an `origin` field (`workspace` / `global` / `bundled`), and `validateTemplateName()` takes the target so the duplicate check runs against the directory the file will be created in
+
 ## [1.1.20] - 2026-09-20
 
 ### Fixed
@@ -2524,3 +2550,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.17...v1.1.18
 [1.1.19]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.18...v1.1.19
 [1.1.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.19...v1.1.20
+[1.2.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.20...v1.2.0

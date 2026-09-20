@@ -2,21 +2,34 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { promises as fsPromises } from 'fs';
 import { TemplateService, TemplateVariables } from './TemplateService';
+import { getGlobalPromptTemplatesDir } from '../utils/globalTemplatePaths';
+
+/**
+ * テンプレートの作成先
+ */
+export type PromptTemplateTarget = 'workspace' | 'global';
+
+/**
+ * テンプレートの出所
+ */
+export type PromptTemplateOrigin = PromptTemplateTarget | 'bundled';
 
 /**
  * Editor Viewへ挿入するプロンプトテンプレート（スニペット）
  */
 export interface PromptTemplate {
-    /** ファイル名（拡張子なし） */
+    /** ファイル名（拡張子なし）。一覧からの選択キーとして使うため一意であること */
     id: string;
     /** 表示名（先頭のH1見出し、無ければファイル名） */
     label: string;
-    /** 一覧に表示する補足（ファイル名） */
+    /** 一覧に表示する補足（ファイル名。グローバル分は`(global)`付き） */
     description: string;
     /** ファイルの内容そのまま（変数置換前・H1を含む） */
     body: string;
     /** 元ファイルの絶対パス */
     filePath: string;
+    /** どこに置かれているテンプレートか */
+    origin: PromptTemplateOrigin;
 }
 
 /** ワークスペース上のテンプレート配置先（既定値） */
@@ -68,21 +81,48 @@ export class PromptTemplateService {
     }
 
     /**
+     * グローバルのテンプレートディレクトリを取得
+     * 解決できない場合はundefinedを返す
+     */
+    getGlobalTemplatesDir(): string | undefined {
+        return getGlobalPromptTemplatesDir(this.context);
+    }
+
+    /**
      * テンプレート一覧を取得
      *
-     * ワークスペース側に1件でも存在する場合はワークスペース側のみを返す。
-     * 同梱分と混在させると同名ファイルの優先順位が分かりづらくなるため。
+     * ワークスペースとグローバルをマージし、**同名ファイルはワークスペースを優先**する。
+     * 排他（どちらか片方だけ）にすると、グローバルへ共通スニペットを置いても
+     * ワークスペース側に1件でもあった時点で共通分が消えてしまい実用にならないため。
+     *
+     * 同梱分はどちらにも1件も無い場合のみ返す。
+     * ユーザー定義と混在させると同名ファイルの優先順位が分かりづらくなるため。
+     *
+     * 並び順はワークスペース分→グローバル分で、各グループ内はファイル名昇順。
      */
     async listTemplates(): Promise<PromptTemplate[]> {
         const workspaceDir = this.getWorkspaceTemplatesDir();
-        if (workspaceDir) {
-            const workspaceTemplates = await this.readTemplatesFrom(workspaceDir);
-            if (workspaceTemplates.length > 0) {
-                return workspaceTemplates;
-            }
+        const globalDir = this.getGlobalTemplatesDir();
+
+        const workspaceTemplates = workspaceDir
+            ? await this.readTemplatesFrom(workspaceDir, 'workspace')
+            : [];
+        const globalTemplates = globalDir
+            ? await this.readTemplatesFrom(globalDir, 'global')
+            : [];
+
+        // idは選択キーのため一意にする必要がある。同名はワークスペース側を残す
+        const usedIds = new Set(workspaceTemplates.map(template => template.id));
+        const merged = [
+            ...workspaceTemplates,
+            ...globalTemplates.filter(template => !usedIds.has(template.id))
+        ];
+
+        if (merged.length > 0) {
+            return merged;
         }
 
-        return this.readTemplatesFrom(this.getBundledTemplatesDir());
+        return this.readTemplatesFrom(this.getBundledTemplatesDir(), 'bundled');
     }
 
     /**
@@ -97,31 +137,63 @@ export class PromptTemplateService {
             return undefined;
         }
 
-        await fsPromises.mkdir(workspaceDir, { recursive: true });
+        await this.copyBundledTemplatesTo(workspaceDir);
+        return workspaceDir;
+    }
+
+    /**
+     * 同梱テンプレートをグローバルへコピーする
+     * 既に存在するファイルは上書きしない
+     *
+     * @returns コピー先ディレクトリ（解決できない場合はundefined）
+     */
+    async setupGlobalTemplates(): Promise<string | undefined> {
+        const globalDir = this.getGlobalTemplatesDir();
+        if (!globalDir) {
+            return undefined;
+        }
+
+        await this.copyBundledTemplatesTo(globalDir);
+        return globalDir;
+    }
+
+    /**
+     * 同梱テンプレートを指定ディレクトリへコピーする
+     * 既に存在するファイルは上書きしない
+     *
+     * globalStorageUri配下はVS Codeが自動作成しないため必ずmkdirする
+     */
+    private async copyBundledTemplatesTo(destinationDir: string): Promise<void> {
+        await fsPromises.mkdir(destinationDir, { recursive: true });
 
         const bundledDir = this.getBundledTemplatesDir();
         const fileNames = await this.readMarkdownFileNames(bundledDir);
 
         for (const fileName of fileNames) {
-            const destinationPath = path.join(workspaceDir, fileName);
+            const destinationPath = path.join(destinationDir, fileName);
             if (await this.pathExists(destinationPath)) {
                 continue;
             }
             const content = await fsPromises.readFile(path.join(bundledDir, fileName), 'utf8');
             await fsPromises.writeFile(destinationPath, content, 'utf8');
         }
-
-        return workspaceDir;
     }
 
     /**
      * 新規テンプレートのファイル名として使えるかを検証する
      *
-     * `vscode.window.showInputBox`のvalidateInputから利用する
+     * `vscode.window.showInputBox`のvalidateInputから利用する。
+     * 既存ファイルとの衝突は作成先ごとに判定するため、
+     * 呼び出し側は名前入力より先に作成先を決めておくこと
      *
+     * @param name テンプレート名（拡張子は省略可）
+     * @param target 作成先
      * @returns 問題がある場合はエラーメッセージ、問題なければundefined
      */
-    async validateTemplateName(name: string): Promise<string | undefined> {
+    async validateTemplateName(
+        name: string,
+        target: PromptTemplateTarget = 'workspace'
+    ): Promise<string | undefined> {
         const trimmed = name.trim();
 
         if (!trimmed) {
@@ -141,8 +213,8 @@ export class PromptTemplateService {
             return 'Enter a template name';
         }
 
-        const workspaceDir = this.getWorkspaceTemplatesDir();
-        if (workspaceDir && await this.pathExists(path.join(workspaceDir, fileName))) {
+        const targetDir = this.getTemplatesDirFor(target);
+        if (targetDir && await this.pathExists(path.join(targetDir, fileName))) {
             return `${fileName} already exists`;
         }
 
@@ -151,10 +223,6 @@ export class PromptTemplateService {
 
     /**
      * ワークスペースへ新規テンプレートを作成する
-     *
-     * 作成前にワークスペース側が空であれば同梱テンプレートをコピーする。
-     * ワークスペース側に1件でもあるとそちらだけを一覧に出す仕様のため、
-     * コピーしないと同梱テンプレートが一覧から消えてしまう
      *
      * @param name テンプレート名（拡張子は省略可）
      * @returns 作成したファイルの絶対パス
@@ -165,19 +233,43 @@ export class PromptTemplateService {
             throw new Error('No workspace is open');
         }
 
+        return this.createTemplateIn(workspaceDir, name);
+    }
+
+    /**
+     * グローバルへ新規テンプレートを作成する
+     *
+     * @param name テンプレート名（拡張子は省略可）
+     * @returns 作成したファイルの絶対パス
+     */
+    async createGlobalTemplate(name: string): Promise<string> {
+        const globalDir = this.getGlobalTemplatesDir();
+        if (!globalDir) {
+            throw new Error('Global template directory is not available');
+        }
+
+        return this.createTemplateIn(globalDir, name);
+    }
+
+    /**
+     * 指定ディレクトリへ新規テンプレートを作成する
+     *
+     * 作成前にユーザー定義のテンプレートが1件も無い場合は、同梱テンプレートを先にコピーする。
+     * 同梱分は「ワークスペースにもグローバルにも1件も無い場合のみ」一覧に出る仕様のため、
+     * コピーしないと1件作った瞬間に一覧から同梱分が消えてしまう
+     */
+    private async createTemplateIn(directoryPath: string, name: string): Promise<string> {
         const fileName = this.toTemplateFileName(name.trim());
-        const filePath = path.join(workspaceDir, fileName);
+        const filePath = path.join(directoryPath, fileName);
 
         if (await this.pathExists(filePath)) {
             throw new Error(`${fileName} already exists`);
         }
 
-        // ワークスペース側が空の場合は、一覧に出ていた同梱テンプレートを先にコピーする
-        const existing = await this.readMarkdownFileNames(workspaceDir);
-        if (existing.length === 0) {
-            await this.setupWorkspaceTemplates();
+        if (await this.hasNoUserTemplates()) {
+            await this.copyBundledTemplatesTo(directoryPath);
         } else {
-            await fsPromises.mkdir(workspaceDir, { recursive: true });
+            await fsPromises.mkdir(directoryPath, { recursive: true });
         }
 
         // 見出しは一覧の表示名としても使われる
@@ -185,6 +277,32 @@ export class PromptTemplateService {
         await fsPromises.writeFile(filePath, `# ${label}\n\n`, 'utf8');
 
         return filePath;
+    }
+
+    /**
+     * 作成先に対応するディレクトリを取得
+     */
+    private getTemplatesDirFor(target: PromptTemplateTarget): string | undefined {
+        return target === 'global'
+            ? this.getGlobalTemplatesDir()
+            : this.getWorkspaceTemplatesDir();
+    }
+
+    /**
+     * ユーザー定義のテンプレート（ワークスペース・グローバル）が1件も無いかどうか
+     */
+    private async hasNoUserTemplates(): Promise<boolean> {
+        const workspaceDir = this.getWorkspaceTemplatesDir();
+        if (workspaceDir && (await this.readMarkdownFileNames(workspaceDir)).length > 0) {
+            return false;
+        }
+
+        const globalDir = this.getGlobalTemplatesDir();
+        if (globalDir && (await this.readMarkdownFileNames(globalDir)).length > 0) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -236,8 +354,13 @@ export class PromptTemplateService {
     /**
      * 指定ディレクトリ直下の.mdファイルをテンプレートとして読み込む
      * ディレクトリが存在しない場合は空配列を返す
+     *
+     * グローバル分はワークスペース分と見分けがつくよう、descriptionに`(global)`を付ける
      */
-    private async readTemplatesFrom(directoryPath: string): Promise<PromptTemplate[]> {
+    private async readTemplatesFrom(
+        directoryPath: string,
+        origin: PromptTemplateOrigin
+    ): Promise<PromptTemplate[]> {
         const fileNames = await this.readMarkdownFileNames(directoryPath);
 
         const templates = await Promise.all(
@@ -248,9 +371,10 @@ export class PromptTemplateService {
                 return {
                     id: path.basename(fileName, '.md'),
                     label: this.extractLabel(body) ?? path.basename(fileName, '.md'),
-                    description: fileName,
+                    description: origin === 'global' ? `${fileName} (global)` : fileName,
                     body: body,
-                    filePath: filePath
+                    filePath: filePath,
+                    origin: origin
                 };
             })
         );

@@ -72,6 +72,8 @@ suite('Extension Test Suite', () => {
 		const templateCommands = [
 			'aiCodingSidebar.insertPromptTemplate',
 			'aiCodingSidebar.setupPromptTemplates',
+			'aiCodingSidebar.setupGlobalTemplate',
+			'aiCodingSidebar.setupGlobalPromptTemplates',
 		];
 
 		templateCommands.forEach(cmd => {

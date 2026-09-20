@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { CommandDependencies } from './types';
+import { openGlobalTemplatesRoot } from '../utils/globalTemplatePaths';
 
 /**
  * プロンプトテンプレート関連のコマンドを登録
@@ -45,6 +46,29 @@ export function registerTemplatesCommands(
                 vscode.window.showInformationMessage(`Prompt templates are ready: ${displayPath}`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to create prompt templates: ${error}`);
+            }
+        })
+    );
+
+    // 同梱のプロンプトテンプレートをグローバルへコピーするコマンド
+    // ワークスペース未オープンでも実行できる
+    // どのテンプレートを編集したいかは利用者によるため、
+    // 特定のファイルをエディタで開かずグローバル配置先を新しいウィンドウで開く
+    context.subscriptions.push(
+        vscode.commands.registerCommand('aiCodingSidebar.setupGlobalPromptTemplates', async () => {
+            try {
+                const templatesDir = await promptTemplateService.setupGlobalTemplates();
+                if (!templatesDir) {
+                    vscode.window.showErrorMessage('Global template directory is not available');
+                    return;
+                }
+
+                // 新しいウィンドウへフォーカスが移るため、通知を先に出す
+                vscode.window.showInformationMessage(`Global prompt templates are ready: ${templatesDir}`);
+
+                await openGlobalTemplatesRoot(context);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create global prompt templates: ${error}`);
             }
         })
     );

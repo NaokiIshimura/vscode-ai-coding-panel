@@ -386,6 +386,111 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.0新機能: テンプレート / プロンプトテンプレートのグローバル管理
+
+ファイル雛形（template）とスニペット（prompt template）を、ワークスペース単位だけでなく全ワークスペース共通でも管理できるようにした：
+
+**グローバル配置先**
+
+```
+<globalTemplatesPath>            ← 既定: context.globalStorageUri.fsPath
+├── templates/                   ← ファイル雛形（prompt.md / task.md / spec.md / quick_start.md）
+└── prompts/                     ← スニペット（*.md）
+```
+
+- 設定 `aiCodingSidebar.globalTemplatesPath`（既定 `""`）で差し替え可能。空なら拡張機能のグローバルストレージ
+- **相対パスはワークスペースルートではなくホームディレクトリ基準**で解決し、`~` も展開する。グローバル配置先をワークスペースに依存させないため
+- ワークスペース側（`.vscode/ai-coding-panel/{templates,prompts}`）と同じサブディレクトリ構成にしている。設定を1つ（ルート）にまとめた理由もこれ
+
+**`globalStorageUri` のディレクトリはVS Codeが自動作成しない（最も踏みやすい落とし穴）**
+- URIが返るだけでディレクトリは存在しない。書き込み経路では必ず `fsPromises.mkdir(dir, { recursive: true })` を行う
+- `getGlobalRootDir()` は `context.globalStorageUri?.fsPath` を参照する。**既存テストのモックcontextは `{ extensionPath }` だけを持つ**ため、オプショナルチェーンで `undefined` を返してグローバル配置先を無効化している。ここを `!` にすると既存テストが軒並み落ちる
+
+**`revealInExplorer` はグローバル配置先に使えない**
+- ワークスペース外のパスは現在のウィンドウのエクスプローラーに表示できない
+- グローバル系のコマンドは `openGlobalTemplatesRoot()` で **VS Codeの新しいウィンドウ**として開く
+  ```ts
+  vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(root), { forceNewWindow: true })
+  ```
+  - **`forceNewWindow` は必須**。省略すると現在のウィンドウがそのフォルダで開き直され、作業中のワークスペースが閉じてしまう
+  - 開くのは `templates` / `prompts` ではなく**ルート**。両方を1つのウィンドウで扱えるようにするため
+  - 新しいウィンドウへフォーカスが移るため、**通知（`showInformationMessage`）はフォルダを開く前に出す**
+- ワークスペース側の既存コマンドは `revealInExplorer` のまま
+
+**グローバル系のコマンドはファイルをエディタで開かない**
+
+| コマンド | コピー後の挙動 |
+|---|---|
+| Customize Template（ワークスペース） | `openFirstTemplate()` で `TEMPLATE_FILE_NAMES[0]`（= `task.md`）を開く＋`revealInExplorer` |
+| Customize Prompt Templates（ワークスペース） | 一覧の先頭テンプレートを開く＋`revealInExplorer` |
+| **Customize Global Template** | ファイルは**開かない**。グローバル配置先のルートを新しいウィンドウで開く |
+| **Customize Global Prompt Templates** | ファイルは**開かない**。グローバル配置先のルートを新しいウィンドウで開く |
+
+- グローバル側はどのファイルを編集したいかが利用者によるため、特定のファイルを勝手に開かずディレクトリの表示のみにしている
+- ワークスペース側の挙動は従来どおり（変更していない）
+- `TEMPLATE_TYPES` の並び（`task` が先頭）は `setupTemplate()` の従来挙動を保つためであり、コピー自体は全4ファイルが対象なので順序に意味は無い。将来 `openFirstTemplate()` が開くファイルを変えたい場合は、配列順を入れ替えるのではなく開くファイル名を明示すること
+- `setupGlobalPromptTemplates` から開く処理を外したことで `listTemplates()` の呼び出しも不要になった
+
+**template（ファイル雛形）の解決順**
+
+| 順 | 探索先 |
+|---|---|
+| 1 | `<workspace>/.vscode/ai-coding-panel/templates/<type>.md` |
+| 2 | `<global>/templates/<type>.md` |
+| 3 | `<extensionPath>/templates/<type>.md`（同梱） |
+
+- `loadTemplate()` は候補パスの配列を先頭から探す形へ整理した。**変更前はワークスペース未オープン時に即同梱へ落ちていたが、変更後は未オープンでもグローバルを見る**
+
+**prompt template（スニペット）は排他ではなくマージにした（設計判断）**
+
+| 方式 | 挙動 | 採否 |
+|---|---|---|
+| 優先順位のみ | ワークスペースに1件でもあればワークスペースのみ | **不採用**。グローバルへ共通スニペットを置いても、ワークスペース側に1件でもあった時点で共通分が消えてしまい実用にならない |
+| **マージ** | ワークスペース + グローバルを結合し、**同名はワークスペース優先**。両方空のときだけ同梱 | **採用** |
+
+- `PromptTemplate.id`（拡張子を除いたファイル名）は `_insertPromptTemplateById()` の選択キーであり一意である必要がある。マージ時に同名があると衝突するため、**ワークスペース側を残してグローバル側を捨てる**
+- 並び順はワークスペース分 → グローバル分。各グループ内はファイル名昇順
+- 由来が分かるよう `PromptTemplate.origin`（`workspace` / `global` / `bundled`）を追加し、グローバル分は `description` を `refactor.md (global)` の形にしている
+- 同梱分は従来どおりユーザー定義と混ぜない（どちらにも1件も無い場合のみ表示）
+
+**`createWorkspaceTemplate()` の「空なら同梱をコピー」条件を変えている（見落とすとv1.1.20と同じ構図のバグ）**
+- 旧: 「ワークスペース側が空なら同梱をコピー」
+- 新: 「**ワークスペースにもグローバルにも1件も無い**なら同梱をコピー」（`hasNoUserTemplates()`）
+- 同梱分が消える条件がマージ化で変わったため。旧条件のままだと、グローバルにスニペットがある状態でワークスペースに1件作った瞬間に同梱分が一覧から消える
+- コピー先は「作成先のディレクトリ」。`createGlobalTemplate()` から呼ばれた場合はグローバルへコピーされる
+
+**テンプレート一覧の二重管理を解消した**
+- v1.1.20 の原因だった「`setupTemplate()` の `templateFiles` 配列」と「`templateUtils.ts` の `TemplateType`」の手動同期を廃止
+- `TEMPLATE_TYPES`（as const配列）から `TemplateType` と `TEMPLATE_FILE_NAMES` の両方を導出し、コピー処理は `copyBundledTemplates()` に一本化した。テンプレート種別を追加してもコピー漏れが起きない
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/utils/globalTemplatePaths.ts`（新規） | グローバルのルート / `templates` / `prompts` のパス解決と、ルートを新しいウィンドウで開く `openGlobalTemplatesRoot()`。`resolveConfiguredGlobalPath()` は設定値だけを受け取る純粋関数として公開し、設定を書き換えずにテストできるようにしている |
+| `src/utils/templateUtils.ts` | `TEMPLATE_TYPES` / `TEMPLATE_FILE_NAMES` / `WORKSPACE_TEMPLATES_RELATIVE_PATH` を追加。`loadTemplate()` を候補パス走査へ変更 |
+| `src/utils/workspaceSetup.ts` | `copyBundledTemplates()` / `openFirstTemplate()` を切り出し、`setupGlobalTemplate()` を追加 |
+| `src/services/PromptTemplateService.ts` | `getGlobalTemplatesDir()` / `setupGlobalTemplates()` / `createGlobalTemplate()` を追加。`listTemplates()` をマージ化、`validateTemplateName()` に作成先を追加、`PromptTemplate` に `origin` を追加 |
+| `src/providers/EditorProvider.ts` | `_pickPromptTemplateTarget()` を追加。`[+]` は作成先を選ばせてから名前を聞く |
+| `src/commands/settings.ts` / `src/commands/templates.ts` | `setupGlobalTemplate` / `setupGlobalPromptTemplates` を登録 |
+| `src/providers/MenuProvider.ts` | Global セクションに2項目を追加 |
+| `package.json` | 設定 `globalTemplatesPath`、コマンド2件 |
+
+**`[+]` は作成先を名前入力より先に聞く**
+- `validateTemplateName()` の重複チェックは作成先ディレクトリに対して行うため。逆順にすると検証対象が決まらない
+- 選択肢が1つしかない場合（ワークスペース未オープン等）はQuickPickを出さずにそれを使う
+- 従来はワークスペース未オープン時にエラーだったが、グローバルへ作成できるようになった
+
+**ローカルでのテスト実行について**
+- v1.1.15に記載のとおり、macOSローカルの `npm test` はmochaの結果が親プロセスへ返らず、失敗しても成功扱いになる
+- 本バージョンでは `vscode` をスタブ化したNode上でmocha（`--ui tdd`）を直接実行して確認している
+- ワークスペースの有無で分岐するテスト（マージの優先順位など）は `this.skip()` で保護しているため、**スタブに `workspaceFolders` を持たせた状態でも実行**して確認した（ワークスペース無し: 66 passing / 2 pending、ワークスペース有り: PromptTemplateService 31 passing / 2 pending）
+- 既存のワークスペーステンプレートを壊さないため、ワークスペース側のディレクトリが既に存在する場合はテストをスキップする
+
+**今回のスコープ外**
+- `TemplateService.loadTemplate()` / `getDefaultTemplate()` は探索先が `.vscode/templates/` のままで、`templateUtils.ts` の `.vscode/ai-coding-panel/templates/` と食い違っている。参照は自身のテストのみでデッドコードの疑いがあるため触っていないが、**今回グローバル対応を入れたことで `templateUtils` との差はさらに広がった**
+- グローバルテンプレートのSettings Sync対応。`globalStorageUri` は同期対象外のため、同期したい場合は `globalTemplatesPath` にdotfiles配下の絶対パスを指定する運用で代替する
+
 ### v1.1.20バグ修正: Customize Templateで`quick_start.md`がコピーされない
 
 Menu Viewの「Customize Template」（`utils/workspaceSetup.ts` の `setupTemplate()`）がワークスペースへコピーする対象に `quick_start.md` が含まれておらず、Quick Startのテンプレートだけワークスペース側でカスタマイズできなかった問題を修正：

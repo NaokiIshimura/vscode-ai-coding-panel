@@ -67,6 +67,18 @@ suite('Extension Test Suite', () => {
 		});
 	});
 
+	test('Prompt template commands should be registered', async () => {
+		const commands = await vscode.commands.getCommands(true);
+		const templateCommands = [
+			'aiCodingSidebar.insertPromptTemplate',
+			'aiCodingSidebar.setupPromptTemplates',
+		];
+
+		templateCommands.forEach(cmd => {
+			assert.ok(commands.includes(cmd), `Command ${cmd} should be registered`);
+		});
+	});
+
 	test('Browser commands should be registered', async () => {
 		const commands = await vscode.commands.getCommands(true);
 		assert.ok(

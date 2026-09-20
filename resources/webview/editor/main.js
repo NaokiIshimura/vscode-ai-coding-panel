@@ -7,6 +7,7 @@ const specButton = document.getElementById('spec-button');
 const planButton = document.getElementById('plan-button');
 const runButton = document.getElementById('run-button');
 const nextButton = document.getElementById('next-button');
+const templateButton = document.getElementById('template-button');
 const linkOverlay = document.getElementById('link-overlay');
 const contextMenuElement = document.getElementById('context-menu');
 let originalContent = '';
@@ -107,8 +108,12 @@ const findUrlAtPoint = (x, y) => {
     return null;
 };
 
+// テンプレート選択メニューを開いているか（ボタンでの開閉判定に使う）
+let promptMenuOpen = false;
+
 const hideContextMenu = () => {
     contextMenuElement.classList.add('hidden');
+    promptMenuOpen = false;
 };
 
 /**
@@ -116,6 +121,7 @@ const hideContextMenu = () => {
  */
 const showUrlContextMenu = (event, url) => {
     contextMenuElement.textContent = '';
+    contextMenuElement.classList.remove('prompt-menu');
 
     // 対象URLを見出しとして表示する
     const header = document.createElement('div');
@@ -149,6 +155,84 @@ const showUrlContextMenu = (event, url) => {
     const top = Math.min(event.clientY, window.innerHeight - menuRect.height - 4);
     contextMenuElement.style.left = `${Math.max(0, left)}px`;
     contextMenuElement.style.top = `${Math.max(0, top)}px`;
+};
+
+/**
+ * メニューが画面内に収まるように位置を決める
+ * 基準要素の上側に出し、収まらない場合は下側へ反転する
+ */
+const placeMenuNearElement = (element) => {
+    const anchorRect = element.getBoundingClientRect();
+    const menuRect = contextMenuElement.getBoundingClientRect();
+    const gap = 4;
+
+    let top = anchorRect.top - menuRect.height - gap;
+    if (top < gap) {
+        // 上側に収まらない場合は下側へ出す
+        top = Math.min(anchorRect.bottom + gap, window.innerHeight - menuRect.height - gap);
+    }
+
+    const left = Math.min(anchorRect.left, window.innerWidth - menuRect.width - gap);
+
+    contextMenuElement.style.left = `${Math.max(gap, left)}px`;
+    contextMenuElement.style.top = `${Math.max(gap, top)}px`;
+};
+
+/**
+ * プロンプトテンプレートの選択メニューをボタンの近くに表示する
+ */
+const showPromptTemplateMenu = (templates) => {
+    contextMenuElement.textContent = '';
+    contextMenuElement.classList.add('prompt-menu');
+
+    // ヘッダー行: 見出しと、テンプレートを追加する[+]ボタン
+    const header = document.createElement('div');
+    header.className = 'context-menu-header prompt-menu-header';
+
+    const headerLabel = document.createElement('span');
+    headerLabel.textContent = 'Prompt templates';
+    header.appendChild(headerLabel);
+
+    const addButton = document.createElement('button');
+    addButton.className = 'context-menu-action';
+    addButton.title = 'Add template';
+    addButton.setAttribute('aria-label', 'Add template');
+    const addIcon = document.createElement('span');
+    addIcon.className = 'codicon codicon-add';
+    addButton.appendChild(addIcon);
+    addButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        hideContextMenu();
+        vscode.postMessage({ type: 'createPromptTemplate' });
+    });
+    header.appendChild(addButton);
+
+    contextMenuElement.appendChild(header);
+
+    const separator = document.createElement('div');
+    separator.className = 'context-menu-separator';
+    contextMenuElement.appendChild(separator);
+
+    for (const template of templates) {
+        const menuItem = document.createElement('div');
+        menuItem.className = 'context-menu-item';
+        menuItem.textContent = template.label;
+        // 同じ表示名でもファイル名で判別できるようにする
+        menuItem.title = template.description;
+        menuItem.addEventListener('click', () => {
+            hideContextMenu();
+            vscode.postMessage({
+                type: 'insertPromptTemplate',
+                templateId: template.id
+            });
+        });
+        contextMenuElement.appendChild(menuItem);
+    }
+
+    // 位置計算には描画後のサイズが必要なため、先に表示する
+    contextMenuElement.classList.remove('hidden');
+    placeMenuNearElement(templateButton);
+    promptMenuOpen = true;
 };
 
 // URL上での右クリックのみ自前のメニューを表示する
@@ -286,6 +370,10 @@ window.addEventListener('message', event => {
             editor.removeAttribute('readonly');
             isReadOnly = false;
             break;
+        case 'showPromptTemplates':
+            // テンプレート一覧を受け取ってボタン近くにメニューを表示する
+            showPromptTemplateMenu(message.templates || []);
+            break;
         case 'insertText':
             // カーソル位置にテキストを挿入
             const start = editor.selectionStart;
@@ -392,6 +480,33 @@ planButton.addEventListener('click', () => {
         type: 'planTask',
         filePath: currentFilePath,
         content: (currentFilePath && isDirty && !isReadOnly) || !currentFilePath ? editor.value : null
+    });
+});
+
+// prompts button click handler - テンプレート一覧をボタン近くのメニューで表示する
+templateButton.addEventListener('click', (event) => {
+    // documentのclickハンドラで直後に閉じられないようにする
+    event.stopPropagation();
+
+    // 開いている場合はトグルで閉じる
+    if (promptMenuOpen) {
+        hideContextMenu();
+        return;
+    }
+
+    hideContextMenu();
+
+    // 読み取り専用時は挿入してもtextareaの変更が保存されないため開かない
+    if (isReadOnly) {
+        vscode.postMessage({
+            type: 'showWarning',
+            message: 'This file is being edited in VS Code. Close the tab to insert a template here.'
+        });
+        return;
+    }
+
+    vscode.postMessage({
+        type: 'requestPromptTemplates'
     });
 });
 

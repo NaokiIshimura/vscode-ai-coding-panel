@@ -5,6 +5,32 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.19] - 2026-09-20
+
+### Added
+- **Editor Viewのプロンプトテンプレート挿入**: 最下段の左端に**prompts**ボタンを追加し、定型プロンプトをカーソル位置へ挿入できるようにした
+  - ボタンを押下するとボタンのすぐ上（Editor View内）にテンプレートのメニューが開く。再度の押下・メニュー外のクリック・`Escape`で閉じる
+  - メニューのヘッダーにある**+**ボタンでテンプレートを新規作成できる。名前を入力するとテンプレート配置先にファイルを作成し、VS Codeのエディタで開く
+  - ワークスペース側が空の状態で作成した場合は、同梱テンプレートも同時にコピーする。メニューに出ていたテンプレートが消えないようにするため
+  - コマンド`aiCodingSidebar.insertPromptTemplate`（コマンドパレット）は基準となるボタンが無いため、従来どおりQuickPickで選択する
+  - テンプレートは`.vscode/ai-coding-panel/prompts/`直下のMarkdownファイル（1ファイル1件）。Markdownファイルが無い場合は拡張機能に同梱のテンプレートを使用する
+  - メニューの表示名は先頭の`# 見出し`、無ければファイル名。**ファイルの内容はそのまま挿入する**ため、見出しも一緒に挿入される
+  - `{{filename}}` / `{{filepath}}` / `{{dirpath}}` / `{{datetime}}` / `{{timestamp}}`をEditor Viewで開いているファイルの値に置換する。ファイル未オープン時はファイル関連の変数を空文字にする
+  - コマンド`aiCodingSidebar.insertPromptTemplate` / `aiCodingSidebar.setupPromptTemplates`と、Menuビューの Workspace への **Customize Prompt Templates** を追加
+  - 設定`aiCodingSidebar.editor.promptTemplatesPath`（既定値 `.vscode/ai-coding-panel/prompts`）を追加
+
+### Changed
+- Editor Viewのフッターを`justify-content: space-between`の2グループ構成に変更し、左端にInsert Template・右端にNextを配置
+
+### Technical
+- `PromptTemplateService`を追加。ファイル新規作成用の雛形（`TemplateService` / `templateUtils`）とは用途が異なるため分離している
+- 挿入は`insertPaths()`と同じ既存の`insertText`メッセージを経由するため、カーソル位置挿入・dirty反映・リンクオーバーレイの再構築はWebview側の既存処理がそのまま働く
+- メニューはv1.1.13で追加した`#context-menu`要素を再利用しており、既存の閉じる処理（メニュー外クリック・`Escape`・`window`のblur・エディタのスクロール）がそのまま効く
+- Webviewへ渡すのはID・表示名・ファイル名のみ。本文は拡張側に保持し、選択されたタイミングで読み直す
+- `TemplateService.renderVariables()`を追加し、`replaceVariables()`の可視性を変えずに変数置換を公開した
+- VS Codeのタブで開いている間はEditor Viewが読み取り専用となり挿入内容が保存されないため、その場合は挿入せず警告を表示する
+- `PromptTemplateService`のテスト（一覧取得・表示名の決定・本文の非加工・変数置換）を追加
+
 ## [1.1.18] - 2026-09-07
 
 ### Added
@@ -1958,3 +1984,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.15...v1.1.16
 [1.1.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.16...v1.1.17
 [1.1.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.17...v1.1.18
+[1.1.19]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.18...v1.1.19

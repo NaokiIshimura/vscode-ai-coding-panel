@@ -47,7 +47,8 @@ body.focused {
     color: var(--vscode-foreground);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    /* 左端にInsert Template、右端にNextを配置する */
+    justify-content: space-between;
     gap: 8px;
     flex-shrink: 0;
 }
@@ -65,7 +66,8 @@ body.focused {
 .run-button,
 .next-button,
 .edit-button,
-.save-button {
+.save-button,
+.template-button {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -179,6 +181,27 @@ body.focused {
 
 .edit-button.active:hover {
     background-color: var(--vscode-button-hoverBackground);
+}
+
+/* Insert Templateボタン（フッター左端）。Nextの赤と競合しないようセカンダリ配色にする */
+.template-button {
+    padding: 2px 8px;
+    font-size: 11px;
+    line-height: 16px;
+    background-color: transparent;
+    color: var(--vscode-foreground);
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.template-button:hover {
+    background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.template-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .plan-button {
@@ -335,6 +358,55 @@ body.focused {
 .context-menu-item:hover {
     background-color: var(--vscode-menu-selectionBackground, var(--vscode-list-activeSelectionBackground));
     color: var(--vscode-menu-selectionForeground, var(--vscode-list-activeSelectionForeground));
+}
+
+/* テンプレート選択メニューのヘッダー行（見出し＋追加ボタン） */
+.prompt-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-right: 4px;
+}
+
+.prompt-menu-header > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ヘッダー内のアイコンボタン（テンプレート追加） */
+.context-menu-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 4px;
+    background-color: transparent;
+    color: var(--vscode-foreground);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.context-menu-action:hover {
+    background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.context-menu-action .codicon {
+    font-size: 14px;
+    line-height: 16px;
+}
+
+/* テンプレート選択メニューは狭いサイドバー幅・高さに収める */
+.context-menu.prompt-menu {
+    max-width: calc(100vw - 8px);
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+}
+
+.context-menu.prompt-menu .context-menu-item {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .context-menu-separator {

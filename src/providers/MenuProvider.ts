@@ -144,6 +144,15 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
                             title: 'Customize Template'
                         },
                         new vscode.ThemeIcon('file-text')
+                    ),
+                    new MenuItem(
+                        'Customize Prompt Templates',
+                        'Customize prompt templates inserted from the Editor view',
+                        {
+                            command: 'aiCodingSidebar.setupPromptTemplates',
+                            title: 'Customize Prompt Templates'
+                        },
+                        new vscode.ThemeIcon('symbol-snippet')
                     )
                 ],
                 vscode.TreeItemCollapsibleState.Collapsed

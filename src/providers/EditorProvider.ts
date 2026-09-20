@@ -4,6 +4,7 @@ import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { PlansProvider } from './PlansProvider';
 import { TemplateService, SendCommandType } from '../services/TemplateService';
+import { PromptTemplateService } from '../services/PromptTemplateService';
 import { openInIntegratedBrowser } from '../utils/browserUtils';
 
 // Forward declaration for TerminalProvider to avoid circular dependency
@@ -27,12 +28,15 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     private _pendingFileToRestore?: string;
     private _disposables: vscode.Disposable[] = [];
     private templateService: TemplateService;
+    private promptTemplateService?: PromptTemplateService;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
         templateService?: TemplateService,
+        promptTemplateService?: PromptTemplateService,
     ) {
         this.templateService = templateService ?? new TemplateService();
+        this.promptTemplateService = promptTemplateService;
         // アクティブエディタの変更を監視
         this._disposables.push(
             vscode.window.onDidChangeActiveTextEditor(editor => {
@@ -250,6 +254,18 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                 case 'createMarkdownFile':
                     // Cmd+M / Ctrl+M pressed - execute create markdown file command
                     vscode.commands.executeCommand('aiCodingSidebar.createMarkdownFile');
+                    break;
+                case 'requestPromptTemplates':
+                    // promptsボタン - テンプレート一覧をメニューで表示するため送信
+                    await this._sendPromptTemplates();
+                    break;
+                case 'insertPromptTemplate':
+                    // メニューで選択されたテンプレートをカーソル位置へ挿入
+                    await this._insertPromptTemplateById(data.templateId);
+                    break;
+                case 'createPromptTemplate':
+                    // メニューヘッダーの[+]ボタン - テンプレートを新規作成して開く
+                    await this._createPromptTemplate();
                     break;
                 case 'showWarning':
                     vscode.window.showWarningMessage(data.message);
@@ -668,6 +684,196 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                 type: 'clearContent'
             });
         }
+    }
+
+    /**
+     * プロンプトテンプレートサービスを設定
+     */
+    public setPromptTemplateService(service: PromptTemplateService): void {
+        this.promptTemplateService = service;
+    }
+
+    /**
+     * Webviewへ送るテンプレート一覧を作成する
+     *
+     * ボタン押下時にEditor View内のメニューへ表示する。
+     * 本文は拡張側で保持し、選択結果はIDで受け取る
+     */
+    private async _sendPromptTemplates(): Promise<void> {
+        if (!this.promptTemplateService) {
+            vscode.window.showWarningMessage('Prompt templates are not available');
+            return;
+        }
+
+        // VS Codeのタブで編集中はEditor Viewが読み取り専用のため、挿入しても保存されない
+        if (this._isCurrentFileReadOnly()) {
+            vscode.window.showWarningMessage(
+                'This file is being edited in VS Code. Close the tab to insert a template here.'
+            );
+            return;
+        }
+
+        const templates = await this.promptTemplateService.listTemplates();
+        if (templates.length === 0) {
+            await this._showNoPromptTemplateGuidance();
+            return;
+        }
+
+        // 本文はメッセージに含めない（挿入時に拡張側で読み直す）
+        this._view?.webview.postMessage({
+            type: 'showPromptTemplates',
+            templates: templates.map(template => ({
+                id: template.id,
+                label: template.label,
+                description: template.description
+            }))
+        });
+    }
+
+    /**
+     * Editor View内のメニューで選択されたテンプレートを挿入する
+     * @param templateId テンプレートのID（拡張子を除いたファイル名）
+     */
+    private async _insertPromptTemplateById(templateId?: string): Promise<void> {
+        if (!this.promptTemplateService || !templateId) {
+            return;
+        }
+
+        // メニュー表示後にファイルが変化している場合があるため読み直す
+        const templates = await this.promptTemplateService.listTemplates();
+        const template = templates.find(entry => entry.id === templateId);
+        if (!template) {
+            vscode.window.showWarningMessage(`Prompt template not found: ${templateId}`);
+            return;
+        }
+
+        this._insertPromptTemplateText(
+            this.promptTemplateService.renderTemplate(template, this._currentFilePath)
+        );
+    }
+
+    /**
+     * プロンプトテンプレートをQuickPickで選択してカーソル位置へ挿入する
+     *
+     * Editor Viewのボタンからはメニュー表示を使うため、
+     * こちらはコマンドパレットなどビュー外からの実行で使う
+     */
+    public async insertPromptTemplate(): Promise<void> {
+        if (!this.promptTemplateService) {
+            vscode.window.showWarningMessage('Prompt templates are not available');
+            return;
+        }
+
+        // VS Codeのタブで編集中はEditor Viewが読み取り専用のため、挿入しても保存されない
+        if (this._isCurrentFileReadOnly()) {
+            vscode.window.showWarningMessage(
+                'This file is being edited in VS Code. Close the tab to insert a template here.'
+            );
+            return;
+        }
+
+        const templates = await this.promptTemplateService.listTemplates();
+        if (templates.length === 0) {
+            await this._showNoPromptTemplateGuidance();
+            return;
+        }
+
+        const picked = await vscode.window.showQuickPick(
+            templates.map(template => ({
+                label: template.label,
+                description: template.description,
+                template: template
+            })),
+            {
+                placeHolder: 'Select a prompt template',
+                matchOnDescription: true
+            }
+        );
+
+        if (!picked) {
+            return;
+        }
+
+        this._insertPromptTemplateText(
+            this.promptTemplateService.renderTemplate(picked.template, this._currentFilePath)
+        );
+    }
+
+    /**
+     * プロンプトテンプレートを新規作成してVS Codeのエディタで開く
+     *
+     * メニューヘッダーの[+]ボタンから呼ばれる
+     */
+    private async _createPromptTemplate(): Promise<void> {
+        if (!this.promptTemplateService) {
+            vscode.window.showWarningMessage('Prompt templates are not available');
+            return;
+        }
+
+        if (!this.promptTemplateService.getWorkspaceTemplatesDir()) {
+            vscode.window.showErrorMessage('No workspace is open');
+            return;
+        }
+
+        const name = await vscode.window.showInputBox({
+            title: 'New Prompt Template',
+            prompt: 'Enter a name for the new prompt template',
+            placeHolder: 'refactor',
+            validateInput: value => this.promptTemplateService?.validateTemplateName(value)
+        });
+
+        if (!name) {
+            return;
+        }
+
+        try {
+            const filePath = await this.promptTemplateService.createWorkspaceTemplate(name);
+            // 本文はVS Codeの標準エディタで編集してもらう
+            const document = await vscode.workspace.openTextDocument(filePath);
+            await vscode.window.showTextDocument(document);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to create prompt template: ${error}`);
+        }
+    }
+
+    /**
+     * 現在のファイルが読み取り専用（VS Codeのタブで編集中）かどうか
+     */
+    private _isCurrentFileReadOnly(): boolean {
+        return !!this._currentFilePath && this._isFileOpenInTab(this._currentFilePath);
+    }
+
+    /**
+     * テンプレートが1件も無い場合の案内を表示する
+     */
+    private async _showNoPromptTemplateGuidance(): Promise<void> {
+        const createAction = 'Create Templates';
+        const selection = await vscode.window.showInformationMessage(
+            'No prompt template was found.',
+            createAction
+        );
+        if (selection === createAction) {
+            await vscode.commands.executeCommand('aiCodingSidebar.setupPromptTemplates');
+        }
+    }
+
+    /**
+     * 変数置換済みのテンプレートをエディタへ挿入する
+     * 挿入自体はinsertPaths()と同じ`insertText`メッセージ経由で行う
+     */
+    private _insertPromptTemplateText(text: string): void {
+        if (!this._view) {
+            vscode.window.showWarningMessage('Editor view is not available');
+            return;
+        }
+
+        this._view.webview.postMessage({
+            type: 'insertText',
+            text: text
+        });
+
+        // Editorビューをフォーカス
+        this._view.show?.(true);
     }
 
     /**

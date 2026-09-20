@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import { EditorProvider } from '../../../providers/EditorProvider';
 import { PlansProvider } from '../../../providers/PlansProvider';
 import { TemplateService } from '../../../services/TemplateService';
+import { PromptTemplateService } from '../../../services/PromptTemplateService';
 
 suite('EditorProvider Integration Test Suite', () => {
 	let editorProvider: EditorProvider;
@@ -121,6 +122,21 @@ suite('EditorProvider Integration Test Suite', () => {
 			// disposeを呼んでもエラーが発生しないことを確認
 			assert.doesNotThrow(() => {
 				editorProvider.dispose();
+			});
+		});
+	});
+
+	suite('insertPromptTemplate', () => {
+		test('Should not throw error when PromptTemplateService is not set', async () => {
+			// サービス未設定時は警告を出して終了する
+			await editorProvider.insertPromptTemplate();
+			assert.ok(true);
+		});
+
+		test('Should set PromptTemplateService reference', () => {
+			const mockPromptTemplateService = {} as PromptTemplateService;
+			assert.doesNotThrow(() => {
+				editorProvider.setPromptTemplateService(mockPromptTemplateService);
 			});
 		});
 	});

@@ -4,6 +4,7 @@ import * as path from 'path';
 // サービスクラスのインポート
 import { FileOperationService } from './services/FileOperationService';
 import { TemplateService } from './services/TemplateService';
+import { PromptTemplateService } from './services/PromptTemplateService';
 import { FileWatcherService } from './services/FileWatcherService';
 
 // コマンド登録のインポート
@@ -16,6 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
     // サービスクラスの初期化
     const fileOperationService = new FileOperationService();
     const templateService = new TemplateService(context);
+    const promptTemplateService = new PromptTemplateService(context, templateService);
 
     // 共通のファイルウォッチャーサービスを作成
     const fileWatcherService = new FileWatcherService();
@@ -32,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
     // TreeDataProviderを作成
     const menuProvider = new MenuProvider();
     const plansProvider = new PlansProvider(fileWatcherService, context.extensionUri);
-    const editorProvider = new EditorProvider(context.extensionUri);
+    const editorProvider = new EditorProvider(context.extensionUri, templateService, promptTemplateService);
 
     // EditorProviderをPlansProviderに設定
     plansProvider.setEditorProvider(editorProvider);
@@ -129,7 +131,8 @@ export function activate(context: vscode.ExtensionContext) {
         editorProvider,
         terminalProvider,
         fileOperationService,
-        templateService
+        templateService,
+        promptTemplateService
     };
     registerAllCommands(context, commandDeps);
 

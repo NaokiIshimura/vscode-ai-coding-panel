@@ -203,6 +203,18 @@ datetime: {{datetime}}
 └── prompts/     Editor Viewから挿入するプロンプトテンプレート
 ```
 
+### 同梱のプロンプトテンプレート
+Editor Viewの **prompts** ボタン向けに、以下のスニペットを同梱しています。
+
+| ファイル | 依頼する内容 |
+|---|---|
+| `add_test.md` | 正常系・境界値・エラー処理を網羅したテストの追加 |
+| `output_status.md` | 現在の作業状況を、`dir` のディレクトリ配下へタイムスタンプ付きMarkdownとして出力 |
+| `refactor.md` | 挙動を変えないリファクタリング |
+| `review.md` | バグとエラー処理の漏れを優先して報告するレビュー |
+
+一覧に出るのは、ワークスペースにもグローバルにもMarkdownファイルが1件も無い場合のみです。**Customize Prompt Templates** / **Customize Global Prompt Templates** はこれらをコピーしますが、既存ファイルは上書きしません。同梱スニペットが追加された場合は、アップデート後にいずれかを再実行してください。
+
 ### テンプレートの優先順位
 1. `.vscode/ai-coding-panel/templates/` のワークスペーステンプレート（存在する場合）
 2. `<globalTemplatesPath>/templates/` のグローバルテンプレート（存在する場合）
@@ -367,14 +379,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.1.vsix
+   code --install-extension ai-coding-sidebar-1.2.2.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.2.1.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.2.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -388,7 +400,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.1.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.1.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.2.vsix
    ```
 4. VS Codeを再起動
 

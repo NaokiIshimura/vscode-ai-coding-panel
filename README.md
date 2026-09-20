@@ -204,6 +204,18 @@ The global directory is the global storage directory of this extension. Set `aiC
 `-- prompts/     prompt templates inserted from the Editor view
 ```
 
+### Bundled prompt templates
+The extension bundles these snippets for the **prompts** button in the Editor view:
+
+| File | What it asks for |
+|---|---|
+| `add_test.md` | Tests covering the normal path, boundary values, and error handling |
+| `output_status.md` | The current status, written as a timestamped Markdown file under the directory in `dir` |
+| `refactor.md` | A refactor that keeps the behavior unchanged |
+| `review.md` | A review that reports bugs and missing error handling first |
+
+They are listed only while neither the workspace nor the global directory holds a Markdown file. **Customize Prompt Templates** and **Customize Global Prompt Templates** copy them and never overwrite an existing file, so run one of them again after an update to pick up a snippet that was added to the bundle.
+
 ### Template priority
 1. Workspace templates in `.vscode/ai-coding-panel/templates/` (if present)
 2. Global templates in `<globalTemplatesPath>/templates/` (if present)
@@ -368,14 +380,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.1.vsix
+   code --install-extension ai-coding-sidebar-1.2.2.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.1.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.2.vsix
 ```
 
 #### Build the package yourself
@@ -389,7 +401,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.1.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.1.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.2.vsix
    ```
 4. Restart VS Code.
 

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-09-20
+
+### Added
+- **`output_status` prompt template**: Added a fourth bundled snippet for the **prompts** button in the Editor view
+  - It asks for the current status of the task to be written as a timestamped Markdown file under the directory recorded as `dir` in the metadata section, so the output lands next to the prompt file it belongs to
+  - `{{dirpath}}` and `{{timestamp}}` are substituted on insertion, which makes the output path and the file name concrete before the request is sent
+
+### Notes
+- A snippet added to the bundle does not reach a directory that already holds prompt templates. **Customize Prompt Templates** and **Customize Global Prompt Templates** copy only the files that are missing, and the bundled list is hidden as soon as the workspace or the global directory holds one Markdown file. Run either command again after updating to pick up `output_status.md`
+- Prefer **Customize Global Prompt Templates** when the global directory is already in use. The workspace command copies all four bundled files, and a file name present in both locations is taken from the workspace, which hides the global copy of `add_test`, `refactor`, and `review`
+
 ## [1.2.1] - 2026-09-20
 
 ### Added
@@ -2567,3 +2578,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.19...v1.1.20
 [1.2.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.20...v1.2.0
 [1.2.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.0...v1.2.1
+[1.2.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.1...v1.2.2

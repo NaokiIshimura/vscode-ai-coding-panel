@@ -5,6 +5,17 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.2] - 2026-09-20
+
+### Added
+- **`output_status` プロンプトテンプレート**: Editor Viewの **prompts** ボタン向けの同梱スニペットを1件追加しました
+  - メタデータの `dir` に記録されたディレクトリ配下へ、現在の作業状況をタイムスタンプ付きMarkdownとして出力させる内容です。出力先が対応するプロンプトファイルと同じ場所に揃います
+  - 挿入時に `{{dirpath}}` と `{{timestamp}}` が置換されるため、出力先のパスとファイル名が送信前に確定します
+
+### Notes
+- 同梱スニペットを追加しても、既にプロンプトテンプレートを持つディレクトリには届きません。**Customize Prompt Templates** / **Customize Global Prompt Templates** は不足分のみをコピーし、ワークスペースかグローバルにMarkdownが1件でもあると同梱分は一覧から外れます。`output_status.md` を反映するには、アップデート後にいずれかを再実行してください
+- グローバル配置先を既に使っている場合は **Customize Global Prompt Templates** を選んでください。ワークスペース側のコマンドは同梱4件すべてをコピーし、同名はワークスペースが優先されるため、グローバルの `add_test` / `refactor` / `review` が隠れます
+
 ## [1.2.1] - 2026-09-20
 
 ### Added
@@ -2038,3 +2049,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.19...v1.1.20
 [1.2.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.20...v1.2.0
 [1.2.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.0...v1.2.1
+[1.2.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.1...v1.2.2

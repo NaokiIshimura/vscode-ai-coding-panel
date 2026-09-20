@@ -386,6 +386,51 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.2新機能: `output_status` プロンプトテンプレートの追加
+
+Editor Viewの `prompts` ボタン向けの同梱スニペットに `resources/prompt-templates/output_status.md` を追加した（同梱3件→4件）：
+
+**内容**
+
+```markdown
+# Output status
+
+Record the current status of this task as a Markdown file.
+
+- Output to: {{dirpath}}
+- File name: {{timestamp}}_status.md
+- State what is done, what is left, and why each decision was made
+- Reference code as file:line so it can be opened directly
+- Keep it short enough to be read as a handover note
+```
+
+- `{{dirpath}}` はメタデータの `dir` と同じ値に展開されるため、出力先が対応するプロンプトファイルと同じディレクトリに揃う
+- ファイル名は挿入時に確定する（`{{timestamp}}` は `PromptTemplateService.buildVariables()` が挿入時刻から生成する）
+- 既存3件と同じ「H1 + 1文 + 箇条書き」の構成に合わせている
+
+**コード変更は不要（`listTemplates()` がディレクトリを走査するため）**
+- `readTemplatesFrom()` は指定ディレクトリ直下の `.md` を読むだけなので、ファイルを置けば一覧に載る
+- ファイル雛形（`templates/*.md`）側の `TEMPLATE_TYPES` のような列挙は存在しないため、同期漏れの心配は無い
+
+**同梱スニペットの追加は既存ユーザーへ自動では届かない（最も誤解しやすい箇所）**
+
+| 前提 | 挙動 |
+|---|---|
+| コピー元 | `context.extensionPath` 配下。**インストール済み拡張機能のディレクトリ**であり、リポジトリの作業ツリーではない |
+| 一覧の条件 | ワークスペースかグローバルに `.md` が1件でもあれば同梱分は表示されない（v1.2.0参照） |
+| コピーの条件 | `copyBundledTemplatesTo()` は**存在しないファイルのみ**コピーする |
+
+- したがって、新しい同梱スニペットを見るには「拡張機能のアップデート」＋「Customize (Global) Prompt Templates の再実行」の両方が必要になる。v1.1.20 の `quick_start.md` と同じ構図
+- 開発中に確認する場合は `F5`（Extension Development Host）を使う。`extensionPath` がリポジトリを指すため、リリース前でも同梱分に含まれる
+
+**ワークスペース側ではなくグローバル側の再実行を推奨する理由**
+- `copyBundledTemplatesTo()` は同梱の**全4件**をコピーする。ワークスペース側で実行すると `add_test` / `refactor` / `review` もワークスペースへ作られる
+- 一覧は同名ファイルをワークスペース優先で解決するため（v1.2.0参照）、**グローバルで編集済みの同名スニペットがそのワークスペースでは使われなくなる**。以後グローバル側を編集しても反映されず、気づきにくい
+- グローバル側で実行した場合は不足している `output_status.md` が1件増えるだけで、既存ファイルには影響しない
+
+**今回のスコープ外**
+- 同梱スニペットの追加を既存ユーザーへ自動で届ける仕組み（activate時の不足分補完、または同梱分を常にマージする方式）。いずれも「意図的に削除したスニペットが復活する」「v1.1.19で決めた『同梱分はユーザー定義と混ぜない』方針の変更」というトレードオフがあるため、本バージョンではリリースノートでの案内に留めている
+
 ### v1.2.1新機能: 送信履歴へのresumeコマンド記録
 
 Spec / Plan / Run を実行した際、起動したClaude Codeのセッションを再開するコマンドを、開いているMarkdownファイルへ記録するようにした：

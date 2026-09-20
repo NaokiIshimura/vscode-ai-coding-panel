@@ -59,9 +59,10 @@ Markdownプロンプトファイルを編集し、パネルから直接Claude Co
 | **自動ターミナル統合** | コマンドはTerminalビューに送信され、シームレスなワークフローのためにファイル-タブの自動関連付けが行われる |
 | 自動表示 | タイムスタンプ形式のMarkdownファイル（形式: `YYYY_MMDD_HHMM_SS_PROMPT.md`、`..._TASK.md`、`..._SPEC.md`、`..._QUICK_START.md`）を選択すると自動的に表示。その他のMarkdownファイルは通常のエディタで開く |
 | Saveボタン | 1段目に表示され、未保存の変更がある場合は色が変わる。ファイル未開時は現在のPlansディレクトリに新規作成 |
-| **2段構成のレイアウト** | 1段目の左にEdit / Save・右にSpec / Plan / Run、最下段にNextボタンを配置 |
+| **2段構成のレイアウト** | 1段目の左にEdit / Save・右にSpec / Plan / Run、最下段の左にpromptsボタン・右にNextボタンを配置 |
 | **Nextボタン** | ビュー最下部の専用領域に配置された赤い**Next**ボタン。タイムスタンプ付きの`PROMPT.md`を新規作成して開き、入力エリアにカーソルを移すため、そのまま入力を開始できる。`Cmd+M` / `Ctrl+M`でも実行可能 |
-| ボタンのアイコン | すべてのボタンにVS Code標準のcodiconを表示（Spec: 本、Plan: チェックリスト、Run: 再生、Next: 新規ファイル、Edit: 鉛筆、Save: フロッピー）。Plans ViewのQuick Startボタンと見た目を統一 |
+| **promptsボタン（テンプレート挿入）** | 最下段の左端にある**prompts**ボタン。押下するとボタンのすぐ上にテンプレートのメニューが開き、選択したテンプレートをカーソル位置へ挿入する（再度の押下・メニュー外のクリック・`Escape`で閉じる）。メニューのヘッダーにある**+**ボタンでテンプレートを新規作成できる（名前を入力するとテンプレート配置先にファイルを作成し、VS Codeのエディタで開く）。テンプレートは`.vscode/ai-coding-panel/prompts/*.md`に1ファイル1件で配置し、Markdownファイルが無い場合は拡張機能に同梱のテンプレートを使用する。ファイルの内容はそのまま挿入されるため、先頭の`# 見出し`も挿入される（見出しはメニューの表示名としても使われる）。`{{filename}}` / `{{filepath}}` / `{{dirpath}}` / `{{datetime}}` / `{{timestamp}}`は開いているファイルの値に置換される。コマンドパレットの**Insert Prompt Template**からも実行でき、その場合はQuickPickで選択する。Menuビューの**Customize Prompt Templates**で同梱テンプレートをワークスペースへコピーできる |
+| ボタンのアイコン | すべてのボタンにVS Code標準のcodiconを表示（Spec: 本、Plan: チェックリスト、Run: 再生、Next: 新規ファイル、Edit: 鉛筆、Save: フロッピー、prompts: スニペット）。Plans ViewのQuick Startボタンと見た目を統一 |
 | カスタマイズ可能なコマンド | ワークフローに合わせてRun、Plan、Specコマンドを設定で変更可能 |
 | **クリック可能なURL** | 本文中のURLに下線を表示し、クリックすると標準ブラウザで開く。右クリックすると「Open in Default Browser」「Open in Integrated Browser」（VS Code標準のSimple Browser）を選択できる。URL以外の場所を右クリックした場合はVS Code標準のメニューを表示 |
 | 読み取り専用モード | VSCodeエディタでファイルがアクティブになると自動的に読み取り専用モードに切り替わる |
@@ -262,6 +263,7 @@ datetime: {{datetime}}
 | `editor.planCommand` | Planボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
 | `editor.specCommand` | Specボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
 | `editor.recordSendTimestamp` | Spec / Plan / Run の実行時に、開いているファイルへ送信日時を追記するか | boolean | `true` | ファイル末尾の`## sent history`セクションに追記される |
+| `editor.promptTemplatesPath` | Editor Viewへ挿入するプロンプトテンプレートの配置ディレクトリ（ワークスペースルートからの相対パス） | string | `".vscode/ai-coding-panel/prompts"` | 直下の`.md`ファイル1つが1テンプレート。Markdownファイルが無い場合は拡張機能に同梱のテンプレートを使用する |
 | `browser.defaultUrl` | Menuビューの「Open Integrated Browser」で開くURL | string | `"about:blank"` | `"about:blank"`で空のタブを開く。`"http://localhost:3000"`などを設定すると常にそのURLを開く |
 | `terminal.shell` | Terminalビューのシェル実行パス | string | `""` | 空欄の場合はシステムのデフォルトシェルを使用 |
 | `terminal.fontSize` | Terminalビューのフォントサイズ | number | `12` | 任意の正の数値 |
@@ -348,14 +350,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.18.vsix
+   code --install-extension ai-coding-sidebar-1.1.19.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.1.18.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.19.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -369,7 +371,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.18.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.18.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.19.vsix
    ```
 4. VS Codeを再起動
 

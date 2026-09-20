@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.19] - 2026-09-20
+
+### Added
+- **Editor View Prompt Templates**: Added a **prompts** button at the left end of the bottom bar, which inserts a reusable prompt at the caret
+  - Clicking the button opens a template menu just above it, inside the Editor view. Pressing the button again, clicking outside the menu, or pressing `Escape` closes it
+  - The **+** button in the menu header creates a new template. It asks for a name, creates the file under the templates directory, and opens it in the VS Code editor
+  - When the workspace directory is still empty, creating a template there also copies the bundled templates, so the ones shown in the menu do not disappear
+  - The `aiCodingSidebar.insertPromptTemplate` command shows a quick pick instead, because there is no button to anchor the menu to
+  - Templates are Markdown files placed directly under `.vscode/ai-coding-panel/prompts/` (one file per template); when that directory holds no Markdown file, the templates bundled with the extension are used
+  - The name shown in the menu comes from the leading `# heading`, or from the file name when there is none. The file content is inserted as it is, so the heading is inserted as well
+  - `{{filename}}`, `{{filepath}}`, `{{dirpath}}`, `{{datetime}}`, and `{{timestamp}}` are replaced with the values of the file open in the Editor view. When no file is open, the file related variables become empty strings
+  - Added the `aiCodingSidebar.insertPromptTemplate` and `aiCodingSidebar.setupPromptTemplates` commands, and a **Customize Prompt Templates** entry in the Workspace section of the Menu view
+  - Added the `aiCodingSidebar.editor.promptTemplatesPath` setting (default `.vscode/ai-coding-panel/prompts`)
+
+### Changed
+- The Editor view footer now uses `justify-content: space-between` with two button groups, so Insert Template sits on the left and Next stays on the right
+
+### Technical
+- Added `PromptTemplateService`, which is kept separate from the file creation templates (`TemplateService` / `templateUtils`) because the two serve different purposes
+- Insertion reuses the existing `insertText` message used by `insertPaths()`, so the webview keeps handling caret insertion, the dirty state, and the link overlay
+- The menu reuses the `#context-menu` element added in v1.1.13, so its existing close handlers (outside click, `Escape`, window blur, editor scroll) apply as they are
+- The message payload carries only the id, label, and file name; the body stays on the extension side and is read again when the selection arrives
+- Added `TemplateService.renderVariables()` to expose variable substitution without changing the visibility of `replaceVariables()`
+- Inserting is refused while the file is open in a VS Code tab, because the Editor view is read-only then and the inserted text would not be saved
+- Added tests for `PromptTemplateService` (listing, label resolution, body preservation, variable substitution)
+
 ## [1.1.18] - 2026-09-07
 
 ### Added
@@ -2487,3 +2513,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.15...v1.1.16
 [1.1.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.16...v1.1.17
 [1.1.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.17...v1.1.18
+[1.1.19]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.18...v1.1.19

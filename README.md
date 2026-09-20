@@ -60,10 +60,11 @@ Edit Markdown prompt files and execute Claude Code commands directly from the pa
 | **Send History** | Pressing Spec / Plan / Run appends the send date and time to a `## sent history` section at the end of the open file (for example `- run : 2026/09/06 21:27:29`). The section is reused on later sends, and recording can be turned off with `editor.recordSendTimestamp` |
 | **Auto-Terminal Integration** | Commands are sent to Terminal view with automatic file-tab association for seamless workflow |
 | Auto-display | Automatically opens when selecting a timestamp-named Markdown file (format: `YYYY_MMDD_HHMM_SS_PROMPT.md`, `..._TASK.md`, `..._SPEC.md`, or `..._QUICK_START.md`). Other Markdown files open in the standard editor |
-| **Two-Row Layout** | The view is split into two bars: the top bar holds Edit / Save on the left and Spec / Plan / Run on the right, and the bottom bar holds the Next button |
+| **Two-Row Layout** | The view is split into two bars: the top bar holds Edit / Save on the left and Spec / Plan / Run on the right, and the bottom bar holds the prompts button on the left and the Next button on the right |
 | Save button | Displays in the top bar with a color change indicating unsaved changes. Creates new file if none is open (saves to current Plans directory) |
 | **Next button** | Red **Next** button in a dedicated bar at the bottom of the view. Creates a new timestamped `PROMPT.md`, opens it, and puts the caret in the text area so you can start typing right away. Also available with `Cmd+M` / `Ctrl+M` |
-| Button icons | Every button uses a VS Code codicon (Spec: book, Plan: checklist, Run: play, Next: new file, Edit: pencil, Save: floppy disk), matching the Quick Start button in Plans View |
+| **prompts button** | **prompts** button at the left end of the bottom bar. Clicking it opens a template menu just above the button, and the template you pick is inserted at the caret (pressing the button again, clicking elsewhere, or pressing `Escape` closes the menu). The **+** button in the menu header creates a new template: enter a name, and the file is created under the templates directory and opened in the VS Code editor. Templates live in `.vscode/ai-coding-panel/prompts/*.md` (one file per template); when that directory holds no Markdown file, the templates bundled with the extension are used. The file content is inserted as it is, so a leading `# heading` is inserted too - the heading is only used as the name in the menu. `{{filename}}`, `{{filepath}}`, `{{dirpath}}`, `{{datetime}}`, and `{{timestamp}}` are replaced with the values of the open file. The same action is available from the command palette as **Insert Prompt Template**, which shows a quick pick instead. Run **Customize Prompt Templates** from the Menu view to copy the bundled templates into the workspace |
+| Button icons | Every button uses a VS Code codicon (Spec: book, Plan: checklist, Run: play, Next: new file, Edit: pencil, Save: floppy disk, prompts: snippet), matching the Quick Start button in Plans View |
 | Customizable commands | Configure Run, Plan, and Spec commands in settings to match your workflow |
 | **Clickable URLs** | URLs in the text are underlined and open in the default browser on click. Right-click a URL to choose **Open in Default Browser** or **Open in Integrated Browser** (VS Code's Simple Browser). Right-clicking anywhere else shows the standard VS Code menu |
 | Read-only mode | Automatically switches to read-only mode when the file is active in VSCode editor |
@@ -263,6 +264,7 @@ If the default relative path doesn't exist, Plans displays a "Create directory" 
 | `editor.planCommand` | Command template to execute when clicking the Plan button | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
 | `editor.specCommand` | Command template to execute when clicking the Spec button | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
 | `editor.recordSendTimestamp` | Append the send date and time to the open file when Spec / Plan / Run is pressed | boolean | `true` | The history is added to a `## sent history` section at the end of the file |
+| `editor.promptTemplatesPath` | Directory that holds the prompt templates inserted from the Editor view (relative to the workspace root) | string | `".vscode/ai-coding-panel/prompts"` | Each `.md` file directly under it becomes one template. When it holds no Markdown file, the templates bundled with the extension are used |
 | `browser.defaultUrl` | URL opened by the Open Integrated Browser action in the Menu view | string | `"about:blank"` | `"about:blank"` opens an empty tab; set a URL such as `"http://localhost:3000"` to always open it |
 | `terminal.shell` | Shell executable path for Terminal view | string | `""` | Leave empty to use system default shell |
 | `terminal.fontSize` | Font size for Terminal view | number | `12` | Any positive number |
@@ -349,14 +351,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.18.vsix
+   code --install-extension ai-coding-sidebar-1.1.19.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.18.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.19.vsix
 ```
 
 #### Build the package yourself
@@ -370,7 +372,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.18.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.18.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.19.vsix
    ```
 4. Restart VS Code.
 

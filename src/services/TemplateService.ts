@@ -148,6 +148,14 @@ datetime   : ${variables.datetime}
     }
 
     /**
+     * 任意の文字列に対してテンプレート変数を置換する
+     * プロンプトテンプレートの挿入など、テンプレートファイル以外の内容にも使う
+     */
+    renderVariables(content: string, variables: TemplateVariables): string {
+        return this.replaceVariables(content, variables);
+    }
+
+    /**
      * テンプレート内の変数を置換
      */
     private replaceVariables(template: string, variables: TemplateVariables): string {

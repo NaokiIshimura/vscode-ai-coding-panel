@@ -6,6 +6,7 @@ import { registerTerminalCommands } from './terminal';
 import { registerBrowserCommands } from './browser';
 import { registerPlansCommands } from './plans';
 import { registerFilesCommands } from './files';
+import { registerTemplatesCommands } from './templates';
 
 /**
  * 全てのコマンドを登録
@@ -31,4 +32,7 @@ export function registerAllCommands(
 
     // ファイル操作関連のコマンドを登録
     registerFilesCommands(context, deps);
+
+    // プロンプトテンプレート関連のコマンドを登録
+    registerTemplatesCommands(context, deps);
 }

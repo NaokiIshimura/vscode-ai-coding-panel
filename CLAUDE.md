@@ -386,6 +386,93 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.19新機能: Editor Viewのプロンプトテンプレート挿入
+
+Editor Viewのカーソル位置へ定型プロンプト（スニペット）を挿入できるようにした：
+
+**配置と一覧**
+
+| 場所 | 用途 |
+|---|---|
+| `.vscode/ai-coding-panel/prompts/*.md` | ワークスペース側（優先・ユーザー編集用）。設定 `aiCodingSidebar.editor.promptTemplatesPath` で変更可能 |
+| `resources/prompt-templates/*.md` | 拡張機能同梱（フォールバック） |
+
+- 1ファイル1テンプレート。直下の `.md` のみが対象で、サブディレクトリは辿らない
+- ワークスペース側に `.md` が1つでもあれば**ワークスペース側のみ**を一覧に出す。同梱分と混在させると同名ファイルの優先順位が分かりづらくなるため
+- 一覧はQuickPickを開くたびに読み直す（キャッシュしない）
+
+**表示名にH1を使うが、本文は加工しない（最も間違えやすい箇所）**
+- 一覧の表示名は先頭の `# 見出し`、無ければ拡張子を除いたファイル名
+- **表示名にH1を使った場合でも、挿入本文からH1行は除去しない**。`PromptTemplate.body` は読み込んだ内容をそのまま保持し、`renderTemplate()` は変数置換しか行わない
+- 結果として本文の途中へ挿入すると見出し行も入る。H1を入れたくない場合はスニペット側でH1を書かない（表示名はファイル名になる）
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `resources/prompt-templates/`（新規） | 同梱スニペット3件（`refactor.md` / `add_test.md` / `review.md`） |
+| `src/services/PromptTemplateService.ts`（新規） | 一覧取得・ワークスペースへのコピー・変数置換 |
+| `src/services/TemplateService.ts` | `renderVariables()` を追加公開 |
+| `src/providers/EditorProvider.ts` | `insertPromptTemplate()` と `insertPromptTemplate` メッセージ、`setPromptTemplateService()` を追加 |
+| `resources/webview/editor/{index.html,style.css,main.js}` | `#footer` を2グループ化し、左端に `#template-button`（アイコン＋`prompts`）とテンプレート選択メニューを追加 |
+| `src/commands/templates.ts`（新規） | `aiCodingSidebar.insertPromptTemplate` / `aiCodingSidebar.setupPromptTemplates` |
+| `src/providers/MenuProvider.ts` | Workspace に「Customize Prompt Templates」を追加 |
+| `package.json` | 上記2コマンドと設定 `editor.promptTemplatesPath` |
+
+**選択UIはEditor View内のメニュー（QuickPickではない）**
+
+`prompts` ボタンの押下から挿入までの流れ:
+
+| # | 送信元 | メッセージ | 内容 |
+|---|---|---|---|
+| 1 | Webview | `requestPromptTemplates` | ボタン押下。読み取り専用時とメニューを開いている時（トグルで閉じる）は送らない |
+| 2 | 拡張 | `showPromptTemplates` | `listTemplates()` の結果を **id / label / description のみ**にして送る |
+| 3 | Webview | `insertPromptTemplate`（`templateId`付き） | メニュー項目のクリック |
+| 4 | 拡張 | `insertText` | IDで一覧を引き直し、変数置換した本文を送る |
+
+メニューのヘッダー行（`.prompt-menu-header`）には見出しと **[+]ボタン**（`codicon-add`）を並べている。押下すると `createPromptTemplate` を送り、拡張側が `showInputBox()` で名前を受け取ってファイルを作成し、VS Codeの標準エディタで開く。
+
+**[+]で作成するとき、ワークスペース側が空なら同梱テンプレートも同時にコピーする**
+- 一覧は「ワークスペース側に1件でもあればワークスペース側のみ」という仕様のため、同梱テンプレートを見ている状態で1件作ると**それまで見えていたテンプレートが消える**
+- これを避けるため、`createWorkspaceTemplate()` はワークスペース側が空の場合に `setupWorkspaceTemplates()` を先に実行する
+- 作成するファイルの内容は `# <名前>` のみ。見出しは一覧の表示名としても使われる
+- 名前の検証は `validateTemplateName()`（`showInputBox` の `validateInput` から呼ぶ）。空文字・パス区切り・`: * ? " < > |`・既存ファイルを弾き、拡張子は省略可（`toTemplateFileName()` が `.md` を付ける）
+
+- **本文はメッセージに載せない**。Webviewには表示に必要な情報だけを渡し、挿入時に拡張側で読み直す。メニュー表示中にファイルが変化していた場合も最新の内容が入る（見つからない場合は警告）
+- メニューはv1.1.13で追加した `#context-menu` 要素を再利用する。閉じる処理（メニュー外クリック・`Escape`・`window` のblur・エディタのスクロール）が既存のまま効く
+- ボタンのクリックハンドラでは `event.stopPropagation()` を呼ぶ。`document` のclickハンドラ（メニュー外クリックで閉じる）に届くと、開いた直後に閉じてしまうため
+- 位置は `placeMenuNearElement()` が `getBoundingClientRect()` で計算する。**サイズを測るには描画済みである必要がある**ため、`hidden` を外してから位置を決めている。フッターは最下部にあるため既定はボタンの上側で、収まらない場合のみ下側へ反転する
+- サイドバーは幅が狭いため、`.context-menu.prompt-menu` で `max-width` / `max-height` と省略表示を指定している
+- `aiCodingSidebar.insertPromptTemplate`（コマンドパレット）は基準となるボタンが無いため、従来どおり `showQuickPick()` を使う。`insertPromptTemplate()` と `_insertPromptTemplateById()` のどちらも `_insertPromptTemplateText()` に集約している
+
+**挿入は既存の `insertText` メッセージを再利用している**
+- `insertPaths()`（`EditorProvider.ts`）と同じ経路で送るだけ。Webview側の `case 'insertText'` がカーソル位置挿入・`contentChanged` 通知・`renderLinkOverlay()`（v1.1.13）まで実施済み
+- Webview側に独自の挿入処理を書くと、dirty反映やリンクオーバーレイの再構築を取りこぼす
+
+**読み取り専用時は挿入しない**
+- VS Codeのタブで開いている間、Editor Viewのtextareaは読み取り専用。挿入しても保存されず内容が失われるため、Webview側（`isReadOnly`）と拡張側（`_isFileOpenInTab()`）の両方で弾いて警告を出す
+
+**`#footer` を2グループ構成へ変更した**
+- `#footer` は `justify-content: flex-end` の1グループ構成だった。`space-between` に変えたうえで**左グループの `<div class="footer-actions">` を必ず置く**こと。置かないとNextが左端へ移動する
+- `.footer-actions .codicon` の既存ルールが両グループへそのまま効くため、アイコンサイズの追加指定は不要
+- ボタンの配色は `.edit-button` と同じセカンダリ系。同じ行にあるNext（`#c9483f` の赤）と競合させないため
+- ボタンはアイコン（`codicon-symbol-snippet`）＋ラベル `prompts` の構成
+
+**ファイル新規作成用の雛形とは分離している**
+- `templates/{prompt,task,spec,quick_start}.md` と `utils/templateUtils.ts` の `TemplateType` は「ファイル新規作成時の雛形」。ここにスニペット種別を足すと `createMarkdownFile` 等の分岐に混入するため、ディレクトリもサービスも分けている
+- `utils/workspaceSetup.ts` の `setupTemplate()`（Customize Template）は雛形用のまま。プロンプトテンプレート用は `PromptTemplateService.setupWorkspaceTemplates()` で、既存ファイルは上書きしない
+
+**変数置換**
+- `{{datetime}}` / `{{timestamp}}` / `{{filename}}` / `{{filepath}}` / `{{dirpath}}` を `TemplateService` と同じ記法で置換する
+- ファイル未オープン時はファイル関連の3つを空文字にする（例外にしない）。Editor Viewはファイル無しでも編集できるため
+- 未定義の `{{...}}` はそのまま残す
+
+**ローカルでのテスト実行について**
+- v1.1.15に記載のとおり、macOSローカルの `npm test` はmochaの結果が親プロセスへ返らず、失敗しても成功扱いになる
+- 本バージョンでは `PromptTemplateService` のテスト（16ケース）を、`vscode` モジュールをスタブ化したNode上のmochaで直接実行して確認している。VS Code APIに依存する `EditorProvider` / `extension` のテストはCIの結果で判断する
+- Webviewのメニュー（ボタン押下→一覧要求→表示→選択→トグル／`Escape`／読み取り専用／ヘッダーの[+]）は、最小限のDOMスタブ上で `main.js` を実行して確認している
+- ワークスペース側の作成処理（同梱分のコピー、既存名の拒否、拡張子の補完）は、`vscode` をスタブ化してワークスペースありの状態を模して確認している
+
 ### v1.1.18新機能: Terminal Viewの `claude --from-pr` ショートカット
 
 Terminal Viewのショートカットバーに `claude --from-pr` ボタンを追加した。**押下時はコマンドを挿入するだけで実行しない**点が他のショートカットと異なる：

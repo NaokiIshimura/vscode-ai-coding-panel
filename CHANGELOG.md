@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.20] - 2026-09-20
+
+### Fixed
+- **Customize Template**: `quick_start.md` is now copied to the workspace along with the other templates
+  - The copy list in `setupTemplate()` still held only `task.md`, `spec.md`, and `prompt.md`, so the Quick Start template could not be customized per workspace
+  - The list was missed when `templates/quick_start.md` was added in v1.0.20
+  - Quick Start itself kept working, because `loadTemplate()` falls back to the template bundled with the extension when the workspace has none. Only the customization path was broken
+  - Existing files are left untouched, so run **Customize Template** again to add `quick_start.md` to a workspace that was set up before this release
+
 ## [1.1.19] - 2026-09-20
 
 ### Added
@@ -2514,3 +2523,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.16...v1.1.17
 [1.1.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.17...v1.1.18
 [1.1.19]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.18...v1.1.19
+[1.1.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.19...v1.1.20

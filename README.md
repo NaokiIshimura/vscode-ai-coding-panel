@@ -164,6 +164,7 @@ When you create a file from Plans, you can automatically populate it with a temp
    - `task.md` - Template for Start Task
    - `spec.md` - Template for New Spec
    - `prompt.md` - Template for New File (PROMPT.md)
+   - `quick_start.md` - Template for Quick Start
 4. Edit the templates and save them.
 
 ### Default template
@@ -351,14 +352,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.1.19.vsix
+   code --install-extension ai-coding-sidebar-1.1.20.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.1.19.vsix
+code --install-extension releases/ai-coding-sidebar-1.1.20.vsix
 ```
 
 #### Build the package yourself
@@ -372,7 +373,7 @@ code --install-extension releases/ai-coding-sidebar-1.1.19.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.1.19.vsix
+   code --install-extension releases/ai-coding-sidebar-1.1.20.vsix
    ```
 4. Restart VS Code.
 

@@ -511,6 +511,20 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     }
 
     /**
+     * アクティブタブでClaude Codeが起動中かどうかを返す
+     *
+     * 起動中はsendCommand()の内容がコマンドとして実行されず入力テキストとして扱われるため、
+     * 新しいセッションが始まるかどうかの判定に使う
+     */
+    public isClaudeCodeRunning(): boolean {
+        if (!this._activeTabId) {
+            return false;
+        }
+        const tab = this._tabs.find(t => t.id === this._activeTabId);
+        return tab?.isClaudeCodeRunning ?? false;
+    }
+
+    /**
      * ターミナルにコマンドを送信
      * @param command 実行するコマンド
      * @param addNewline 改行を追加するかどうか（デフォルト: true、Claude Code起動中は自動的にfalse）

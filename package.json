@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -446,6 +446,11 @@
           "type": "boolean",
           "default": true,
           "description": "Append the date and time to the open file when the Spec, Plan, or Run button is pressed in the Editor view."
+        },
+        "aiCodingSidebar.editor.recordResumeCommand": {
+          "type": "boolean",
+          "default": true,
+          "description": "Start the Spec, Plan, and Run commands with a generated session ID and record the matching 'claude --resume <session-id>' command in the sent history. Requires aiCodingSidebar.editor.recordSendTimestamp."
         },
         "aiCodingSidebar.editor.promptTemplatesPath": {
           "type": "string",

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-09-20
+
+### Added
+- **Resume command in the send history**: Spec, Plan, and Run now record the command that reopens the Claude Code session they started
+  - The command is written next to the timestamp in the `## sent history` section of the open file, for example `- run : 2026/09/20 15:12:03 | claude --resume 0f1d2c3b-4a59-4687-8f0a-1b2c3d4e5f60`
+  - There is no way to read the session id back after the command is sent, so the extension generates a UUID and passes it to Claude Code as `--session-id`. The recorded command is therefore known before the session starts
+  - Added the `aiCodingSidebar.editor.recordResumeCommand` setting (default `true`). It requires `aiCodingSidebar.editor.recordSendTimestamp`, because the history line is where the command is written
+  - The session id is not added when Claude Code is already running in the active tab, because the text is then handled as input rather than as a command and no new session begins
+  - The session id is not added when `aiCodingSidebar.editor.commandPrefix` does not start Claude Code, or already contains `--session-id`, `--resume`, `-r`, `--continue`, `-c`, or `--fork-session`
+
+### Technical
+- `TemplateService.appendSendHistoryLine()` takes an optional resume command and appends it after the timestamp, separated by `|`. Omitting it produces the previous line format
+- Added `EditorProvider._prepareResumeSession()`, which decides whether to append `--session-id` to the command prefix and returns the resume command to record. Run, Plan, and Spec all go through it
+- Added `TerminalProvider.isClaudeCodeRunning()`, which reports the state of the active tab. It is declared as an optional member of `ITerminalProvider` so that existing mocks keep compiling
+
 ## [1.2.0] - 2026-09-20
 
 ### Added
@@ -2551,3 +2566,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.1.19]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.18...v1.1.19
 [1.1.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.19...v1.1.20
 [1.2.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.20...v1.2.0
+[1.2.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.0...v1.2.1

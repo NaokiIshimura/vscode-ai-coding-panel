@@ -34,6 +34,11 @@ const SEND_HISTORY_LABELS: Record<SendCommandType, string> = {
 };
 
 /**
+ * 送信履歴行で日時とresumeコマンドを区切る文字列
+ */
+const SEND_HISTORY_SEPARATOR = '|';
+
+/**
  * テンプレート生成サービス
  */
 export class TemplateService {
@@ -228,10 +233,17 @@ datetime   : ${variables.datetime}
      * @param content 追記対象の内容
      * @param commandType 送信したコマンドの種別
      * @param dateTime 記録する日時（formatDateTime()の戻り値）
+     * @param resumeCommand 送信したセッションを再開するコマンド（例: claude --resume <uuid>）
      * @returns 追記後の内容
      */
-    appendSendHistoryLine(content: string, commandType: SendCommandType, dateTime: string): string {
-        const historyLine = `- ${SEND_HISTORY_LABELS[commandType]}: ${dateTime}`;
+    appendSendHistoryLine(
+        content: string,
+        commandType: SendCommandType,
+        dateTime: string,
+        resumeCommand?: string
+    ): string {
+        const suffix = resumeCommand ? ` ${SEND_HISTORY_SEPARATOR} ${resumeCommand}` : '';
+        const historyLine = `- ${SEND_HISTORY_LABELS[commandType]}: ${dateTime}${suffix}`;
         const lines = content.split('\n');
         // 見出しは行全体の完全一致で判定する（本文中の類似表記へ追記しないため）
         const headingIndex = lines.findIndex(line => line.trim() === SENT_HISTORY_HEADING);

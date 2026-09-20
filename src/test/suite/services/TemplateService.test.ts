@@ -244,6 +244,46 @@ suite('TemplateService Test Suite', () => {
 			);
 		});
 
+		test('Should append the resume command after the timestamp', () => {
+			const content = '# task\n';
+
+			const result = templateService.appendSendHistoryLine(
+				content,
+				'run',
+				dateTime,
+				'claude --resume 0f1d2c3b-4a59-4687-8f0a-1b2c3d4e5f60'
+			);
+
+			assert.strictEqual(
+				result,
+				'# task\n\n## sent history\n- run : 2026/09/06 21:27:29 | claude --resume 0f1d2c3b-4a59-4687-8f0a-1b2c3d4e5f60\n'
+			);
+		});
+
+		test('Should keep the existing format when no resume command is given', () => {
+			const withUndefined = templateService.appendSendHistoryLine('', 'run', dateTime, undefined);
+			const withEmpty = templateService.appendSendHistoryLine('', 'run', dateTime, '');
+
+			assert.strictEqual(withUndefined, '## sent history\n- run : 2026/09/06 21:27:29\n');
+			assert.strictEqual(withEmpty, '## sent history\n- run : 2026/09/06 21:27:29\n');
+		});
+
+		test('Should append the resume command to the existing section', () => {
+			const content = '## sent history\n- run : 2026/09/06 21:27:29\n';
+
+			const result = templateService.appendSendHistoryLine(
+				content,
+				'plan',
+				'2026/09/06 21:31:02',
+				'claude --resume 11111111-2222-4333-8444-555555555555'
+			);
+
+			assert.strictEqual(
+				result,
+				'## sent history\n- run : 2026/09/06 21:27:29\n- plan: 2026/09/06 21:31:02 | claude --resume 11111111-2222-4333-8444-555555555555\n'
+			);
+		});
+
 		test('Should align the timestamp column for every command type', () => {
 			const run = templateService.appendSendHistoryLine('', 'run', dateTime);
 			const plan = templateService.appendSendHistoryLine('', 'plan', dateTime);

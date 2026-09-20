@@ -58,6 +58,7 @@ Edit Markdown prompt files and execute Claude Code commands directly from the pa
 | --- | --- |
 | **Run/Plan/Spec Commands** | Execute Claude Code with pre-configured commands:<br>- **Run** (`Cmd+R` / `Ctrl+R`): `claude "Execute the instructions described in the file at ${filePath}"`<br>- **Plan**: `claude --permission-mode plan "Review ... create an implementation plan ..."`<br>- **Spec**: `claude --permission-mode plan "Review ... create specification documents ..."`<br>Auto-saves before execution and works even without a file open |
 | **Send History** | Pressing Spec / Plan / Run appends the send date and time to a `## sent history` section at the end of the open file (for example `- run : 2026/09/06 21:27:29`). The section is reused on later sends, and recording can be turned off with `editor.recordSendTimestamp` |
+| **Resume Command** | Each Spec / Plan / Run starts Claude Code with a generated session ID, and the matching command is recorded next to the timestamp (for example `- run : 2026/09/06 21:27:29 \| claude --resume 0f1d2c3b-...`) so the session can be reopened later. Turn it off with `editor.recordResumeCommand` |
 | **Auto-Terminal Integration** | Commands are sent to Terminal view with automatic file-tab association for seamless workflow |
 | Auto-display | Automatically opens when selecting a timestamp-named Markdown file (format: `YYYY_MMDD_HHMM_SS_PROMPT.md`, `..._TASK.md`, `..._SPEC.md`, or `..._QUICK_START.md`). Other Markdown files open in the standard editor |
 | **Two-Row Layout** | The view is split into two bars: the top bar holds Edit / Save on the left and Spec / Plan / Run on the right, and the bottom bar holds the prompts button on the left and the Next button on the right |
@@ -278,6 +279,7 @@ If the default relative path doesn't exist, Plans displays a "Create directory" 
 | `editor.planCommand` | Command template to execute when clicking the Plan button | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
 | `editor.specCommand` | Command template to execute when clicking the Spec button | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
 | `editor.recordSendTimestamp` | Append the send date and time to the open file when Spec / Plan / Run is pressed | boolean | `true` | The history is added to a `## sent history` section at the end of the file |
+| `editor.recordResumeCommand` | Start Spec / Plan / Run with a generated session ID and record the matching `claude --resume <session-id>` command | boolean | `true` | Requires `editor.recordSendTimestamp`. Skipped while Claude Code is already running, and when `editor.commandPrefix` is not `claude` or already specifies a session |
 | `editor.promptTemplatesPath` | Directory that holds the prompt templates inserted from the Editor view (relative to the workspace root) | string | `".vscode/ai-coding-panel/prompts"` | Each `.md` file directly under it becomes one template. When it holds no Markdown file, the templates bundled with the extension are used |
 | `globalTemplatesPath` | Directory that holds the templates shared across every workspace (with `templates` and `prompts` sub directories). When empty, the global storage directory of this extension is used. A relative path is resolved from the home directory, and `~` is expanded. Set this in your **User** settings | string | `""` | `"~/ai-coding-guide/ai-coding-panel"` keeps the templates in a dotfiles repository |
 | `browser.defaultUrl` | URL opened by the Open Integrated Browser action in the Menu view | string | `"about:blank"` | `"about:blank"` opens an empty tab; set a URL such as `"http://localhost:3000"` to always open it |
@@ -366,14 +368,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.0.vsix
+   code --install-extension ai-coding-sidebar-1.2.1.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.0.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.1.vsix
 ```
 
 #### Build the package yourself
@@ -387,7 +389,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.0.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.0.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.1.vsix
    ```
 4. Restart VS Code.
 

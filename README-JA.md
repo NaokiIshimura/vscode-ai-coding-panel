@@ -56,6 +56,7 @@ Markdownプロンプトファイルを編集し、パネルから直接Claude Co
 | --- | --- |
 | **Run/Plan/Specコマンド** | 事前設定されたコマンドでClaude Codeを実行：<br>- **Run** (`Cmd+R` / `Ctrl+R`): `claude "Execute the instructions described in the file at ${filePath}"`<br>- **Plan**: `claude --permission-mode plan "Review ... create an implementation plan ..."`<br>- **Spec**: `claude --permission-mode plan "Review ... create specification documents ..."`<br>実行前に自動保存、ファイル未開でも実行可能 |
 | **送信履歴の記録** | Spec / Plan / Run を実行すると、開いているファイル末尾の`## sent history`セクションへ送信日時を追記する（例: `- run : 2026/09/06 21:27:29`）。2回目以降は同じセクションへ追記され、`editor.recordSendTimestamp`で無効にできる |
+| **resumeコマンドの記録** | Spec / Plan / Run の実行時にセッションIDを指定してClaude Codeを起動し、そのセッションを再開するコマンドを送信日時の横へ記録する（例: `- run : 2026/09/06 21:27:29 \| claude --resume 0f1d2c3b-...`）。`editor.recordResumeCommand`で無効にできる |
 | **自動ターミナル統合** | コマンドはTerminalビューに送信され、シームレスなワークフローのためにファイル-タブの自動関連付けが行われる |
 | 自動表示 | タイムスタンプ形式のMarkdownファイル（形式: `YYYY_MMDD_HHMM_SS_PROMPT.md`、`..._TASK.md`、`..._SPEC.md`、`..._QUICK_START.md`）を選択すると自動的に表示。その他のMarkdownファイルは通常のエディタで開く |
 | Saveボタン | 1段目に表示され、未保存の変更がある場合は色が変わる。ファイル未開時は現在のPlansディレクトリに新規作成 |
@@ -277,6 +278,7 @@ datetime: {{datetime}}
 | `editor.planCommand` | Planボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
 | `editor.specCommand` | Specボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
 | `editor.recordSendTimestamp` | Spec / Plan / Run の実行時に、開いているファイルへ送信日時を追記するか | boolean | `true` | ファイル末尾の`## sent history`セクションに追記される |
+| `editor.recordResumeCommand` | Spec / Plan / Run の実行時にセッションIDを指定し、`claude --resume <session-id>`を記録するか | boolean | `true` | `editor.recordSendTimestamp`が有効な場合のみ。Claude Code起動中や、`editor.commandPrefix`が`claude`以外／既にセッション指定を含む場合は付与しない |
 | `editor.promptTemplatesPath` | Editor Viewへ挿入するプロンプトテンプレートの配置ディレクトリ（ワークスペースルートからの相対パス） | string | `".vscode/ai-coding-panel/prompts"` | 直下の`.md`ファイル1つが1テンプレート。Markdownファイルが無い場合は拡張機能に同梱のテンプレートを使用する |
 | `globalTemplatesPath` | 全ワークスペースで共有するテンプレートの配置先（配下に `templates` と `prompts` を持つ）。空の場合は拡張機能のグローバルストレージを使用。相対パスはホームディレクトリ基準で解決され、`~` も展開される。**ユーザー設定**に記述する想定 | string | `""` | `"~/ai-coding-guide/ai-coding-panel"` でdotfilesリポジトリ内に配置できる |
 | `browser.defaultUrl` | Menuビューの「Open Integrated Browser」で開くURL | string | `"about:blank"` | `"about:blank"`で空のタブを開く。`"http://localhost:3000"`などを設定すると常にそのURLを開く |
@@ -365,14 +367,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.0.vsix
+   code --install-extension ai-coding-sidebar-1.2.1.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.2.0.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.1.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -386,7 +388,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.0.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.0.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.1.vsix
    ```
 4. VS Codeを再起動
 

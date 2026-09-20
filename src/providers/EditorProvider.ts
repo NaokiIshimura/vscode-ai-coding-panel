@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import * as path from 'path';
+import { randomUUID } from 'crypto';
 import { PlansProvider } from './PlansProvider';
 import { TemplateService, SendCommandType } from '../services/TemplateService';
 import { PromptTemplateService, PromptTemplateTarget } from '../services/PromptTemplateService';
@@ -11,7 +12,30 @@ import { openInIntegratedBrowser } from '../utils/browserUtils';
 export interface ITerminalProvider {
     focus(): void;
     sendCommand(command: string, addNewline?: boolean, filePath?: string, commandType?: 'run' | 'plan' | 'spec'): Promise<void>;
+    isClaudeCodeRunning?(): boolean;
 }
+
+/**
+ * 送信するコマンドと、そのセッションを再開するコマンド
+ */
+interface ResumeSession {
+    /** --session-id を付与したコマンドプレフィックス */
+    commandPrefix: string;
+    /** 送信履歴に記録するresumeコマンド（付与できなかった場合はundefined） */
+    resumeCommand?: string;
+}
+
+/**
+ * セッション指定と競合するClaude CLIのオプション
+ * 既に指定されている場合は --session-id を付与しない
+ */
+const RESUME_CONFLICTING_OPTIONS = /(^|\s)(--session-id|--resume|-r|--continue|-c|--fork-session)(\s|=|$)/;
+
+/**
+ * コマンドプレフィックスがclaudeを起動するかどうかを判定する
+ * パス付きの指定（/usr/local/bin/claude 等）も対象にする
+ */
+const CLAUDE_EXECUTABLE_PATTERN = /^(\S*[/\\])?claude(\s|$)/;
 
 export class EditorProvider implements vscode.WebviewViewProvider, vscode.Disposable {
     public static readonly viewType = 'markdownEditor';
@@ -114,12 +138,50 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
+     * Claude Codeのセッションを後から再開できるよう、コマンドプレフィックスへ --session-id を付与する
+     *
+     * 以下の場合はセッションIDを付与せず、プレフィックスをそのまま返す
+     * - 送信履歴を記録しない設定になっている（記録先が無いため）
+     * - プレフィックスがclaude以外、もしくは既にセッションを指定している
+     * - Claude Code起動中（コマンドではなく入力テキストとして扱われ、新規セッションが始まらない）
+     *
+     * @param commandPrefix 設定から取得したコマンドプレフィックス
+     * @returns 送信に使うプレフィックスと、記録するresumeコマンド
+     */
+    private _prepareResumeSession(commandPrefix: string): ResumeSession {
+        const config = vscode.workspace.getConfiguration('aiCodingSidebar');
+        if (!config.get<boolean>('editor.recordSendTimestamp', true)
+            || !config.get<boolean>('editor.recordResumeCommand', true)) {
+            return { commandPrefix };
+        }
+
+        const trimmed = commandPrefix.trim();
+        if (!CLAUDE_EXECUTABLE_PATTERN.test(trimmed) || RESUME_CONFLICTING_OPTIONS.test(trimmed)) {
+            return { commandPrefix };
+        }
+
+        if (this._terminalProvider?.isClaudeCodeRunning?.()) {
+            return { commandPrefix };
+        }
+
+        const sessionId = randomUUID();
+        // resumeコマンドにはプレフィックスと同じ実行ファイルを使う
+        const executable = trimmed.split(/\s+/)[0];
+
+        return {
+            commandPrefix: `${trimmed} --session-id ${sessionId}`,
+            resumeCommand: `${executable} --resume ${sessionId}`
+        };
+    }
+
+    /**
      * Spec / Plan / Run の送信履歴を現在のファイルへ追記する
      *
      * 追記に失敗してもコマンドの送信は継続するため、エラーは記録のみ行う
      * @param commandType 送信するコマンドの種別
+     * @param resumeCommand 送信するセッションを再開するコマンド
      */
-    private async _appendSendHistory(commandType: SendCommandType): Promise<void> {
+    private async _appendSendHistory(commandType: SendCommandType, resumeCommand?: string): Promise<void> {
         if (!this._currentFilePath) {
             // ファイル未オープン時のRunは記録対象外
             return;
@@ -140,7 +202,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                 const document = await vscode.workspace.openTextDocument(filePath);
                 const wasDirty = document.isDirty;
                 const original = document.getText();
-                const updated = this.templateService.appendSendHistoryLine(original, commandType, dateTime);
+                const updated = this.templateService.appendSendHistoryLine(original, commandType, dateTime, resumeCommand);
 
                 const edit = new vscode.WorkspaceEdit();
                 edit.replace(
@@ -164,7 +226,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             } else {
                 // 直前の保存結果を正とするため、ディスク上の内容を読み直す
                 const original = await fsPromises.readFile(filePath, 'utf8');
-                const updated = this.templateService.appendSendHistoryLine(original, commandType, dateTime);
+                const updated = this.templateService.appendSendHistoryLine(original, commandType, dateTime, resumeCommand);
                 await fsPromises.writeFile(filePath, updated, 'utf8');
                 this._applySendHistory(updated);
             }
@@ -309,13 +371,16 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
                         const commandTemplate = config.get<string>('editor.planCommand', '${commandPrefix} "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."');
 
+                        // Claude Codeのセッションを後から再開できるようセッションIDを付与する
+                        const resumeSession = this._prepareResumeSession(commandPrefix);
+
                         // Replace placeholders with safely escaped values
                         const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
-                        let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
+                        let command = commandTemplate.replace(/\$\{commandPrefix\}/g, resumeSession.commandPrefix);
                         command = command.replace(/\$\{filePath\}/g, escapedPath);
 
-                        // 送信した記録としてファイルへ日時を追記する
-                        await this._appendSendHistory('plan');
+                        // 送信した記録としてファイルへ日時とresumeコマンドを追記する
+                        await this._appendSendHistory('plan', resumeSession.resumeCommand);
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {
@@ -351,13 +416,16 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
                         const commandTemplate = config.get<string>('editor.specCommand', '${commandPrefix} "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}."');
 
+                        // Claude Codeのセッションを後から再開できるようセッションIDを付与する
+                        const resumeSession = this._prepareResumeSession(commandPrefix);
+
                         // Replace placeholders with safely escaped values
                         const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
-                        let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
+                        let command = commandTemplate.replace(/\$\{commandPrefix\}/g, resumeSession.commandPrefix);
                         command = command.replace(/\$\{filePath\}/g, escapedPath);
 
-                        // 送信した記録としてファイルへ日時を追記する
-                        await this._appendSendHistory('spec');
+                        // 送信した記録としてファイルへ日時とresumeコマンドを追記する
+                        await this._appendSendHistory('spec', resumeSession.resumeCommand);
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {
@@ -540,13 +608,16 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
             const commandTemplate = config.get<string>('editor.runCommand', '${commandPrefix} "Execute the instructions described in the file at ${filePath}"');
 
+            // Claude Codeのセッションを後から再開できるようセッションIDを付与する
+            const resumeSession = this._prepareResumeSession(commandPrefix);
+
             // Replace placeholders with safely escaped values
             const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
-            let command = commandTemplate.replace(/\$\{commandPrefix\}/g, commandPrefix);
+            let command = commandTemplate.replace(/\$\{commandPrefix\}/g, resumeSession.commandPrefix);
             command = command.replace(/\$\{filePath\}/g, escapedPath);
 
-            // 送信した記録としてファイルへ日時を追記する
-            await this._appendSendHistory('run');
+            // 送信した記録としてファイルへ日時とresumeコマンドを追記する
+            await this._appendSendHistory('run', resumeSession.resumeCommand);
 
             // Send command to Terminal view
             if (this._terminalProvider) {

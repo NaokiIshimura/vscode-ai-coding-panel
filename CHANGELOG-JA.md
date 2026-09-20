@@ -5,6 +5,21 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.1] - 2026-09-20
+
+### Added
+- **送信履歴へのresumeコマンド記録**: Spec / Plan / Run で起動したClaude Codeのセッションを再開するコマンドを記録するようにしました
+  - 開いているファイルの `## sent history` セクションで、送信日時の横に記録します（例: `- run : 2026/09/20 15:12:03 | claude --resume 0f1d2c3b-4a59-4687-8f0a-1b2c3d4e5f60`）
+  - コマンド送信後にセッションIDを取得する手段が無いため、拡張機能側でUUIDを生成し `--session-id` としてClaude Codeへ渡します。これにより、セッション開始前に記録するコマンドが確定します
+  - 設定 `aiCodingSidebar.editor.recordResumeCommand`（既定 `true`）を追加しました。記録先が送信履歴の行のため、`aiCodingSidebar.editor.recordSendTimestamp` が有効な場合のみ動作します
+  - アクティブタブでClaude Codeが起動中の場合はセッションIDを付与しません。この状態ではコマンドではなく入力テキストとして扱われ、新しいセッションが始まらないためです
+  - `aiCodingSidebar.editor.commandPrefix` がClaude Codeを起動しない場合や、既に `--session-id` / `--resume` / `-r` / `--continue` / `-c` / `--fork-session` を含む場合も付与しません
+
+### Technical
+- `TemplateService.appendSendHistoryLine()` にresumeコマンドの任意引数を追加し、日時の後ろへ `|` 区切りで連結するようにしました。省略時は従来の行フォーマットになります
+- `EditorProvider._prepareResumeSession()` を追加しました。コマンドプレフィックスへ `--session-id` を付与するかを判定し、記録するresumeコマンドを返します。Run / Plan / Spec の3経路がこれを経由します
+- `TerminalProvider.isClaudeCodeRunning()` を追加し、アクティブタブの状態を返すようにしました。既存のモックがそのままコンパイルできるよう、`ITerminalProvider` ではオプショナルなメンバーとして宣言しています
+
 ## [1.2.0] - 2026-09-20
 
 ### Added
@@ -2022,3 +2037,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.19]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.18...v1.1.19
 [1.1.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.19...v1.1.20
 [1.2.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.20...v1.2.0
+[1.2.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.0...v1.2.1

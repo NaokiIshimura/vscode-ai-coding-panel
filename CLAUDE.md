@@ -386,6 +386,57 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.1新機能: 送信履歴へのresumeコマンド記録
+
+Spec / Plan / Run を実行した際、起動したClaude Codeのセッションを再開するコマンドを、開いているMarkdownファイルへ記録するようにした：
+
+**記録の形式**
+
+v1.1.15で追加した `## sent history` の行を拡張し、日時の後ろへ `|` 区切りで連結する。
+
+```markdown
+## sent history
+- run : 2026/09/20 15:12:03 | claude --resume 0f1d2c3b-4a59-4687-8f0a-1b2c3d4e5f60
+- plan: 2026/09/20 15:20:41 | claude --resume 11111111-2222-4333-8444-555555555555
+```
+
+**セッションIDは「取得」ではなく「指定」する（設計の要点）**
+- コマンドを送信した後にそのセッションのIDを読み取る手段は無い。ターミナルの出力を解析する案もあるが、TUIの描画に依存するため壊れやすい
+- 代わりに拡張機能側で `randomUUID()` を生成し、`--session-id <uuid>` としてコマンドプレフィックスへ付与する。記録するコマンドがセッション開始前に確定するため、追記処理を従来どおり送信の直前に置ける
+- 付与位置はプレフィックスの末尾。`claude --permission-mode auto` のようなオプション付きでも `claude --permission-mode auto --session-id <uuid> "..."` となり、テンプレートの `${commandPrefix}` を置き換えるだけで済む
+- resumeコマンドの実行ファイルはプレフィックスの先頭トークンを使う。`/usr/local/bin/claude` のようなパス指定でもそのまま再実行できる
+
+**セッションIDを付与しない条件**
+
+| 条件 | 理由 |
+|---|---|
+| Claude Code起動中（`isClaudeCodeRunning()`） | `sendCommand()` の内容はコマンドとして実行されず入力テキストとして扱われる（v1.0.12参照）。新しいセッションは始まらないため、記録すると存在しないIDが残る |
+| プレフィックスがClaude Codeを起動しない | `--session-id` は Claude CLI のオプション。`CLAUDE_EXECUTABLE_PATTERN` で先頭トークンが `claude`（パス付きも可）かを判定する。`claude-wrapper` のような別コマンドは対象外 |
+| 既にセッションを指定している | `RESUME_CONFLICTING_OPTIONS` が `--session-id` / `--resume` / `-r` / `--continue` / `-c` / `--fork-session` を検出する |
+| `recordSendTimestamp` が `false` | 記録先の行そのものが作られないため |
+| `recordResumeCommand` が `false` | 本機能の設定 |
+| ファイル未オープンでのRun | 追記先が無い（v1.1.15と同じ扱い） |
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/services/TemplateService.ts` | `appendSendHistoryLine()` に任意引数 `resumeCommand` を追加。区切り文字は `SEND_HISTORY_SEPARATOR`（`\|`） |
+| `src/providers/EditorProvider.ts` | `ResumeSession` 型・`RESUME_CONFLICTING_OPTIONS` / `CLAUDE_EXECUTABLE_PATTERN`・`_prepareResumeSession()` を追加。Run / Plan / Spec の3経路から呼ぶ |
+| `src/providers/TerminalProvider.ts` | アクティブタブの状態を返す `isClaudeCodeRunning()` を追加 |
+| `package.json` | 設定 `aiCodingSidebar.editor.recordResumeCommand`（既定 `true`） |
+| `src/test/suite/services/TemplateService.test.ts` | `resumeCommand` 付き / 無しの3ケースを追加 |
+
+**`ITerminalProvider.isClaudeCodeRunning()` はオプショナルにしている**
+- `ITerminalProvider`（`EditorProvider.ts` 内の前方宣言）は循環参照回避のための最小インターフェースで、テストが独自のモックを渡す
+- 必須メンバーとして追加すると既存のモックが軒並みコンパイルエラーになるため、`isClaudeCodeRunning?(): boolean` として宣言し、呼び出し側も `this._terminalProvider?.isClaudeCodeRunning?.()` とする
+- 未実装のプロバイダーでは「起動中ではない」とみなされ、セッションIDが付与される
+
+**ローカルでのテスト実行について**
+- v1.1.15に記載のとおり、macOSローカルの `npm test` はmochaの結果が親プロセスへ返らず、失敗しても成功扱いになる
+- 本バージョンでは `vscode` をスタブ化したNode上でmocha（`--ui tdd`）を実行し、`TemplateService` のテストを確認している（21 passing）
+- `_prepareResumeSession()` は同じスタブ上で `EditorProvider` を生成して直接呼び出し、UUID形式・オプション付き／パス付きプレフィックス・競合オプション6種・Claude Code起動中・設定オフ2種・`isClaudeCodeRunning` 未実装のプロバイダーの計15ケースを確認している
+
 ### v1.2.0新機能: テンプレート / プロンプトテンプレートのグローバル管理
 
 ファイル雛形（template）とスニペット（prompt template）を、ワークスペース単位だけでなく全ワークスペース共通でも管理できるようにした：
@@ -1777,6 +1828,7 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 - `aiCodingSidebar.editor.runCommandWithoutFile`: ファイルなし時のRunコマンド
 - `aiCodingSidebar.editor.planCommand`: Planボタン実行コマンド
 - `aiCodingSidebar.editor.specCommand`: Specボタン実行コマンド
+- `aiCodingSidebar.editor.recordResumeCommand`: Spec / Plan / Run の実行時にセッションIDを指定し、resumeコマンドを送信履歴へ記録するか（デフォルト: `true`）
 - `aiCodingSidebar.browser.defaultUrl`: 統合ブラウザで開くURL（デフォルト: `about:blank`）
 - `aiCodingSidebar.terminal.*`: ターミナル設定（shell, fontSize, fontFamily, cursorStyle, cursorBlink, scrollback）
 

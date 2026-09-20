@@ -5,6 +5,26 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.3] - 2026-09-20
+
+### Added
+- **テンプレート読み込み元の無効化設定**: テンプレートの読み込み元を個別に無効化する設定を4件、Editor Settingsに追加しました。いずれも既定は `false` で、従来どおりの挙動です
+  - `aiCodingSidebar.editor.disableWorkspaceEditorTemplates` で `.vscode/ai-coding-panel/templates/` のファイル雛形を、`aiCodingSidebar.editor.disableGlobalEditorTemplates` で `<globalTemplatesPath>/templates/` のファイル雛形を読み込まなくなります
+  - `aiCodingSidebar.editor.disableWorkspacePromptTemplates` / `aiCodingSidebar.editor.disableGlobalPromptTemplates` で、**prompts** ボタンの一覧から該当のプロンプトテンプレートを除外します
+  - 拡張機能に同梱のテンプレートは無効化できません。常に最終フォールバックとして残るため、ファイル作成が失敗することはなく、有効な読み込み元にMarkdownが1件も無い場合はプロンプトテンプレートの一覧も同梱分になります
+  - 影響するのは読み込みのみです。**Customize Editor Templates** / **Customize Prompt Templates** / テンプレートメニューの **+** ボタンによる作成は、無効化した配置先に対しても従来どおり行えます
+
+### Changed
+- **Menu Viewの項目名**: 親セクションで区別できるため、テンプレート関連の項目から `Global` を外しました
+  - Global: **Customize Global Template** → **Customize Editor Templates**、**Customize Global Prompt Templates** → **Customize Prompt Templates**
+  - Workspace: **Customize Template** → **Customize Editor Templates**
+  - コマンドIDは変更していないため各項目の動作は同じです。コマンドパレットの表示は従来の名称のままです
+
+### Technical
+- `src/utils/templateSourceSettings.ts` を追加しました。4つの設定を読み取り `TemplateSourceSettings` として返します。設定値は無効化フラグのため、呼び出し側の条件式が二重否定にならないよう肯定形（`true` = 読み込む）へ反転しています
+- `loadTemplate()` に任意の第4引数、`PromptTemplateService` のコンストラクタに任意の第3引数として設定リーダーを追加しました。いずれも既定では現在の設定を読むため既存の呼び出し箇所は変更不要で、テストは設定を書き換えずに値を注入できます
+- `PromptTemplateService.listTemplates()` と `hasNoUserTemplates()` が `getEnabledSourceDirs()` を共有するようにしました。対象ディレクトリの判定がずれると、ユーザー定義のテンプレートを1件作成した時点で同梱分が一覧から消えてしまいます
+
 ## [1.2.2] - 2026-09-20
 
 ### Added
@@ -2050,3 +2070,4 @@ v0.8.33以前からアップグレードする場合:
 [1.2.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.20...v1.2.0
 [1.2.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.0...v1.2.1
 [1.2.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.1...v1.2.2
+[1.2.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.2...v1.2.3

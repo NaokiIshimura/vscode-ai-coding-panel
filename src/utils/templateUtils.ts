@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { getGlobalTemplatesDir } from './globalTemplatePaths';
+import { TemplateSourceSettings, readTemplateSourceSettings } from './templateSourceSettings';
 
 /**
  * テンプレート種別
@@ -36,17 +37,24 @@ async function fileExists(filePath: string): Promise<boolean> {
  * 1. ワークスペース
  * 2. グローバル
  * 3. 拡張機能の同梱分
+ *
+ * 1と2は設定で個別に無効化できる。
+ * 同梱分は常に候補へ加える（無効化するとファイル作成そのものが行えなくなるため）
  */
-function buildCandidatePaths(context: vscode.ExtensionContext, templateFileName: string): string[] {
+function buildCandidatePaths(
+    context: vscode.ExtensionContext,
+    templateFileName: string,
+    settings: TemplateSourceSettings
+): string[] {
     const candidates: string[] = [];
 
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-    if (workspaceRoot) {
+    if (settings.workspaceTemplates && workspaceRoot) {
         candidates.push(path.join(workspaceRoot, WORKSPACE_TEMPLATES_RELATIVE_PATH, templateFileName));
     }
 
     const globalTemplatesDir = getGlobalTemplatesDir(context);
-    if (globalTemplatesDir) {
+    if (settings.globalTemplates && globalTemplatesDir) {
         candidates.push(path.join(globalTemplatesDir, templateFileName));
     }
 
@@ -55,14 +63,19 @@ function buildCandidatePaths(context: vscode.ExtensionContext, templateFileName:
     return candidates;
 }
 
-// テンプレートを読み込んで変数を置換する関数
+/**
+ * テンプレートを読み込んで変数を置換する
+ *
+ * @param settings 読み込み元の設定。省略時は現在の設定を読む（テストからの差し替え用）
+ */
 export async function loadTemplate(
     context: vscode.ExtensionContext,
     variables: { [key: string]: string },
-    templateType: TemplateType = 'prompt'
+    templateType: TemplateType = 'prompt',
+    settings: TemplateSourceSettings = readTemplateSourceSettings()
 ): Promise<string> {
     const templateFileName = `${templateType}.md`;
-    const candidates = buildCandidatePaths(context, templateFileName);
+    const candidates = buildCandidatePaths(context, templateFileName, settings);
 
     let templatePath: string | undefined;
     for (const candidate of candidates) {

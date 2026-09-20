@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-09-20
+
+### Added
+- **Settings that turn off a template source**: Four settings were added to the Editor settings so that each place templates are read from can be disabled on its own. All of them default to `false`, which keeps the current behavior
+  - `aiCodingSidebar.editor.disableWorkspaceEditorTemplates` skips the file templates in `.vscode/ai-coding-panel/templates/`, and `aiCodingSidebar.editor.disableGlobalEditorTemplates` skips the ones in `<globalTemplatesPath>/templates/`
+  - `aiCodingSidebar.editor.disableWorkspacePromptTemplates` and `aiCodingSidebar.editor.disableGlobalPromptTemplates` leave the matching prompt templates out of the list shown by the **prompts** button
+  - The templates bundled with the extension cannot be disabled. They stay as the last fallback, so creating a file never fails, and the prompt template list falls back to them when no enabled source holds a Markdown file
+  - Only reading is affected. **Customize Editor Templates**, **Customize Prompt Templates**, and the **+** button in the template menu still create files in the directory you pick, even when that directory is disabled
+
+### Changed
+- **Menu view item names**: `Global` was dropped from the template items, because the parent section already tells the two apart
+  - Global: **Customize Global Template** is now **Customize Editor Templates**, and **Customize Global Prompt Templates** is now **Customize Prompt Templates**
+  - Workspace: **Customize Template** is now **Customize Editor Templates**
+  - The command ids are unchanged, so the behavior of each item is the same. The command palette still shows the previous titles
+
+### Technical
+- Added `src/utils/templateSourceSettings.ts`, which reads the four settings and returns them as `TemplateSourceSettings`. The stored values are disable flags, and they are inverted into a positive form (`true` means the source is read) to keep the conditions at the call sites free of double negatives
+- `loadTemplate()` takes the settings as an optional fourth parameter, and `PromptTemplateService` takes a settings reader as an optional third constructor parameter. Both default to reading the current configuration, which keeps the existing call sites unchanged and lets the tests inject a value instead of writing to the configuration
+- `PromptTemplateService.listTemplates()` and `hasNoUserTemplates()` now share `getEnabledSourceDirs()`. The two must agree on which directories count, otherwise the bundled snippets disappear from the list as soon as the first user template is created
+
 ## [1.2.2] - 2026-09-20
 
 ### Added
@@ -2579,3 +2599,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.20...v1.2.0
 [1.2.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.0...v1.2.1
 [1.2.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.1...v1.2.2
+[1.2.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.2...v1.2.3

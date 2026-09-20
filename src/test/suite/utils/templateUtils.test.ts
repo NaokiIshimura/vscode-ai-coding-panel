@@ -8,6 +8,7 @@ import {
 	TemplateType,
 	WORKSPACE_TEMPLATES_RELATIVE_PATH
 } from '../../../utils/templateUtils';
+import { TemplateSourceSettings } from '../../../utils/templateSourceSettings';
 
 suite('templateUtils Test Suite', () => {
 	// テスト専用の一時ディレクトリを使用（既存のファイルを破壊しない）
@@ -206,6 +207,131 @@ suite('templateUtils Test Suite', () => {
 			}
 
 			assert.strictEqual(content, 'John is John');
+		});
+	});
+
+	suite('loadTemplate with template source settings', () => {
+		// 読み込み元の設定。既定は現行どおり全て読み込む
+		const settingsWith = (overrides: Partial<TemplateSourceSettings>): TemplateSourceSettings => ({
+			workspaceTemplates: true,
+			globalTemplates: true,
+			workspacePromptTemplates: true,
+			globalPromptTemplates: true,
+			...overrides
+		});
+
+		// グローバルのテンプレートを持つ一時ディレクトリを用意する
+		const withGlobalTemplate = async (
+			content: string | undefined,
+			run: (context: vscode.ExtensionContext) => Promise<void>
+		): Promise<void> => {
+			const globalRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'global-templates-test-'));
+			try {
+				if (content !== undefined) {
+					const globalTemplatesDir = path.join(globalRoot, 'templates');
+					fs.mkdirSync(globalTemplatesDir, { recursive: true });
+					fs.writeFileSync(path.join(globalTemplatesDir, 'prompt.md'), content, 'utf8');
+				}
+
+				await run({
+					extensionPath: path.join(testFixturesDir, '..'),
+					globalStorageUri: vscode.Uri.file(globalRoot)
+				} as unknown as vscode.ExtensionContext);
+			} finally {
+				fs.rmSync(globalRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			}
+		};
+
+		test('Should skip the global template when it is disabled', async function () {
+			const workspaceTemplate = workspaceTemplatePathFor('prompt');
+			if (workspaceTemplate && fs.existsSync(workspaceTemplate)) {
+				// ワークスペース側が最優先になる環境では対象外
+				this.skip();
+				return;
+			}
+
+			await withGlobalTemplate('global: {{title}}', async context => {
+				const result = await loadTemplate(
+					context,
+					{ title: 'Test Title', content: 'Body' },
+					'prompt',
+					settingsWith({ globalTemplates: false })
+				);
+
+				// グローバルを飛ばして同梱（fixtures）が使われる
+				assert.ok(!result.startsWith('global:'));
+				assert.ok(result.includes('Test Title'));
+				assert.ok(result.includes('Body'));
+			});
+		});
+
+		test('Should use the global template when only the workspace one is disabled', async () => {
+			await withGlobalTemplate('global: {{title}}', async context => {
+				const result = await loadTemplate(
+					context,
+					{ title: 'Test Title' },
+					'prompt',
+					settingsWith({ workspaceTemplates: false })
+				);
+
+				assert.strictEqual(result, 'global: Test Title');
+			});
+		});
+
+		test('Should fall back to the bundled template when both are disabled', async () => {
+			await withGlobalTemplate('global: {{title}}', async context => {
+				const result = await loadTemplate(
+					context,
+					{ title: 'Test Title', content: 'Body' },
+					'prompt',
+					settingsWith({ workspaceTemplates: false, globalTemplates: false })
+				);
+
+				// 同梱分は無効化できないため必ず見つかる
+				assert.ok(!result.startsWith('global:'));
+				assert.ok(result.includes('Test Title'));
+				assert.ok(result.includes('Body'));
+			});
+		});
+
+		test('Should skip the workspace template when it is disabled', async function () {
+			const workspaceTemplate = workspaceTemplatePathFor('prompt');
+			if (!workspaceTemplate) {
+				// ワークスペース未オープンでは検証できない
+				this.skip();
+				return;
+			}
+			if (fs.existsSync(workspaceTemplate)) {
+				// 既存のワークスペーステンプレートを壊さないため対象外
+				this.skip();
+				return;
+			}
+
+			const templatesDir = path.dirname(workspaceTemplate);
+			const createdDir = !fs.existsSync(templatesDir);
+			fs.mkdirSync(templatesDir, { recursive: true });
+			fs.writeFileSync(workspaceTemplate, 'workspace: {{title}}', 'utf8');
+
+			try {
+				await withGlobalTemplate('global: {{title}}', async context => {
+					// 既定ではワークスペースが優先される
+					const preferred = await loadTemplate(context, { title: 'Test Title' }, 'prompt');
+					assert.strictEqual(preferred, 'workspace: Test Title');
+
+					const result = await loadTemplate(
+						context,
+						{ title: 'Test Title' },
+						'prompt',
+						settingsWith({ workspaceTemplates: false })
+					);
+					assert.strictEqual(result, 'global: Test Title');
+				});
+			} finally {
+				fs.rmSync(workspaceTemplate, { force: true });
+				if (createdDir) {
+					fs.rmSync(templatesDir, { recursive: true, force: true });
+				}
+			}
 		});
 	});
 });

@@ -386,6 +386,109 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.3新機能: テンプレート読み込み元の無効化設定
+
+Editor Settings に、テンプレートの読み込み元を個別に無効化する4つのboolean設定を追加した。いずれも既定は `false`（＝読み込む。従来どおりの挙動）：
+
+| 設定キー | 無効化する対象 | 影響する実装 |
+|---|---|---|
+| `aiCodingSidebar.editor.disableWorkspaceEditorTemplates` | ワークスペースのファイル雛形 `.vscode/ai-coding-panel/templates/` | `utils/templateUtils.ts` |
+| `aiCodingSidebar.editor.disableGlobalEditorTemplates` | グローバルのファイル雛形 `<global>/templates/` | `utils/templateUtils.ts` |
+| `aiCodingSidebar.editor.disableWorkspacePromptTemplates` | ワークスペースのスニペット `.vscode/ai-coding-panel/prompts/` | `services/PromptTemplateService.ts` |
+| `aiCodingSidebar.editor.disableGlobalPromptTemplates` | グローバルのスニペット `<global>/prompts/` | `services/PromptTemplateService.ts` |
+
+**設定画面の表示名はキー名から生成される**
+- VS Codeは設定のタイトルを持たず、キーの末尾セグメントをcamelCase分割して表示する（`disableGlobalEditorTemplates` → `Disable Global Editor Templates`）
+- そのため表示名を変えるにはキー名を変えるしかない。`description` はタイトルの下の説明文にしかならない
+- ファイル雛形のキーに `Editor` が入っているのはこのため（Menu Viewの `Customize Editor Templates` と表記を揃えている）。スニペット側は `Prompt` が既に入っているため変更していない
+
+**`editor.` 名前空間に置いているのは Editor Settings の実装都合**
+- `aiCodingSidebar.openEditorSettings`（`commands/settings.ts`）は `workbench.action.openSettings` へ文字列 `'aiCodingSidebar.editor'` を渡すだけの**検索**であり、このプレフィックスを持たない設定はEditor Settingsに表示されない
+- ファイル雛形（template）はEditor View専用ではなくPlans Viewのファイル作成コマンドからも使われるため、意味的には `aiCodingSidebar.templates.*` の方が正確だが、「Editor Settingsに追加する」という要求を優先した
+
+**設定は無効化フラグ、内部では肯定形に反転する**
+- `utils/templateSourceSettings.ts`（新規）の `readTemplateSourceSettings()` が `disableXxx` を読み、`TemplateSourceSettings`（**true = 読み込む**）へ反転して返す。呼び出し側の条件式が二重否定になるのを避けるため
+- キャッシュしない。`loadTemplate()` / `listTemplates()` は呼ばれるたびに設定を読むため、`onDidChangeConfiguration` を購読しなくても設定変更が即座に反映される
+
+**同梱分（bundled）は無効化できない**
+- `buildCandidatePaths()` は無効化された候補を積まないだけで、最後の `<extensionPath>/templates/<type>.md` は常に候補に入る。4設定すべてONでもファイル作成が壊れない
+- `listTemplates()` も「有効な読み込み元に1件も無い」場合は同梱分へフォールバックする
+
+**`hasNoUserTemplates()` を `listTemplates()` と同じ基準にする必要がある（最も壊れやすい箇所）**
+- 両者は `getEnabledSourceDirs()` を共有する。`hasNoUserTemplates()` は「一覧から同梱分が消えるのを防ぐ」ためだけに存在する関数（v1.2.0）なので、判定対象が一覧とずれると v1.1.20・v1.2.0 と同型のバグ（1件作った瞬間に同梱分が一覧から消える）が再発する
+- 例: ワークスペースの読み込みを無効化した状態でグローバルへ1件目を作成する場合、有効な読み込み元はグローバルのみのため、ワークスペースにファイルがあっても同梱分をグローバルへコピーしてから作成する
+
+**無効化するのは「読み込み」だけで「作成・コピー」はしない（設計判断）**
+
+| 対象 | 設定の影響 |
+|---|---|
+| `loadTemplate()` / `listTemplates()` | あり |
+| `validateTemplateName()` | **なし**。重複判定は実ディレクトリに対して行う必要がある（無効化中でも同名ファイルは作れない） |
+| `createWorkspaceTemplate()` / `createGlobalTemplate()` | **なし**。明示的な作成操作のため |
+| `setupTemplate()` / `setupWorkspaceTemplates()` / `setupGlobalTemplates()` | **なし**。明示的なコピー操作のため |
+| `EditorProvider._pickPromptTemplateTarget()` | **なし**。作成先の選択肢は従来どおり両方出る |
+
+- トレードオフとして、無効化中の配置先にも作成できてしまう（作ったのに一覧に出ない、という見え方になり得る）。「読み込まない」という要求の範囲に留めた
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/utils/templateSourceSettings.ts`（新規） | `TemplateSourceSettings` / `TemplateSourceSettingsReader` / `readTemplateSourceSettings()` |
+| `src/utils/templateUtils.ts` | `buildCandidatePaths()` に `settings` を渡して候補を絞る。`loadTemplate()` に任意引数 `settings` を追加 |
+| `src/services/PromptTemplateService.ts` | コンストラクタに任意の設定リーダーを追加。`getEnabledSourceDirs()` を新設し、`listTemplates()` / `hasNoUserTemplates()` から使う |
+| `package.json` | 設定4件 |
+| `src/test/suite/utils/templateUtils.test.ts` | 読み込み元を無効化した4ケース |
+| `src/test/suite/services/PromptTemplateService.test.ts` | `createService()` に設定の差し替えを追加し、無効化した4ケース |
+
+**テストのために設定リーダーを注入できるようにしている**
+- 既存テストは `config.update()` を一切使わず、設定が既定と異なる環境では `this.skip()` する方針。そのままでは設定ONの経路を検証できない
+- `loadTemplate()` の第4引数と `PromptTemplateService` の第3引数はいずれも**オプショナル**。必須にすると `extension.ts` と既存テストの生成箇所が壊れる
+
+**ローカルでのテスト実行について**
+- v1.1.15に記載のとおり、macOSローカルの `npm test` はmochaの結果が親プロセスへ返らず、失敗しても成功扱いになる
+- 本バージョンでは `vscode` をスタブ化したNode上でmocha（`--ui tdd`）を実行して確認している（ワークスペース無し: 44 passing / 5 pending、ワークスペース有り: 47 passing / 2 pending。`workspaceSetup` / `globalTemplatePaths` / `TemplateService` も同時に実行して影響が無いことを確認）
+
+### v1.2.3変更: Menu Viewの項目名変更
+
+Menu Viewのテンプレートカスタマイズ項目から `Global` を外し、親項目で区別する命名にした：
+
+| セクション | 変更前 | 変更後 |
+|---|---|---|
+| Global | Customize Global Template | Customize Editor Templates |
+| Global | Customize Global Prompt Templates | Customize Prompt Templates |
+| Workspace | Customize Template | Customize Editor Templates |
+| Workspace | Customize Prompt Templates | （変更なし） |
+
+**Global / Workspace の子項目が同名になる**
+- 配置先の区別は親項目（Global / Workspace）が担う。ラベル側の `Global` は冗長になるため外した
+- コマンドIDは異なるため動作は変わらない（Global: `setupGlobalTemplate` / `setupGlobalPromptTemplates`、Workspace: `setupTemplate` / `setupPromptTemplates`）
+- READMEで項目を指す箇所は名前だけでは一意に定まらなくなったため、「Workspaceセクションの」「Globalセクションの同名項目」のようにセクション名を添える表現へ変更した
+
+**ファイル雛形を `Editor Templates` と呼ぶ**
+- 従来の `Template` は、スニペット（`Prompt Templates`）との対比が弱かった
+- 実体は `templates/{task,spec,prompt,quick_start}.md`（ファイル新規作成時の雛形）で、`resources/prompt-templates/*.md`（挿入用スニペット）とは別物。v1.1.19で分離した2系統の呼び分けを表示名にも反映している
+
+**変更したのは表示名のみ**
+
+| 対象 | 変更 |
+|---|---|
+| `MenuProvider` の `MenuItem` ラベルと `Command.title` | あり |
+| コマンドID | なし |
+| `package.json` の `contributes.commands` の `title` | **なし**。コマンドパレットの表示は `Customize Template` / `Customize Global Template` / `Customize Prompt Templates` / `Customize Global Prompt Templates` のまま |
+| `commands/settings.ts` の `setupWorkspace` のQuickPick（`$(file-text) Customize Template`） | **なし** |
+
+- 指示の対象がMenu Viewの項目名のため、コマンドパレット側は揃えていない。揃える場合は `package.json` の4箇所と `commands/settings.ts` を合わせて変更する
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/providers/MenuProvider.ts` | Global 2項目・Workspace 1項目のラベルと `title`（各2箇所ずつ） |
+| `README.md` / `README-JA.md` | Menu項目名を参照している4箇所（promptsボタンの説明、グローバルテンプレートの節、同梱プロンプトテンプレートの節、テンプレートの優先順位の節） |
+
+- `src/test/suite/providers/MenuProvider.test.ts` はラベル文字列を検証していないため変更不要（9 passing）
+
 ### v1.2.2新機能: `output_status` プロンプトテンプレートの追加
 
 Editor Viewの `prompts` ボタン向けの同梱スニペットに `resources/prompt-templates/output_status.md` を追加した（同梱3件→4件）：
@@ -1874,6 +1977,10 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 - `aiCodingSidebar.editor.planCommand`: Planボタン実行コマンド
 - `aiCodingSidebar.editor.specCommand`: Specボタン実行コマンド
 - `aiCodingSidebar.editor.recordResumeCommand`: Spec / Plan / Run の実行時にセッションIDを指定し、resumeコマンドを送信履歴へ記録するか（デフォルト: `true`）
+- `aiCodingSidebar.editor.disableWorkspaceEditorTemplates`: ワークスペースのファイル雛形を読み込まないか（デフォルト: `false`）
+- `aiCodingSidebar.editor.disableGlobalEditorTemplates`: グローバルのファイル雛形を読み込まないか（デフォルト: `false`）
+- `aiCodingSidebar.editor.disableWorkspacePromptTemplates`: ワークスペースのプロンプトテンプレートを一覧に出さないか（デフォルト: `false`）
+- `aiCodingSidebar.editor.disableGlobalPromptTemplates`: グローバルのプロンプトテンプレートを一覧に出さないか（デフォルト: `false`）
 - `aiCodingSidebar.browser.defaultUrl`: 統合ブラウザで開くURL（デフォルト: `about:blank`）
 - `aiCodingSidebar.terminal.*`: ターミナル設定（shell, fontSize, fontFamily, cursorStyle, cursorBlink, scrollback）
 

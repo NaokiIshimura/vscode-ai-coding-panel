@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { PromptTemplate, PromptTemplateService } from '../../../services/PromptTemplateService';
 import { TemplateService } from '../../../services/TemplateService';
+import { TemplateSourceSettings } from '../../../utils/templateSourceSettings';
 
 suite('PromptTemplateService Test Suite', () => {
 	let promptTemplateService: PromptTemplateService;
@@ -21,13 +22,29 @@ suite('PromptTemplateService Test Suite', () => {
 		return !!(configured && configured.trim());
 	};
 
+	// 読み込み元の設定。既定は現行どおり全て読み込む
+	const settingsWith = (overrides: Partial<TemplateSourceSettings> = {}): TemplateSourceSettings => ({
+		workspaceTemplates: true,
+		globalTemplates: true,
+		workspacePromptTemplates: true,
+		globalPromptTemplates: true,
+		...overrides
+	});
+
 	// 拡張機能の同梱テンプレートとグローバル配置先を差し替えるため、一時ディレクトリを使う
-	const createService = (): PromptTemplateService => {
+	// 設定は実際の設定値ではなく引数で差し替える（テストが環境設定に依存しないようにするため）
+	const createService = (
+		overrides: Partial<TemplateSourceSettings> = {}
+	): PromptTemplateService => {
 		const context = {
 			extensionPath: extensionPath,
 			globalStorageUri: vscode.Uri.file(globalRoot)
 		} as unknown as vscode.ExtensionContext;
-		return new PromptTemplateService(context, new TemplateService());
+		return new PromptTemplateService(
+			context,
+			new TemplateService(),
+			() => settingsWith(overrides)
+		);
 	};
 
 	setup(() => {
@@ -425,6 +442,100 @@ suite('PromptTemplateService Test Suite', () => {
 					undefined
 				);
 				assert.ok(await promptTemplateService.validateTemplateName('shared', 'workspace'));
+			} finally {
+				fs.rmSync(workspaceDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			}
+		});
+	});
+
+	suite('listTemplates with disabled sources', () => {
+		test('Should skip the global templates when they are disabled', async function () {
+			if (isGlobalPathConfigured()) {
+				this.skip();
+				return;
+			}
+
+			fs.writeFileSync(path.join(bundledDir, 'bundled.md'), '# Bundled', 'utf8');
+			fs.mkdirSync(globalPromptsDir, { recursive: true });
+			fs.writeFileSync(path.join(globalPromptsDir, 'shared.md'), '# Shared', 'utf8');
+
+			const service = createService({ globalPromptTemplates: false });
+			const templates = await service.listTemplates();
+
+			// 有効な読み込み元が空になるため同梱分へフォールバックする
+			assert.deepStrictEqual(templates.map(template => template.id), ['bundled']);
+			assert.strictEqual(templates[0].origin, 'bundled');
+		});
+
+		test('Should fall back to the bundled templates when both sources are disabled', async function () {
+			if (isGlobalPathConfigured()) {
+				this.skip();
+				return;
+			}
+
+			fs.writeFileSync(path.join(bundledDir, 'bundled.md'), '# Bundled', 'utf8');
+			fs.mkdirSync(globalPromptsDir, { recursive: true });
+			fs.writeFileSync(path.join(globalPromptsDir, 'shared.md'), '# Shared', 'utf8');
+
+			const service = createService({
+				workspacePromptTemplates: false,
+				globalPromptTemplates: false
+			});
+			const templates = await service.listTemplates();
+
+			assert.deepStrictEqual(templates.map(template => template.id), ['bundled']);
+		});
+
+		test('Should show the global template that the workspace one hides when the workspace is disabled', async function () {
+			const workspaceDir = promptTemplateService.getWorkspaceTemplatesDir();
+			if (isGlobalPathConfigured() || !workspaceDir || fs.existsSync(workspaceDir)) {
+				// 既存のワークスペーステンプレートを壊さないため、未作成の場合のみ実行する
+				this.skip();
+				return;
+			}
+
+			try {
+				fs.mkdirSync(workspaceDir, { recursive: true });
+				fs.writeFileSync(path.join(workspaceDir, 'shared.md'), '# Workspace shared', 'utf8');
+
+				fs.mkdirSync(globalPromptsDir, { recursive: true });
+				fs.writeFileSync(path.join(globalPromptsDir, 'shared.md'), '# Global shared', 'utf8');
+
+				const service = createService({ workspacePromptTemplates: false });
+				const templates = await service.listTemplates();
+
+				// 同名で隠れていたグローバル分が表示される
+				assert.deepStrictEqual(templates.map(template => template.id), ['shared']);
+				assert.strictEqual(templates[0].origin, 'global');
+				assert.strictEqual(templates[0].body, '# Global shared');
+			} finally {
+				fs.rmSync(workspaceDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			}
+		});
+
+		test('Should copy the bundled templates when the only templates are in a disabled source', async function () {
+			const workspaceDir = promptTemplateService.getWorkspaceTemplatesDir();
+			if (isGlobalPathConfigured() || !workspaceDir || fs.existsSync(workspaceDir)) {
+				this.skip();
+				return;
+			}
+
+			try {
+				fs.writeFileSync(path.join(bundledDir, 'bundled.md'), '# Bundled', 'utf8');
+				fs.mkdirSync(workspaceDir, { recursive: true });
+				fs.writeFileSync(path.join(workspaceDir, 'shared.md'), '# Workspace shared', 'utf8');
+
+				// ワークスペース分は一覧に出ないため、グローバルへの初回作成では同梱分をコピーする
+				const service = createService({ workspacePromptTemplates: false });
+				await service.createGlobalTemplate('new_one');
+
+				assert.ok(fs.existsSync(path.join(globalPromptsDir, 'bundled.md')));
+
+				const templates = await service.listTemplates();
+				assert.deepStrictEqual(
+					templates.map(template => template.id).sort(),
+					['bundled', 'new_one']
+				);
 			} finally {
 				fs.rmSync(workspaceDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 			}

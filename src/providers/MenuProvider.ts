@@ -124,20 +124,20 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
                         new vscode.ThemeIcon('settings-gear')
                     ),
                     new MenuItem(
-                        'Customize Global Template',
+                        'Customize Editor Templates',
                         'Customize template for file creation shared across workspaces',
                         {
                             command: 'aiCodingSidebar.setupGlobalTemplate',
-                            title: 'Customize Global Template'
+                            title: 'Customize Editor Templates'
                         },
                         new vscode.ThemeIcon('file-text')
                     ),
                     new MenuItem(
-                        'Customize Global Prompt Templates',
+                        'Customize Prompt Templates',
                         'Customize prompt templates shared across workspaces',
                         {
                             command: 'aiCodingSidebar.setupGlobalPromptTemplates',
-                            title: 'Customize Global Prompt Templates'
+                            title: 'Customize Prompt Templates'
                         },
                         new vscode.ThemeIcon('symbol-snippet')
                     )
@@ -161,11 +161,11 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
                         new vscode.ThemeIcon('settings-gear')
                     ),
                     new MenuItem(
-                        'Customize Template',
+                        'Customize Editor Templates',
                         'Customize template for file creation',
                         {
                             command: 'aiCodingSidebar.setupTemplate',
-                            title: 'Customize Template'
+                            title: 'Customize Editor Templates'
                         },
                         new vscode.ThemeIcon('file-text')
                     ),

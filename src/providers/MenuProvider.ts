@@ -34,6 +34,11 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
 
     /**
      * ルートレベルのメニュー項目を構築
+     *
+     * Global / Workspace は Expanded にしている。Collapsed だと親を開くたびに
+     * getChildren() の呼び出し（拡張ホストとの往復）が個別に発生するため、
+     * 初回展開時の一括取得にまとめて待ち回数を減らす。
+     * Usage Guide だけは項目数が多く常用しないため、既定で閉じる。
      */
     private _buildRootItems(): MenuItem[] {
         return [
@@ -99,6 +104,7 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
                         new vscode.ThemeIcon('link-external')
                     )
                 ],
+                // Usage Guide は項目数が多く常用しないため既定で閉じる
                 vscode.TreeItemCollapsibleState.Collapsed
             ),
             // グローバル（親項目）
@@ -116,9 +122,27 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
                             title: 'Open User Settings'
                         },
                         new vscode.ThemeIcon('settings-gear')
+                    ),
+                    new MenuItem(
+                        'Customize Global Template',
+                        'Customize template for file creation shared across workspaces',
+                        {
+                            command: 'aiCodingSidebar.setupGlobalTemplate',
+                            title: 'Customize Global Template'
+                        },
+                        new vscode.ThemeIcon('file-text')
+                    ),
+                    new MenuItem(
+                        'Customize Global Prompt Templates',
+                        'Customize prompt templates shared across workspaces',
+                        {
+                            command: 'aiCodingSidebar.setupGlobalPromptTemplates',
+                            title: 'Customize Global Prompt Templates'
+                        },
+                        new vscode.ThemeIcon('symbol-snippet')
                     )
                 ],
-                vscode.TreeItemCollapsibleState.Collapsed
+                vscode.TreeItemCollapsibleState.Expanded
             ),
             // ワークスペース（親項目）
             new MenuItem(
@@ -155,7 +179,7 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
                         new vscode.ThemeIcon('symbol-snippet')
                     )
                 ],
-                vscode.TreeItemCollapsibleState.Collapsed
+                vscode.TreeItemCollapsibleState.Expanded
             )
         ];
     }

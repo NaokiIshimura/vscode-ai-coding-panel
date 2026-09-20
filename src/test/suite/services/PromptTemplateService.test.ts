@@ -3,17 +3,30 @@ import * as vscode from 'vscode';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import { PromptTemplateService } from '../../../services/PromptTemplateService';
+import { PromptTemplate, PromptTemplateService } from '../../../services/PromptTemplateService';
 import { TemplateService } from '../../../services/TemplateService';
 
 suite('PromptTemplateService Test Suite', () => {
 	let promptTemplateService: PromptTemplateService;
 	let extensionPath: string;
 	let bundledDir: string;
+	let globalRoot: string;
+	let globalPromptsDir: string;
 
-	// 拡張機能の同梱テンプレートを差し替えるため、一時ディレクトリをextensionPathに見立てる
+	// 設定でグローバル配置先が差し替えられている環境ではglobalStorageUriが使われない
+	const isGlobalPathConfigured = (): boolean => {
+		const configured = vscode.workspace
+			.getConfiguration('aiCodingSidebar')
+			.get<string>('globalTemplatesPath', '');
+		return !!(configured && configured.trim());
+	};
+
+	// 拡張機能の同梱テンプレートとグローバル配置先を差し替えるため、一時ディレクトリを使う
 	const createService = (): PromptTemplateService => {
-		const context = { extensionPath: extensionPath } as vscode.ExtensionContext;
+		const context = {
+			extensionPath: extensionPath,
+			globalStorageUri: vscode.Uri.file(globalRoot)
+		} as unknown as vscode.ExtensionContext;
 		return new PromptTemplateService(context, new TemplateService());
 	};
 
@@ -22,11 +35,16 @@ suite('PromptTemplateService Test Suite', () => {
 		bundledDir = path.join(extensionPath, 'resources', 'prompt-templates');
 		fs.mkdirSync(bundledDir, { recursive: true });
 
+		globalRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'prompt-templates-global-'));
+		globalPromptsDir = path.join(globalRoot, 'prompts');
+
 		promptTemplateService = createService();
 	});
 
 	teardown(() => {
-		fs.rmSync(extensionPath, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+		for (const dir of [extensionPath, globalRoot]) {
+			fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+		}
 	});
 
 	suite('listTemplates', () => {
@@ -111,12 +129,13 @@ suite('PromptTemplateService Test Suite', () => {
 	});
 
 	suite('renderTemplate', () => {
-		const buildTemplate = (body: string) => ({
+		const buildTemplate = (body: string): PromptTemplate => ({
 			id: 'sample',
 			label: 'Sample',
 			description: 'sample.md',
 			body: body,
-			filePath: '/tmp/sample.md'
+			filePath: '/tmp/sample.md',
+			origin: 'workspace'
 		});
 
 		test('Should replace file related variables with the current file', async () => {
@@ -219,6 +238,196 @@ suite('PromptTemplateService Test Suite', () => {
 			const result = await promptTemplateService.setupWorkspaceTemplates();
 
 			assert.strictEqual(result, undefined);
+		});
+	});
+
+	suite('getGlobalTemplatesDir', () => {
+		test('Should point to the prompts sub directory of the global root', function () {
+			if (isGlobalPathConfigured()) {
+				this.skip();
+				return;
+			}
+
+			assert.strictEqual(promptTemplateService.getGlobalTemplatesDir(), globalPromptsDir);
+		});
+	});
+
+	suite('listTemplates with global templates', () => {
+		test('Should return global templates instead of the bundled ones', async function () {
+			if (isGlobalPathConfigured()) {
+				this.skip();
+				return;
+			}
+
+			fs.writeFileSync(path.join(bundledDir, 'bundled.md'), '# Bundled', 'utf8');
+			fs.mkdirSync(globalPromptsDir, { recursive: true });
+			fs.writeFileSync(path.join(globalPromptsDir, 'shared.md'), '# Shared', 'utf8');
+
+			const templates = await promptTemplateService.listTemplates();
+
+			// ユーザー定義が1件でもあれば同梱分は混ぜない
+			assert.deepStrictEqual(templates.map(template => template.id), ['shared']);
+			assert.strictEqual(templates[0].origin, 'global');
+		});
+
+		test('Should mark a global template in the description', async function () {
+			if (isGlobalPathConfigured()) {
+				this.skip();
+				return;
+			}
+
+			fs.mkdirSync(globalPromptsDir, { recursive: true });
+			fs.writeFileSync(path.join(globalPromptsDir, 'shared.md'), '# Shared', 'utf8');
+
+			const templates = await promptTemplateService.listTemplates();
+
+			assert.strictEqual(templates[0].description, 'shared.md (global)');
+		});
+
+		test('Should prefer the workspace template when the same file name exists in both', async function () {
+			const workspaceDir = promptTemplateService.getWorkspaceTemplatesDir();
+			if (isGlobalPathConfigured() || !workspaceDir || fs.existsSync(workspaceDir)) {
+				// 既存のワークスペーステンプレートを壊さないため、未作成の場合のみ実行する
+				this.skip();
+				return;
+			}
+
+			try {
+				fs.mkdirSync(workspaceDir, { recursive: true });
+				fs.writeFileSync(path.join(workspaceDir, 'shared.md'), '# Workspace shared', 'utf8');
+				fs.writeFileSync(path.join(workspaceDir, 'only_workspace.md'), '# Only workspace', 'utf8');
+
+				fs.mkdirSync(globalPromptsDir, { recursive: true });
+				fs.writeFileSync(path.join(globalPromptsDir, 'shared.md'), '# Global shared', 'utf8');
+				fs.writeFileSync(path.join(globalPromptsDir, 'only_global.md'), '# Only global', 'utf8');
+
+				const templates = await promptTemplateService.listTemplates();
+
+				// ワークスペース分→グローバル分の順。同名はワークスペースを残す
+				assert.deepStrictEqual(
+					templates.map(template => template.id),
+					['only_workspace', 'shared', 'only_global']
+				);
+
+				const shared = templates.find(template => template.id === 'shared');
+				assert.strictEqual(shared?.origin, 'workspace');
+				assert.strictEqual(shared?.body, '# Workspace shared');
+			} finally {
+				fs.rmSync(workspaceDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			}
+		});
+	});
+
+	suite('setupGlobalTemplates', () => {
+		test('Should copy the bundled templates into the global directory', async function () {
+			if (isGlobalPathConfigured()) {
+				this.skip();
+				return;
+			}
+
+			fs.writeFileSync(path.join(bundledDir, 'refactor.md'), '# Refactor', 'utf8');
+			fs.writeFileSync(path.join(bundledDir, 'review.md'), '# Review', 'utf8');
+
+			const result = await promptTemplateService.setupGlobalTemplates();
+
+			assert.strictEqual(result, globalPromptsDir);
+			assert.ok(fs.existsSync(path.join(globalPromptsDir, 'refactor.md')));
+			assert.ok(fs.existsSync(path.join(globalPromptsDir, 'review.md')));
+		});
+
+		test('Should not overwrite an existing template', async function () {
+			if (isGlobalPathConfigured()) {
+				this.skip();
+				return;
+			}
+
+			fs.writeFileSync(path.join(bundledDir, 'refactor.md'), '# Refactor', 'utf8');
+			fs.mkdirSync(globalPromptsDir, { recursive: true });
+			fs.writeFileSync(path.join(globalPromptsDir, 'refactor.md'), '# Customized', 'utf8');
+
+			await promptTemplateService.setupGlobalTemplates();
+
+			assert.strictEqual(
+				fs.readFileSync(path.join(globalPromptsDir, 'refactor.md'), 'utf8'),
+				'# Customized'
+			);
+		});
+	});
+
+	suite('createGlobalTemplate', () => {
+		test('Should create a template with an H1 heading', async function () {
+			if (isGlobalPathConfigured()) {
+				this.skip();
+				return;
+			}
+
+			const filePath = await promptTemplateService.createGlobalTemplate('my snippet');
+
+			assert.strictEqual(filePath, path.join(globalPromptsDir, 'my snippet.md'));
+			assert.strictEqual(fs.readFileSync(filePath, 'utf8'), '# my snippet\n\n');
+		});
+
+		test('Should copy the bundled templates when there is no user template yet', async function () {
+			const workspaceDir = promptTemplateService.getWorkspaceTemplatesDir();
+			if (isGlobalPathConfigured() || (workspaceDir && fs.existsSync(workspaceDir))) {
+				// ワークスペース側にテンプレートがある環境では同梱分をコピーしない仕様のため対象外
+				this.skip();
+				return;
+			}
+
+			fs.writeFileSync(path.join(bundledDir, 'refactor.md'), '# Refactor', 'utf8');
+
+			await promptTemplateService.createGlobalTemplate('my snippet');
+
+			// 1件作った瞬間に同梱分が一覧から消えないようコピーされる
+			assert.ok(fs.existsSync(path.join(globalPromptsDir, 'refactor.md')));
+		});
+
+		test('Should reject a duplicated name', async function () {
+			if (isGlobalPathConfigured()) {
+				this.skip();
+				return;
+			}
+
+			await promptTemplateService.createGlobalTemplate('my snippet');
+
+			await assert.rejects(() => promptTemplateService.createGlobalTemplate('my snippet'));
+		});
+	});
+
+	suite('validateTemplateName with a target', () => {
+		test('Should reject a name that already exists in the global directory', async function () {
+			if (isGlobalPathConfigured()) {
+				this.skip();
+				return;
+			}
+
+			fs.mkdirSync(globalPromptsDir, { recursive: true });
+			fs.writeFileSync(path.join(globalPromptsDir, 'shared.md'), '# Shared', 'utf8');
+
+			assert.ok(await promptTemplateService.validateTemplateName('shared', 'global'));
+		});
+
+		test('Should accept a name that exists only in the other location', async function () {
+			const workspaceDir = promptTemplateService.getWorkspaceTemplatesDir();
+			if (isGlobalPathConfigured() || !workspaceDir || fs.existsSync(workspaceDir)) {
+				this.skip();
+				return;
+			}
+
+			try {
+				fs.mkdirSync(workspaceDir, { recursive: true });
+				fs.writeFileSync(path.join(workspaceDir, 'shared.md'), '# Shared', 'utf8');
+
+				// ワークスペースには存在するがグローバルには無いため作成できる
+				assert.strictEqual(
+					await promptTemplateService.validateTemplateName('shared', 'global'),
+					undefined
+				);
+				assert.ok(await promptTemplateService.validateTemplateName('shared', 'workspace'));
+			} finally {
+				fs.rmSync(workspaceDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			}
 		});
 	});
 });

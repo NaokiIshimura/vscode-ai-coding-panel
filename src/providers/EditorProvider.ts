@@ -4,7 +4,7 @@ import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { PlansProvider } from './PlansProvider';
 import { TemplateService, SendCommandType } from '../services/TemplateService';
-import { PromptTemplateService } from '../services/PromptTemplateService';
+import { PromptTemplateService, PromptTemplateTarget } from '../services/PromptTemplateService';
 import { openInIntegratedBrowser } from '../utils/browserUtils';
 
 // Forward declaration for TerminalProvider to avoid circular dependency
@@ -810,16 +810,17 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             return;
         }
 
-        if (!this.promptTemplateService.getWorkspaceTemplatesDir()) {
-            vscode.window.showErrorMessage('No workspace is open');
+        // 既存ファイルとの衝突判定は作成先ごとに行うため、名前入力より先に作成先を決める
+        const target = await this._pickPromptTemplateTarget();
+        if (!target) {
             return;
         }
 
         const name = await vscode.window.showInputBox({
-            title: 'New Prompt Template',
+            title: target === 'global' ? 'New Global Prompt Template' : 'New Prompt Template',
             prompt: 'Enter a name for the new prompt template',
             placeHolder: 'refactor',
-            validateInput: value => this.promptTemplateService?.validateTemplateName(value)
+            validateInput: value => this.promptTemplateService?.validateTemplateName(value, target)
         });
 
         if (!name) {
@@ -827,13 +828,61 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         }
 
         try {
-            const filePath = await this.promptTemplateService.createWorkspaceTemplate(name);
+            const filePath = target === 'global'
+                ? await this.promptTemplateService.createGlobalTemplate(name)
+                : await this.promptTemplateService.createWorkspaceTemplate(name);
             // 本文はVS Codeの標準エディタで編集してもらう
             const document = await vscode.workspace.openTextDocument(filePath);
             await vscode.window.showTextDocument(document);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to create prompt template: ${error}`);
         }
+    }
+
+    /**
+     * プロンプトテンプレートの作成先を決める
+     *
+     * 選択肢が1つしかない場合は確認を挟まずそれを使う
+     */
+    private async _pickPromptTemplateTarget(): Promise<PromptTemplateTarget | undefined> {
+        const service = this.promptTemplateService;
+        if (!service) {
+            return undefined;
+        }
+
+        const hasWorkspace = !!service.getWorkspaceTemplatesDir();
+        const hasGlobal = !!service.getGlobalTemplatesDir();
+
+        if (!hasWorkspace && !hasGlobal) {
+            vscode.window.showErrorMessage('No location is available for prompt templates');
+            return undefined;
+        }
+
+        if (!hasWorkspace) {
+            return 'global';
+        }
+
+        if (!hasGlobal) {
+            return 'workspace';
+        }
+
+        const picked = await vscode.window.showQuickPick(
+            [
+                {
+                    label: '$(root-folder) Workspace',
+                    description: 'Available only in this workspace',
+                    target: 'workspace' as PromptTemplateTarget
+                },
+                {
+                    label: '$(globe) Global',
+                    description: 'Available in every workspace',
+                    target: 'global' as PromptTemplateTarget
+                }
+            ],
+            { placeHolder: 'Where do you want to create the prompt template?' }
+        );
+
+        return picked?.target;
     }
 
     /**

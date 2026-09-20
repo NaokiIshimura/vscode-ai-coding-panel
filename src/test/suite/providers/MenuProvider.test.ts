@@ -1,4 +1,5 @@
 import * as assert from 'assert';
+import * as vscode from 'vscode';
 import { MenuProvider } from '../../../providers/MenuProvider';
 import { MenuItem } from '../../../providers/items/MenuItem';
 
@@ -32,6 +33,32 @@ suite('MenuProvider Test Suite', () => {
 			// メニューに特定のセクションが含まれているか確認
 			const labels = children.map(item => item.label);
 			assert.ok(labels.some(label => typeof label === 'string' && label.includes('Guide')));
+		});
+
+		test('Global and Workspace should be expanded by default', async () => {
+			const rootItems = await menuProvider.getChildren();
+
+			// 子項目を一括取得させて往復回数を減らすため、展開状態で返す
+			['Global', 'Workspace'].forEach(label => {
+				const item = rootItems.find(i => i.label === label);
+				assert.ok(item, `${label} should exist`);
+				assert.strictEqual(
+					item!.collapsibleState,
+					vscode.TreeItemCollapsibleState.Expanded
+				);
+			});
+		});
+
+		test('Usage Guide should be collapsed by default', async () => {
+			const rootItems = await menuProvider.getChildren();
+			const usageGuide = rootItems.find(item => item.label === 'Usage Guide');
+
+			// 項目数が多く常用しないため既定で閉じる
+			assert.ok(usageGuide);
+			assert.strictEqual(
+				usageGuide!.collapsibleState,
+				vscode.TreeItemCollapsibleState.Collapsed
+			);
 		});
 
 		test('Should handle element parameter correctly', async () => {

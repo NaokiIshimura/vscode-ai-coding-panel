@@ -5,6 +5,32 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.0] - 2026-09-20
+
+### Added
+- **グローバルテンプレート**: ファイル雛形とプロンプトテンプレートを、ワークスペース単位だけでなく全ワークスペース共通でも管理できるようにしました
+  - Menuビューの Global セクションに **Customize Global Template** と **Customize Global Prompt Templates** を追加し、対応する `aiCodingSidebar.setupGlobalTemplate` / `aiCodingSidebar.setupGlobalPromptTemplates` コマンドを登録しました。どちらもワークスペース未オープンでも実行できます
+  - 設定 `aiCodingSidebar.globalTemplatesPath`（既定は空）を追加しました。空の場合は拡張機能のグローバルストレージを使用します。相対パスはホームディレクトリ基準で解決され `~` も展開されるため、dotfilesリポジトリでテンプレートを管理できます
+  - グローバル配置先はワークスペース側と同じ構成で、ファイル雛形用の `templates` とプロンプトテンプレート用の `prompts` を配下に持ちます
+  - ファイル雛形の解決順を ワークスペース → グローバル → 同梱 にしました。ワークスペースに独自のテンプレートがある場合の挙動は従来どおりです
+  - Editor Viewのプロンプトメニューの **+** ボタンは、ワークスペースとグローバルの双方が利用できる場合に作成先を尋ねるようになりました。ワークスペース未オープン時はグローバルへ作成します
+  - **Customize Global Template** と **Customize Global Prompt Templates** は、特定のファイルをエディタで開く代わりにグローバル配置先のルートをVS Codeの新しいウィンドウで開きます。どのファイルを編集したいかが利用者によるためです。そのウィンドウからは `templates` と `prompts` の両方を扱えます。ワークスペース側の **Customize Template** と **Customize Prompt Templates** は従来どおり先頭のファイルを開きます
+
+### Changed
+- Editor Viewのプロンプトテンプレートメニューが、ワークスペースとグローバルのテンプレートをまとめて表示するようになりました（従来はどちらか一方のみ）
+  - 同名ファイルはワークスペース側が採用されます。テンプレート選択のキーとして使うidを一意に保つためです
+  - グローバル分は説明に `(global)` が付きます
+  - 同梱テンプレートは、どちらの配置先にもテンプレートが無い場合のみ表示されます
+- プロンプトテンプレートの新規作成時に同梱テンプレートをコピーする条件を、「ワークスペースにもグローバルにも1件も無い場合」に変更しました。従来はワークスペースのみを見ていたため、グローバルにテンプレートがある状態でワークスペースに1件作ると同梱分がメニューから消える状態になっていました
+
+### Technical
+- `src/utils/globalTemplatePaths.ts` を追加しました。グローバルのルート・`templates`・`prompts` のパスを解決し、ルートを新しいウィンドウで開く処理を提供します。`globalStorageUri` を持たないcontextでは `undefined` を返すため、モックしたcontextでも動作します
+- `globalStorageUri` のディレクトリはVS Codeが自動作成しないため、書き込み経路では必ず `mkdir` を `recursive: true` で呼びます
+- グローバル配置先は `revealInExplorer` ではなく `vscode.openFolder` に `forceNewWindow: true` を渡して開きます。ワークスペース外のパスは現在のウィンドウのエクスプローラーに表示できず、`forceNewWindow` を省略すると現在のウィンドウが開き直されてしまうためです
+- `workspaceSetup.ts` に `copyBundledTemplates()` を切り出し、ワークスペース用とグローバル用で共用するようにしました。コピー対象のファイル一覧は `templateUtils.ts` の `TEMPLATE_TYPES` から導出するため、テンプレート種別の追加時にコピー漏れが起きません（v1.1.20の修正の原因）
+- `loadTemplate()` はワークスペースの判定をネストする代わりに候補パスを順に探す形になり、ワークスペース未オープンでもグローバル配置先を参照します
+- `PromptTemplate` に `origin`（`workspace` / `global` / `bundled`）を追加し、`validateTemplateName()` は作成先を受け取って実際に作成するディレクトリに対して重複を判定します
+
 ## [1.1.20] - 2026-09-20
 
 ### Fixed
@@ -1995,3 +2021,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.17...v1.1.18
 [1.1.19]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.18...v1.1.19
 [1.1.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.19...v1.1.20
+[1.2.0]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.20...v1.2.0

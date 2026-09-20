@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { setupSettingsJson, setupTemplate, setupClaudeFolder } from '../utils/workspaceSetup';
+import { setupSettingsJson, setupTemplate, setupGlobalTemplate, setupClaudeFolder } from '../utils/workspaceSetup';
 import { CommandDependencies } from './types';
 
 /**
@@ -125,6 +125,14 @@ export function registerSettingsCommands(
             }
             const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
             await setupTemplate(context, workspaceRoot);
+        })
+    );
+
+    // グローバルテンプレート設定コマンド
+    // ワークスペース未オープンでも実行できる
+    context.subscriptions.push(
+        vscode.commands.registerCommand('aiCodingSidebar.setupGlobalTemplate', async () => {
+            await setupGlobalTemplate(context);
         })
     );
 }

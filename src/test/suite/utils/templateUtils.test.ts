@@ -1,13 +1,26 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import { loadTemplate, TemplateType } from '../../../utils/templateUtils';
+import {
+	loadTemplate,
+	TemplateType,
+	WORKSPACE_TEMPLATES_RELATIVE_PATH
+} from '../../../utils/templateUtils';
 
 suite('templateUtils Test Suite', () => {
 	// テスト専用の一時ディレクトリを使用（既存のファイルを破壊しない）
 	const testFixturesDir = path.join(__dirname, '../../fixtures/templates');
 	const extensionPath = path.join(__dirname, '../../../..');
+
+	// ワークスペース側のテンプレートは最優先のため、存在する環境ではテストをスキップする
+	const workspaceTemplatePathFor = (templateType: TemplateType): string | undefined => {
+		const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+		return workspaceRoot
+			? path.join(workspaceRoot, WORKSPACE_TEMPLATES_RELATIVE_PATH, `${templateType}.md`)
+			: undefined;
+	};
 
 	// テスト前にfixturesディレクトリを作成
 	suiteSetup(() => {
@@ -88,6 +101,58 @@ suite('templateUtils Test Suite', () => {
 			assert.ok(result.includes('Test Details'));
 			assert.ok(!result.includes('{{specName}}'));
 			assert.ok(!result.includes('{{details}}'));
+		});
+
+		test('Should prefer the global template over the bundled one', async function () {
+			const workspaceTemplate = workspaceTemplatePathFor('prompt');
+			if (workspaceTemplate && fs.existsSync(workspaceTemplate)) {
+				// ワークスペース側に同名テンプレートがある環境では優先順位が変わるため対象外
+				this.skip();
+				return;
+			}
+
+			const globalRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'global-templates-test-'));
+			try {
+				const globalTemplatesDir = path.join(globalRoot, 'templates');
+				fs.mkdirSync(globalTemplatesDir, { recursive: true });
+				fs.writeFileSync(path.join(globalTemplatesDir, 'prompt.md'), 'global: {{title}}', 'utf8');
+
+				const context = {
+					extensionPath: path.join(testFixturesDir, '..'),
+					globalStorageUri: vscode.Uri.file(globalRoot)
+				} as unknown as vscode.ExtensionContext;
+
+				const result = await loadTemplate(context, { title: 'Test Title' }, 'prompt');
+
+				assert.strictEqual(result, 'global: Test Title');
+			} finally {
+				fs.rmSync(globalRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			}
+		});
+
+		test('Should fall back to the bundled template when the global one is missing', async function () {
+			const workspaceTemplate = workspaceTemplatePathFor('prompt');
+			if (workspaceTemplate && fs.existsSync(workspaceTemplate)) {
+				this.skip();
+				return;
+			}
+
+			const globalRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'global-templates-test-'));
+			try {
+				// templatesディレクトリを作らないまま実行する
+				const context = {
+					extensionPath: path.join(testFixturesDir, '..'),
+					globalStorageUri: vscode.Uri.file(globalRoot)
+				} as unknown as vscode.ExtensionContext;
+
+				const result = await loadTemplate(context, { title: 'Test Title', content: 'Body' }, 'prompt');
+
+				// fixturesの同梱テンプレート（# {{title}}\n\n{{content}}）が使われる
+				assert.ok(result.includes('Test Title'));
+				assert.ok(result.includes('Body'));
+			} finally {
+				fs.rmSync(globalRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+			}
 		});
 
 		test('Should throw error if template file not found', async () => {

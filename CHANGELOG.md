@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4] - 2026-09-21
+
+### Changed
+- **Run button sends the editor content**: The default value of `aiCodingSidebar.editor.runCommand` is now `${commandPrefix} "${editorContent}"`, so the Run button passes the text of the open file instead of asking Claude Code to read it from a path
+  - `${editorContent}` is substituted in the file-open branch as well, which it was not before. The value is the content shown in the editor, including unsaved edits, taken before the send history line is appended
+  - `${editorContent}` is substituted last, so a `${filePath}` or `${commandPrefix}` written inside the file itself is left alone
+  - The previous behavior is still available by setting `aiCodingSidebar.editor.runCommand` to `${commandPrefix} "Execute the instructions described in the file at ${filePath}"`
+- **Plan and Spec command settings were renamed**: `aiCodingSidebar.editor.planCommand` is now `aiCodingSidebar.editor.runPlanCommand`, and `aiCodingSidebar.editor.specCommand` is now `aiCodingSidebar.editor.runSpecCommand`
+  - VS Code builds the title shown in the settings UI from the key, so the entries now read **Run Plan Command** and **Run Spec Command**, which lines them up with **Run Command**
+  - A value already set under the previous key is still used as long as the new key is not set, so an existing customization is not lost. The previous keys are kept in the settings schema and marked as deprecated
+
+### Technical
+- Added `EditorProvider._getCommandTemplate()`, which reads the new key and falls back to the previous one only when the new key has no explicit value. `inspect()` is used rather than `get()`, because `get()` cannot tell a value set by the user from the default that ships with the extension
+
 ## [1.2.3] - 2026-09-20
 
 ### Added
@@ -2600,3 +2614,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.0...v1.2.1
 [1.2.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.1...v1.2.2
 [1.2.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.2...v1.2.3
+[1.2.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.3...v1.2.4

@@ -386,6 +386,60 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.4変更: Runボタンの送信内容とPlan / Specの設定キー名
+
+Editor ViewのRunボタンが送信する内容を「ファイルパス」から「エディタの内容」へ変更し、Plan / Spec のコマンド設定をリネームした：
+
+**Runボタンがエディタの内容を送信する**
+
+| | 変更前 | 変更後 |
+|---|---|---|
+| `aiCodingSidebar.editor.runCommand` の既定値 | `${commandPrefix} "Execute the instructions described in the file at ${filePath}"` | `${commandPrefix} "${editorContent}"` |
+| 送信される内容 | ファイルの相対パス（Claude Codeが読みに行く） | ファイルの内容そのもの |
+
+- 従来の挙動に戻す場合は `aiCodingSidebar.editor.runCommand` に変更前の値を設定する
+
+**既定値の変更だけでは動かない（最も見落としやすい箇所）**
+- `_runTask()` のファイルあり分岐は `${commandPrefix}` と `${filePath}` しか置換していなかったため、既定値を変えるだけでは `${editorContent}` が文字列のまま送信される
+- 同分岐へ `${editorContent}` の置換を追加した。ファイル未オープン時の `runCommandWithoutFile` は従来どおりで変更していない
+
+**置換に使う内容と順序**
+
+| 項目 | 内容 |
+|---|---|
+| 値 | `this._pendingContent ?? this._currentContent ?? ''`。`runTask()` が使う「最新の内容」と同じ取り方で、未保存の編集を含む |
+| タイミング | `_appendSendHistory()` の**前**。エディタに表示されている内容がそのまま送信され、今回のresumeコマンド行は含まれない |
+| 順序 | commandPrefix → filePath → **editorContent を最後**。ファイル内に `${filePath}` 等が書かれていても展開しないため |
+
+- エスケープは既存の `_escapeShellArgument()` を使う。テンプレート側の `"` と合わせて `"'内容'"` となるが、これは `runCommandWithoutFile` の従来からの挙動と同じ
+
+**Plan / Spec のコマンド設定をリネームした**
+
+| 変更前 | 変更後 | 設定画面の表示 |
+|---|---|---|
+| `aiCodingSidebar.editor.planCommand` | `aiCodingSidebar.editor.runPlanCommand` | Run Plan Command |
+| `aiCodingSidebar.editor.specCommand` | `aiCodingSidebar.editor.runSpecCommand` | Run Spec Command |
+
+- VS Codeは設定のタイトルをキーの末尾セグメントから生成するため（v1.2.3参照）、表示名を変えるにはキー名を変えるしかない
+- `Run Command` と並びが揃い、3つのボタンに対応する設定であることが表からも読み取れる
+
+**旧キーの値を引き継ぐ（リネームでユーザー設定を失わせないため）**
+- `EditorProvider._getCommandTemplate()` を追加し、**新キーに明示的な値が無い場合に限り**旧キーの値を返す
+- `get()` はユーザーが設定した値と拡張機能の既定値を区別できないため、`inspect()` の `workspaceFolderValue` / `workspaceValue` / `globalValue` で判定する
+- 旧キーは `package.json` に `deprecationMessage` 付きで残す。スキーマから消すとVS Codeが「不明な設定」として警告するため。非推奨の設定は設定画面の一覧に出ないので、表示されるのは新キーのみ
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/providers/EditorProvider.ts` | `_getCommandTemplate()` を追加。Plan / Spec の2箇所で使用。Run分岐に `${editorContent}` の置換を追加し、`runCommand` のフォールバック値を変更 |
+| `package.json` | `runCommand` の既定値と説明、`runPlanCommand` / `runSpecCommand` の追加、旧キー2件への `deprecationMessage` |
+| `README.md` / `README-JA.md` / `docs/editor-view.md` | 設定表・設定例・プレースホルダー表 |
+
+**ローカルでのテスト実行について**
+- v1.1.15に記載のとおり、macOSローカルの `npm test` はmochaの結果が親プロセスへ返らず、失敗しても成功扱いになる
+- 本バージョンでは `vscode` をスタブ化したNode上で `EditorProvider` を生成し、`_getCommandTemplate()`（旧キーからの引き継ぎ5ケース）と `_runTask()`（既定値での展開・未保存内容の優先・シングルクォートのエスケープ・内容中プレースホルダーの非展開・`${filePath}` を使うカスタム設定・ファイル未オープン時の6ケース）を直接呼び出して確認している
+
 ### v1.2.3新機能: テンプレート読み込み元の無効化設定
 
 Editor Settings に、テンプレートの読み込み元を個別に無効化する4つのboolean設定を追加した。いずれも既定は `false`（＝読み込む。従来どおりの挙動）：
@@ -1974,8 +2028,8 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 - `aiCodingSidebar.editor.commandPrefix`: コマンドプレフィックス（デフォルト: `claude`）
 - `aiCodingSidebar.editor.runCommand`: Runボタン実行コマンド
 - `aiCodingSidebar.editor.runCommandWithoutFile`: ファイルなし時のRunコマンド
-- `aiCodingSidebar.editor.planCommand`: Planボタン実行コマンド
-- `aiCodingSidebar.editor.specCommand`: Specボタン実行コマンド
+- `aiCodingSidebar.editor.runPlanCommand`: Planボタン実行コマンド（旧 `aiCodingSidebar.editor.planCommand`）
+- `aiCodingSidebar.editor.runSpecCommand`: Specボタン実行コマンド（旧 `aiCodingSidebar.editor.specCommand`）
 - `aiCodingSidebar.editor.recordResumeCommand`: Spec / Plan / Run の実行時にセッションIDを指定し、resumeコマンドを送信履歴へ記録するか（デフォルト: `true`）
 - `aiCodingSidebar.editor.disableWorkspaceEditorTemplates`: ワークスペースのファイル雛形を読み込まないか（デフォルト: `false`）
 - `aiCodingSidebar.editor.disableGlobalEditorTemplates`: グローバルのファイル雛形を読み込まないか（デフォルト: `false`）

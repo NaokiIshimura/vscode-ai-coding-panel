@@ -138,6 +138,41 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
+     * コマンドテンプレートを設定から取得する
+     *
+     * 旧キーへ値を設定しているユーザーの設定が失われないよう、
+     * 新キーが未設定の場合に限り旧キーの値を引き継ぐ
+     *
+     * @param config aiCodingSidebarの設定
+     * @param section 新しい設定キー（aiCodingSidebar配下）
+     * @param deprecatedSection 旧設定キー（aiCodingSidebar配下）
+     * @param defaultValue いずれも未設定の場合に使う既定値
+     */
+    private _getCommandTemplate(
+        config: vscode.WorkspaceConfiguration,
+        section: string,
+        deprecatedSection: string,
+        defaultValue: string
+    ): string {
+        const current = config.inspect<string>(section);
+        const isConfigured = current?.workspaceFolderValue !== undefined
+            || current?.workspaceValue !== undefined
+            || current?.globalValue !== undefined;
+
+        if (!isConfigured) {
+            const deprecated = config.inspect<string>(deprecatedSection);
+            const deprecatedValue = deprecated?.workspaceFolderValue
+                ?? deprecated?.workspaceValue
+                ?? deprecated?.globalValue;
+            if (deprecatedValue !== undefined) {
+                return deprecatedValue;
+            }
+        }
+
+        return config.get<string>(section, defaultValue);
+    }
+
+    /**
      * Claude Codeのセッションを後から再開できるよう、コマンドプレフィックスへ --session-id を付与する
      *
      * 以下の場合はセッションIDを付与せず、プレフィックスをそのまま返す
@@ -369,7 +404,8 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         // Get the plan command template from settings
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
                         const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
-                        const commandTemplate = config.get<string>('editor.planCommand', '${commandPrefix} "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."');
+                        const commandTemplate = this._getCommandTemplate(config, 'editor.runPlanCommand', 'editor.planCommand',
+                            '${commandPrefix} "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."');
 
                         // Claude Codeのセッションを後から再開できるようセッションIDを付与する
                         const resumeSession = this._prepareResumeSession(commandPrefix);
@@ -414,7 +450,8 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         // Get the spec command template from settings
                         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
                         const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
-                        const commandTemplate = config.get<string>('editor.specCommand', '${commandPrefix} "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}."');
+                        const commandTemplate = this._getCommandTemplate(config, 'editor.runSpecCommand', 'editor.specCommand',
+                            '${commandPrefix} "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}."');
 
                         // Claude Codeのセッションを後から再開できるようセッションIDを付与する
                         const resumeSession = this._prepareResumeSession(commandPrefix);
@@ -606,15 +643,21 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             // Get the run command template from settings
             const config = vscode.workspace.getConfiguration('aiCodingSidebar');
             const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
-            const commandTemplate = config.get<string>('editor.runCommand', '${commandPrefix} "Execute the instructions described in the file at ${filePath}"');
+            const commandTemplate = config.get<string>('editor.runCommand', '${commandPrefix} "${editorContent}"');
 
             // Claude Codeのセッションを後から再開できるようセッションIDを付与する
             const resumeSession = this._prepareResumeSession(commandPrefix);
 
+            // 送信履歴を追記する前の内容（エディタに表示されている内容）を${editorContent}に使う
+            const latestContent = this._pendingContent ?? this._currentContent ?? '';
+
             // Replace placeholders with safely escaped values
+            // ${editorContent}は最後に置換する（内容に含まれる${...}を展開しないため）
             const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
+            const escapedContent = this._escapeShellArgument(latestContent.trim());
             let command = commandTemplate.replace(/\$\{commandPrefix\}/g, resumeSession.commandPrefix);
             command = command.replace(/\$\{filePath\}/g, escapedPath);
+            command = command.replace(/\$\{editorContent\}/g, escapedContent);
 
             // 送信した記録としてファイルへ日時とresumeコマンドを追記する
             await this._appendSendHistory('run', resumeSession.resumeCommand);

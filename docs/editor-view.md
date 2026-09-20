@@ -40,9 +40,9 @@ The Run button executes a customizable command in the Terminal view.
 
 ```json
 {
-  "aiCodingSidebar.editor.runCommand": "claude \"${filePath}\"",
+  "aiCodingSidebar.editor.runCommand": "claude \"${editorContent}\"",
   "aiCodingSidebar.editor.runCommandWithoutFile": "claude \"${editorContent}\"",
-  "aiCodingSidebar.editor.planCommand": "claude \"Review the file at ${filePath} and create an implementation plan.\""
+  "aiCodingSidebar.editor.runPlanCommand": "claude \"Review the file at ${filePath} and create an implementation plan.\""
 }
 ```
 
@@ -51,7 +51,7 @@ The Run button executes a customizable command in the Terminal view.
 | Variable | Description |
 |----------|-------------|
 | `${filePath}` | Path to the current file |
-| `${editorContent}` | Content of the editor (when no file is open) |
+| `${editorContent}` | Content of the editor |
 
 ## Templates
 

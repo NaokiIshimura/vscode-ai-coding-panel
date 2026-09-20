@@ -5,6 +5,20 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.4] - 2026-09-21
+
+### Changed
+- **Runボタンがエディタの内容を送信**: `aiCodingSidebar.editor.runCommand` の既定値を `${commandPrefix} "${editorContent}"` に変更しました。ファイルパスを渡して読ませるのではなく、開いているファイルの内容をそのまま送信します
+  - 従来は展開されなかったファイルあり時の `${editorContent}` を展開するようにしました。値はエディタに表示されている内容（未保存の編集を含む）で、送信履歴を追記する前の状態です
+  - `${editorContent}` は最後に置換します。ファイル内に `${filePath}` や `${commandPrefix}` と書かれていても展開されません
+  - 従来の挙動が必要な場合は、`aiCodingSidebar.editor.runCommand` に `${commandPrefix} "Execute the instructions described in the file at ${filePath}"` を設定してください
+- **Plan / Specのコマンド設定をリネーム**: `aiCodingSidebar.editor.planCommand` を `aiCodingSidebar.editor.runPlanCommand` に、`aiCodingSidebar.editor.specCommand` を `aiCodingSidebar.editor.runSpecCommand` に変更しました
+  - VS Codeは設定画面の表示名をキー名から生成するため、表示が **Run Plan Command** / **Run Spec Command** となり、**Run Command** と並びが揃います
+  - 旧キーに設定済みの値は、新キーが未設定である限り引き続き使用されるため、カスタマイズが失われることはありません。旧キーは非推奨として設定スキーマに残しています
+
+### Technical
+- `EditorProvider._getCommandTemplate()` を追加しました。新キーに明示的な値が無い場合に限り旧キーへフォールバックします。`get()` ではユーザーが設定した値と拡張機能の既定値を区別できないため、`inspect()` を使用しています
+
 ## [1.2.3] - 2026-09-20
 
 ### Added
@@ -2071,3 +2085,4 @@ v0.8.33以前からアップグレードする場合:
 [1.2.1]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.0...v1.2.1
 [1.2.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.1...v1.2.2
 [1.2.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.2...v1.2.3
+[1.2.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.3...v1.2.4

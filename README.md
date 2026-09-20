@@ -288,10 +288,10 @@ If the default relative path doesn't exist, Plans displays a "Create directory" 
 | `plans.sortBy` | Sort files and directories in Plans by | string | `"created"` | `"name"` (file name)<br>`"created"` (creation date)<br>`"modified"` (modified date) |
 | `plans.sortOrder` | Sort order for files and directories in Plans | string | `"ascending"` | `"ascending"` (ascending)<br>`"descending"` (descending) |
 | `editor.commandPrefix` | Command prefix substituted for `${commandPrefix}` in the command templates below | string | `"claude"` | `"claude"`, `"claude --permission-mode auto"`, `"claude --model opus"` |
-| `editor.runCommand` | Command template to execute when clicking the Run button in the Editor view | string | `claude "Execute the instructions described in the file at ${filePath}"` | Use `${filePath}` as placeholder for the file path |
+| `editor.runCommand` | Command template to execute when clicking the Run button in the Editor view | string | `claude "${editorContent}"` | Use `${editorContent}` as placeholder for the editor content, `${filePath}` for the file path |
 | `editor.runCommandWithoutFile` | Command template to execute when clicking the Run button without a file open | string | `claude "${editorContent}"` | Use `${editorContent}` as placeholder for the editor content |
-| `editor.planCommand` | Command template to execute when clicking the Plan button | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
-| `editor.specCommand` | Command template to execute when clicking the Spec button | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
+| `editor.runPlanCommand` | Command template to execute when clicking the Plan button | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
+| `editor.runSpecCommand` | Command template to execute when clicking the Spec button | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | Use `${filePath}` as placeholder for the file path |
 | `editor.recordSendTimestamp` | Append the send date and time to the open file when Spec / Plan / Run is pressed | boolean | `true` | The history is added to a `## sent history` section at the end of the file |
 | `editor.recordResumeCommand` | Start Spec / Plan / Run with a generated session ID and record the matching `claude --resume <session-id>` command | boolean | `true` | Requires `editor.recordSendTimestamp`. Skipped while Claude Code is already running, and when `editor.commandPrefix` is not `claude` or already specifies a session |
 | `editor.promptTemplatesPath` | Directory that holds the prompt templates inserted from the Editor view (relative to the workspace root) | string | `".vscode/ai-coding-panel/prompts"` | Each `.md` file directly under it becomes one template. When it holds no Markdown file, the templates bundled with the extension are used |
@@ -318,10 +318,10 @@ Add the following to `.vscode/settings.json`:
   "aiCodingSidebar.plans.sortBy": "created",
   "aiCodingSidebar.plans.sortOrder": "ascending",
   "aiCodingSidebar.editor.commandPrefix": "claude",
-  "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"Execute the instructions described in the file at ${filePath}\"",
+  "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"${editorContent}\"",
   "aiCodingSidebar.editor.runCommandWithoutFile": "${commandPrefix} \"${editorContent}\"",
-  "aiCodingSidebar.editor.planCommand": "${commandPrefix} \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",
-  "aiCodingSidebar.editor.specCommand": "${commandPrefix} \"Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}.\"",
+  "aiCodingSidebar.editor.runPlanCommand": "${commandPrefix} \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",
+  "aiCodingSidebar.editor.runSpecCommand": "${commandPrefix} \"Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}.\"",
   "aiCodingSidebar.terminal.fontSize": 12,
   "aiCodingSidebar.terminal.cursorStyle": "block"
 }
@@ -386,14 +386,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.3.vsix
+   code --install-extension ai-coding-sidebar-1.2.4.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.3.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.4.vsix
 ```
 
 #### Build the package yourself
@@ -407,7 +407,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.3.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.3.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.4.vsix
    ```
 4. Restart VS Code.
 

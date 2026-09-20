@@ -64,7 +64,7 @@ Edit Markdown prompt files and execute Claude Code commands directly from the pa
 | **Two-Row Layout** | The view is split into two bars: the top bar holds Edit / Save on the left and Spec / Plan / Run on the right, and the bottom bar holds the prompts button on the left and the Next button on the right |
 | Save button | Displays in the top bar with a color change indicating unsaved changes. Creates new file if none is open (saves to current Plans directory) |
 | **Next button** | Red **Next** button in a dedicated bar at the bottom of the view. Creates a new timestamped `PROMPT.md`, opens it, and puts the caret in the text area so you can start typing right away. Also available with `Cmd+M` / `Ctrl+M` |
-| **prompts button** | **prompts** button at the left end of the bottom bar. Clicking it opens a template menu just above the button, and the template you pick is inserted at the caret (pressing the button again, clicking elsewhere, or pressing `Escape` closes the menu). The **+** button in the menu header creates a new template: choose where to create it (Workspace or Global), enter a name, and the file is created under that directory and opened in the VS Code editor. Templates live in `.vscode/ai-coding-panel/prompts/*.md` for the workspace and in `<globalTemplatesPath>/prompts/*.md` for every workspace (one file per template). Both are listed together, with the global ones marked `(global)`; a file name present in both is taken from the workspace. When neither holds a Markdown file, the templates bundled with the extension are used. The file content is inserted as it is, so a leading `# heading` is inserted too - the heading is only used as the name in the menu. `{{filename}}`, `{{filepath}}`, `{{dirpath}}`, `{{datetime}}`, and `{{timestamp}}` are replaced with the values of the open file. The same action is available from the command palette as **Insert Prompt Template**, which shows a quick pick instead. Run **Customize Prompt Templates** from the Menu view to copy the bundled templates into the workspace, or **Customize Global Prompt Templates** to copy them into the global directory |
+| **prompts button** | **prompts** button at the left end of the bottom bar. Clicking it opens a template menu just above the button, and the template you pick is inserted at the caret (pressing the button again, clicking elsewhere, or pressing `Escape` closes the menu). The **+** button in the menu header creates a new template: choose where to create it (Workspace or Global), enter a name, and the file is created under that directory and opened in the VS Code editor. Templates live in `.vscode/ai-coding-panel/prompts/*.md` for the workspace and in `<globalTemplatesPath>/prompts/*.md` for every workspace (one file per template). Both are listed together, with the global ones marked `(global)`; a file name present in both is taken from the workspace. When neither holds a Markdown file, the templates bundled with the extension are used. Either source can be left out of the list with `editor.disableWorkspacePromptTemplates` or `editor.disableGlobalPromptTemplates`. The file content is inserted as it is, so a leading `# heading` is inserted too - the heading is only used as the name in the menu. `{{filename}}`, `{{filepath}}`, `{{dirpath}}`, `{{datetime}}`, and `{{timestamp}}` are replaced with the values of the open file. The same action is available from the command palette as **Insert Prompt Template**, which shows a quick pick instead. Run **Customize Prompt Templates** from the Workspace section of the Menu view to copy the bundled templates into the workspace, or the item with the same name in the Global section to copy them into the global directory |
 | Button icons | Every button uses a VS Code codicon (Spec: book, Plan: checklist, Run: play, Next: new file, Edit: pencil, Save: floppy disk, prompts: snippet), matching the Quick Start button in Plans View |
 | Customizable commands | Configure Run, Plan, and Spec commands in settings to match your workflow |
 | **Clickable URLs** | URLs in the text are underlined and open in the default browser on click. Right-click a URL to choose **Open in Default Browser** or **Open in Integrated Browser** (VS Code's Simple Browser). Right-clicking anywhere else shows the standard VS Code menu |
@@ -194,7 +194,7 @@ Use the following variables inside a template:
 - `{{dirpath}}`: Directory path relative to workspace root (for example, .claude/plans)
 
 ### Global templates
-Templates can also be shared across every workspace. Run **Customize Global Template** from the Global section of the Menu view to create the same four files under the global directory, and edit them there. The global directory is then opened in a new VS Code window, because a path outside the workspace cannot be shown in the VS Code explorer of the current window. The window opens on the root, so `templates` and `prompts` are both there.
+Templates can also be shared across every workspace. Run **Customize Editor Templates** from the Global section of the Menu view to create the same four files under the global directory, and edit them there. The global directory is then opened in a new VS Code window, because a path outside the workspace cannot be shown in the VS Code explorer of the current window. The window opens on the root, so `templates` and `prompts` are both there.
 
 The global directory is the global storage directory of this extension. Set `aiCodingSidebar.globalTemplatesPath` in your **User** settings to place it somewhere else, such as a dotfiles repository. It must contain a `templates` sub directory for the file templates and a `prompts` sub directory for the prompt templates:
 
@@ -214,12 +214,14 @@ The extension bundles these snippets for the **prompts** button in the Editor vi
 | `refactor.md` | A refactor that keeps the behavior unchanged |
 | `review.md` | A review that reports bugs and missing error handling first |
 
-They are listed only while neither the workspace nor the global directory holds a Markdown file. **Customize Prompt Templates** and **Customize Global Prompt Templates** copy them and never overwrite an existing file, so run one of them again after an update to pick up a snippet that was added to the bundle.
+They are listed only while neither the workspace nor the global directory holds a Markdown file. **Customize Prompt Templates** in the Workspace section and the item with the same name in the Global section copy them and never overwrite an existing file, so run one of them again after an update to pick up a snippet that was added to the bundle.
 
 ### Template priority
 1. Workspace templates in `.vscode/ai-coding-panel/templates/` (if present)
 2. Global templates in `<globalTemplatesPath>/templates/` (if present)
 3. Built-in extension templates
+
+Steps 1 and 2 can be turned off individually with `editor.disableWorkspaceEditorTemplates` and `editor.disableGlobalEditorTemplates`, which makes the next step take over. Step 3 is always kept, so file creation never breaks. The same applies to the prompt templates through `editor.disableWorkspacePromptTemplates` and `editor.disableGlobalPromptTemplates`; when both are off, the bundled snippets are listed. These settings only affect what is read - **Customize Editor Templates**, **Customize Prompt Templates**, and the **+** button still create files in the directory you pick.
 
 ### Template examples
 - Capture prompts for AI assistants in the `overview` section.
@@ -293,6 +295,10 @@ If the default relative path doesn't exist, Plans displays a "Create directory" 
 | `editor.recordSendTimestamp` | Append the send date and time to the open file when Spec / Plan / Run is pressed | boolean | `true` | The history is added to a `## sent history` section at the end of the file |
 | `editor.recordResumeCommand` | Start Spec / Plan / Run with a generated session ID and record the matching `claude --resume <session-id>` command | boolean | `true` | Requires `editor.recordSendTimestamp`. Skipped while Claude Code is already running, and when `editor.commandPrefix` is not `claude` or already specifies a session |
 | `editor.promptTemplatesPath` | Directory that holds the prompt templates inserted from the Editor view (relative to the workspace root) | string | `".vscode/ai-coding-panel/prompts"` | Each `.md` file directly under it becomes one template. When it holds no Markdown file, the templates bundled with the extension are used |
+| `editor.disableWorkspaceEditorTemplates` | Do not load the file templates in the workspace | boolean | `false` | The global templates, and then the bundled ones, are used instead |
+| `editor.disableGlobalEditorTemplates` | Do not load the file templates in the global directory | boolean | `false` | The bundled templates are always kept as the last fallback, so file creation never breaks |
+| `editor.disableWorkspacePromptTemplates` | Do not list the prompt templates in the workspace | boolean | `false` | A global template hidden by a workspace one with the same name becomes visible |
+| `editor.disableGlobalPromptTemplates` | Do not list the prompt templates in the global directory | boolean | `false` | When both sources are disabled, the bundled snippets are listed |
 | `globalTemplatesPath` | Directory that holds the templates shared across every workspace (with `templates` and `prompts` sub directories). When empty, the global storage directory of this extension is used. A relative path is resolved from the home directory, and `~` is expanded. Set this in your **User** settings | string | `""` | `"~/ai-coding-guide/ai-coding-panel"` keeps the templates in a dotfiles repository |
 | `browser.defaultUrl` | URL opened by the Open Integrated Browser action in the Menu view | string | `"about:blank"` | `"about:blank"` opens an empty tab; set a URL such as `"http://localhost:3000"` to always open it |
 | `terminal.shell` | Shell executable path for Terminal view | string | `""` | Leave empty to use system default shell |
@@ -380,14 +386,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.2.vsix
+   code --install-extension ai-coding-sidebar-1.2.3.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.2.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.3.vsix
 ```
 
 #### Build the package yourself
@@ -401,7 +407,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.2.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.2.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.3.vsix
    ```
 4. Restart VS Code.
 

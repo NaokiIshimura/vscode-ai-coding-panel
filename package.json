@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -456,6 +456,26 @@
           "type": "string",
           "default": ".vscode/ai-coding-panel/prompts",
           "description": "Directory that holds the prompt templates inserted from the Editor view (relative to the workspace root). When it contains no Markdown file, the templates bundled with the extension are used."
+        },
+        "aiCodingSidebar.editor.disableWorkspaceEditorTemplates": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not load the file templates in the workspace (.vscode/ai-coding-panel/templates). The global templates, and then the bundled ones, are used instead."
+        },
+        "aiCodingSidebar.editor.disableGlobalEditorTemplates": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not load the file templates in the global directory (<globalTemplatesPath>/templates). The bundled templates are always kept as the last fallback."
+        },
+        "aiCodingSidebar.editor.disableWorkspacePromptTemplates": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not list the prompt templates in the workspace (editor.promptTemplatesPath)."
+        },
+        "aiCodingSidebar.editor.disableGlobalPromptTemplates": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not list the prompt templates in the global directory (<globalTemplatesPath>/prompts)."
         },
         "aiCodingSidebar.globalTemplatesPath": {
           "type": "string",

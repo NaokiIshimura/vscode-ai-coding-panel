@@ -3,6 +3,10 @@ import * as path from 'path';
 import { promises as fsPromises } from 'fs';
 import { TemplateService, TemplateVariables } from './TemplateService';
 import { getGlobalPromptTemplatesDir } from '../utils/globalTemplatePaths';
+import {
+    TemplateSourceSettingsReader,
+    readTemplateSourceSettings
+} from '../utils/templateSourceSettings';
 
 /**
  * テンプレートの作成先
@@ -50,7 +54,9 @@ const INVALID_FILE_NAME_PATTERN = /[:*?"<>|]/;
 export class PromptTemplateService {
     constructor(
         private readonly context: vscode.ExtensionContext,
-        private readonly templateService: TemplateService
+        private readonly templateService: TemplateService,
+        // テストから読み込み元の設定を差し替えられるようにしている
+        private readonly readSettings: TemplateSourceSettingsReader = readTemplateSourceSettings
     ) {}
 
     /**
@@ -95,34 +101,58 @@ export class PromptTemplateService {
      * 排他（どちらか片方だけ）にすると、グローバルへ共通スニペットを置いても
      * ワークスペース側に1件でもあった時点で共通分が消えてしまい実用にならないため。
      *
-     * 同梱分はどちらにも1件も無い場合のみ返す。
+     * 同梱分は有効な読み込み元に1件も無い場合のみ返す。
      * ユーザー定義と混在させると同名ファイルの優先順位が分かりづらくなるため。
      *
      * 並び順はワークスペース分→グローバル分で、各グループ内はファイル名昇順。
      */
     async listTemplates(): Promise<PromptTemplate[]> {
-        const workspaceDir = this.getWorkspaceTemplatesDir();
-        const globalDir = this.getGlobalTemplatesDir();
+        const sources = this.getEnabledSourceDirs();
 
-        const workspaceTemplates = workspaceDir
-            ? await this.readTemplatesFrom(workspaceDir, 'workspace')
-            : [];
-        const globalTemplates = globalDir
-            ? await this.readTemplatesFrom(globalDir, 'global')
-            : [];
+        // idは選択キーのため一意にする必要がある。同名は先勝ち（ワークスペース優先）
+        const usedIds = new Set<string>();
+        const merged: PromptTemplate[] = [];
 
-        // idは選択キーのため一意にする必要がある。同名はワークスペース側を残す
-        const usedIds = new Set(workspaceTemplates.map(template => template.id));
-        const merged = [
-            ...workspaceTemplates,
-            ...globalTemplates.filter(template => !usedIds.has(template.id))
-        ];
+        for (const source of sources) {
+            const templates = await this.readTemplatesFrom(source.dir, source.origin);
+            for (const template of templates) {
+                if (usedIds.has(template.id)) {
+                    continue;
+                }
+                usedIds.add(template.id);
+                merged.push(template);
+            }
+        }
 
         if (merged.length > 0) {
             return merged;
         }
 
         return this.readTemplatesFrom(this.getBundledTemplatesDir(), 'bundled');
+    }
+
+    /**
+     * 一覧・重複判定の対象となるディレクトリを優先順に返す
+     *
+     * 設定で無効化された読み込み元は含めない。
+     * `listTemplates()`と`hasNoUserTemplates()`で判定基準を揃えるために共通化している
+     * （ずれると「1件作った瞬間に同梱分が一覧から消える」不具合が再発する）
+     */
+    private getEnabledSourceDirs(): { dir: string; origin: PromptTemplateTarget }[] {
+        const settings = this.readSettings();
+        const sources: { dir: string; origin: PromptTemplateTarget }[] = [];
+
+        const workspaceDir = this.getWorkspaceTemplatesDir();
+        if (settings.workspacePromptTemplates && workspaceDir) {
+            sources.push({ dir: workspaceDir, origin: 'workspace' });
+        }
+
+        const globalDir = this.getGlobalTemplatesDir();
+        if (settings.globalPromptTemplates && globalDir) {
+            sources.push({ dir: globalDir, origin: 'global' });
+        }
+
+        return sources;
     }
 
     /**
@@ -289,17 +319,17 @@ export class PromptTemplateService {
     }
 
     /**
-     * ユーザー定義のテンプレート（ワークスペース・グローバル）が1件も無いかどうか
+     * 一覧に出るユーザー定義のテンプレートが1件も無いかどうか
+     *
+     * 判定対象は`listTemplates()`と同じく有効な読み込み元のみ。
+     * 無効化された読み込み元にファイルがあっても一覧には出ないため、
+     * ここで数えると同梱分のコピーが行われず一覧が空になってしまう
      */
     private async hasNoUserTemplates(): Promise<boolean> {
-        const workspaceDir = this.getWorkspaceTemplatesDir();
-        if (workspaceDir && (await this.readMarkdownFileNames(workspaceDir)).length > 0) {
-            return false;
-        }
-
-        const globalDir = this.getGlobalTemplatesDir();
-        if (globalDir && (await this.readMarkdownFileNames(globalDir)).length > 0) {
-            return false;
+        for (const source of this.getEnabledSourceDirs()) {
+            if ((await this.readMarkdownFileNames(source.dir)).length > 0) {
+                return false;
+            }
         }
 
         return true;

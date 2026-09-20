@@ -287,10 +287,10 @@ Editor Viewの **prompts** ボタン向けに、以下のスニペットを同�
 | `plans.sortBy` | Plansのファイル・ディレクトリのソート基準 | string | `"created"` | `"name"`: ファイル名<br>`"created"`: 作成日時<br>`"modified"`: 更新日時 |
 | `plans.sortOrder` | Plansのファイル・ディレクトリのソート順序 | string | `"ascending"` | `"ascending"`: 昇順<br>`"descending"`: 降順 |
 | `editor.commandPrefix` | 以下のコマンドテンプレート内の`${commandPrefix}`に展開されるコマンドプレフィックス | string | `"claude"` | `"claude"`, `"claude --permission-mode auto"`, `"claude --model opus"` |
-| `editor.runCommand` | Editorビューのrunボタンで実行されるコマンドテンプレート | string | `claude "Execute the instructions described in the file at ${filePath}"` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
+| `editor.runCommand` | Editorビューのrunボタンで実行されるコマンドテンプレート | string | `claude "${editorContent}"` | `${editorContent}`をエディタ内容、`${filePath}`をファイルパスのプレースホルダーとして使用 |
 | `editor.runCommandWithoutFile` | ファイル未開時にrunボタンで実行されるコマンドテンプレート | string | `claude "${editorContent}"` | `${editorContent}`をエディタ内容のプレースホルダーとして使用 |
-| `editor.planCommand` | Planボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
-| `editor.specCommand` | Specボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
+| `editor.runPlanCommand` | Planボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
+| `editor.runSpecCommand` | Specボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用 |
 | `editor.recordSendTimestamp` | Spec / Plan / Run の実行時に、開いているファイルへ送信日時を追記するか | boolean | `true` | ファイル末尾の`## sent history`セクションに追記される |
 | `editor.recordResumeCommand` | Spec / Plan / Run の実行時にセッションIDを指定し、`claude --resume <session-id>`を記録するか | boolean | `true` | `editor.recordSendTimestamp`が有効な場合のみ。Claude Code起動中や、`editor.commandPrefix`が`claude`以外／既にセッション指定を含む場合は付与しない |
 | `editor.promptTemplatesPath` | Editor Viewへ挿入するプロンプトテンプレートの配置ディレクトリ（ワークスペースルートからの相対パス） | string | `".vscode/ai-coding-panel/prompts"` | 直下の`.md`ファイル1つが1テンプレート。Markdownファイルが無い場合は拡張機能に同梱のテンプレートを使用する |
@@ -317,10 +317,10 @@ Editor Viewの **prompts** ボタン向けに、以下のスニペットを同�
   "aiCodingSidebar.plans.sortBy": "created",
   "aiCodingSidebar.plans.sortOrder": "ascending",
   "aiCodingSidebar.editor.commandPrefix": "claude",
-  "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"Execute the instructions described in the file at ${filePath}\"",
+  "aiCodingSidebar.editor.runCommand": "${commandPrefix} \"${editorContent}\"",
   "aiCodingSidebar.editor.runCommandWithoutFile": "${commandPrefix} \"${editorContent}\"",
-  "aiCodingSidebar.editor.planCommand": "${commandPrefix} \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",
-  "aiCodingSidebar.editor.specCommand": "${commandPrefix} \"Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}.\"",
+  "aiCodingSidebar.editor.runPlanCommand": "${commandPrefix} \"Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}.\"",
+  "aiCodingSidebar.editor.runSpecCommand": "${commandPrefix} \"Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}.\"",
   "aiCodingSidebar.terminal.fontSize": 12,
   "aiCodingSidebar.terminal.cursorStyle": "block"
 }
@@ -385,14 +385,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.3.vsix
+   code --install-extension ai-coding-sidebar-1.2.4.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.2.3.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.4.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -406,7 +406,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.3.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.3.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.4.vsix
    ```
 4. VS Codeを再起動
 

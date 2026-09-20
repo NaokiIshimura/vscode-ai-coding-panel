@@ -57,7 +57,7 @@ export async function setupSettingsJson(workspaceRoot: string): Promise<void> {
 // テンプレートを設定するヘルパー関数
 export async function setupTemplate(context: vscode.ExtensionContext, workspaceRoot: string): Promise<void> {
     const templatesDir = path.join(workspaceRoot, '.vscode', 'ai-coding-panel', 'templates');
-    const templateFiles = ['task.md', 'spec.md', 'prompt.md'];
+    const templateFiles = ['task.md', 'spec.md', 'prompt.md', 'quick_start.md'];
 
     try {
         // .vscode/ai-coding-panel/templatesディレクトリを作成（存在しない場合）

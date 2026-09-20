@@ -146,12 +146,21 @@ suite('workspaceSetup Test Suite', () => {
 			fs.writeFileSync(path.join(extensionTemplatesDir, 'task.md'), '# Task Template', 'utf8');
 			fs.writeFileSync(path.join(extensionTemplatesDir, 'spec.md'), '# Spec Template', 'utf8');
 			fs.writeFileSync(path.join(extensionTemplatesDir, 'prompt.md'), '# Prompt Template', 'utf8');
+			fs.writeFileSync(path.join(extensionTemplatesDir, 'quick_start.md'), '# Quick Start Template', 'utf8');
 
 			try {
 				await setupTemplate(context, testWorkspaceRoot);
 
 				const templatesDir = path.join(testWorkspaceRoot, '.vscode', 'ai-coding-panel', 'templates');
 				assert.ok(fs.existsSync(templatesDir));
+
+				// 4つのテンプレートファイルがすべてコピーされていることを確認
+				for (const templateFile of ['task.md', 'spec.md', 'prompt.md', 'quick_start.md']) {
+					assert.ok(
+						fs.existsSync(path.join(templatesDir, templateFile)),
+						`Template file not copied: ${templateFile}`
+					);
+				}
 			} finally {
 				// テスト用ディレクトリのみをクリーンアップ（実際のプロジェクトファイルは保護）
 				if (fs.existsSync(testExtensionPath)) {

@@ -386,6 +386,39 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.1.20バグ修正: Customize Templateで`quick_start.md`がコピーされない
+
+Menu Viewの「Customize Template」（`utils/workspaceSetup.ts` の `setupTemplate()`）がワークスペースへコピーする対象に `quick_start.md` が含まれておらず、Quick Startのテンプレートだけワークスペース側でカスタマイズできなかった問題を修正：
+
+**Quick Start自体は壊れていない（最も誤解しやすい箇所）**
+- `loadTemplate()`（`utils/templateUtils.ts`）は「ワークスペースの `.vscode/ai-coding-panel/templates/<type>.md` を優先し、無ければ拡張機能同梱の `templates/<type>.md` にフォールバック」する2段構成
+- そのためワークスペース側に `quick_start.md` が無くても Quick Start は同梱テンプレートで正常に動作していた
+- 壊れていたのは**カスタマイズ経路のみ**。「Customize Template」を実行しても `quick_start.md` だけ作られないため、ユーザーが編集する起点が存在しなかった
+
+**原因**
+- v1.0.20で `templates/quick_start.md` と `TemplateType` の `'quick_start'` を追加した際、`setupTemplate()` の `templateFiles` 配列への追加が漏れていた
+- v1.1.16の「今回のスコープ外（別タスク）」に既知事項として記載されていたものを本バージョンで解消
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/utils/workspaceSetup.ts` | `setupTemplate()` の `templateFiles` に `'quick_start.md'` を追加（3→4ファイル） |
+| `src/test/suite/utils/workspaceSetup.test.ts` | フィクスチャに `quick_start.md` を追加し、4ファイルすべてがコピーされることを検証 |
+| `README.md` / `README-JA.md` | Template Featureの作成ファイル一覧に `quick_start.md` を追加 |
+
+**既存ワークスペースへの反映**
+- `setupTemplate()` は「存在しない場合のみ作成」する仕様のため、カスタマイズ済みの `task.md` / `spec.md` / `prompt.md` は上書きされない
+- 既存ワークスペースで `quick_start.md` を得るには「Customize Template」を再実行する
+
+**テンプレート一覧が2箇所に分かれている点に注意**
+- `setupTemplate()` の `templateFiles`（コピー対象のファイル名配列）と `templateUtils.ts` の `TemplateType`（読み込み時の種別ユニオン型）は連動しておらず、手動同期に依存している
+- 新しいテンプレート種別を追加する際は**両方**を更新する必要がある。本バージョンの不具合はこの同期漏れが原因
+
+**ローカルでのテスト実行について**
+- v1.1.15に記載のとおり、macOSローカルの `npm test` はmochaの結果が親プロセスへ返らず、失敗しても成功扱いになる
+- 本バージョンでは `vscode` をスタブ化したNode上で `setupTemplate()` を直接実行し、4ファイルのコピー・内容の一致・既存ファイルを上書きしないことの3点を確認している
+
 ### v1.1.19新機能: Editor Viewのプロンプトテンプレート挿入
 
 Editor Viewのカーソル位置へ定型プロンプト（スニペット）を挿入できるようにした：
@@ -594,7 +627,7 @@ datetime: {{datetime}}
 
 **今回のスコープ外（別タスク）**
 - `TemplateService.getDefaultTemplate()` が旧形式（`working dir:` を先頭ヘッダとして出力）のまま残っている。`loadTemplate()` の探索先も `.vscode/templates/` で `templateUtils.ts` の `.vscode/ai-coding-panel/templates/` と食い違う。いずれも本体からの呼び出しが無くデッドコードの疑いがある
-- `setupTemplate()` のコピー対象に `quick_start.md` が含まれていない
+- ~~`setupTemplate()` のコピー対象に `quick_start.md` が含まれていない~~（v1.1.20で対応済み）
 
 ### v1.1.15新機能: Editor Viewの送信履歴記録
 

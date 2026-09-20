@@ -5,6 +5,15 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.1.20] - 2026-09-20
+
+### Fixed
+- **Customize Template**: `quick_start.md` が他のテンプレートと同様にワークスペースへコピーされるようにしました
+  - `setupTemplate()` のコピー対象が `task.md` / `spec.md` / `prompt.md` の3つのままで、Quick Startのテンプレートだけワークスペースごとにカスタマイズできませんでした
+  - v1.0.20で `templates/quick_start.md` を追加した際に、このリストへの追加が漏れていました
+  - `loadTemplate()` はワークスペース側が無い場合に拡張機能同梱のテンプレートへフォールバックするため、Quick Start自体は正常に動作していました。壊れていたのはカスタマイズ経路のみです
+  - 既存ファイルは上書きしないため、本バージョン以前に設定済みのワークスペースで `quick_start.md` を得るには **Customize Template** を再実行してください
+
 ## [1.1.19] - 2026-09-20
 
 ### Added
@@ -1985,3 +1994,4 @@ v0.8.33以前からアップグレードする場合:
 [1.1.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.16...v1.1.17
 [1.1.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.17...v1.1.18
 [1.1.19]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.18...v1.1.19
+[1.1.20]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.1.19...v1.1.20

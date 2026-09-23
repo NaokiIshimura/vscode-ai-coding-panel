@@ -53,6 +53,8 @@ The Run button executes a customizable command in the Terminal view.
 | `${filePath}` | Path to the current file |
 | `${editorContent}` | Content of the editor |
 
+Wrap every placeholder in double quotes, as the defaults above do. The value is quoted so that backticks, `$`, `!` and newlines in it reach the command untouched, and the surrounding double quotes keep it a single argument.
+
 ## Templates
 
 Customize file creation templates:

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2026-09-23
+
+### Fixed
+- **The Run button no longer lets the shell interpret the editor content**: Since 1.2.4 the Run button sends the text of the open file, and a file containing a Markdown code fence or inline code had part of its body executed as a shell command, with only the opening lines reaching `claude`
+  - `_escapeShellArgument()` wrapped the value in single quotes, while the command templates wrap the placeholder in double quotes, so the command became `claude "'# task ...'"`. The single quotes ended up as plain characters and `` ` ``, `$` and `\` were still expanded: an inline `` `claude attach xxx` `` ran as a command substitution, and a code fence became an empty pair of backticks that reported `command not found`
+  - The value is now wrapped as `"'value'"`, which closes the double quote the template opens, protects the value with single quotes and opens it again. The shell joins adjacent quoting, so the result stays a single argument
+  - Commands are sent to an interactive shell, where a `!` inside double quotes is also taken as a history expansion (`event not found`). Single quotes are the only form that protects it, which is why the escaping was changed rather than the templates
+- **Plan and Spec pass the file path without stray quotes**: The same escaping is used for `${filePath}`, so the prompt now reads `Review the file at .claude/plans/x.md and ...` instead of carrying literal quotes around the path. A path containing `` ` `` or `$` is no longer expanded either
+
+### Changed
+- **Placeholders in a command template must be wrapped in double quotes**: This is how every default and every example is written, so no change is needed unless a template was customized to leave them unquoted. Such a template now fails with `unmatched '`. The setting descriptions, both READMEs and `docs/editor-view.md` state the requirement
+
 ## [1.2.4] - 2026-09-21
 
 ### Changed

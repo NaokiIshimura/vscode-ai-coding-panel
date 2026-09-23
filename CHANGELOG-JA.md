@@ -5,6 +5,17 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.6] - 2026-09-23
+
+### Fixed
+- **タスクディレクトリのリネーム後もタブ切り替えでファイルが追従するように修正**: ターミナルのタブは Run / Plan / Spec を送信したファイルを記憶しますが、送信時点のパスのまま保持していました。Quick Startのテンプレートはタスクディレクトリのリネームをエージェントへ指示するため、リネーム後は記憶していたパスが存在せず、タブを切り替えてもファイルが表示されずに `Failed to read file: ENOENT` となっていました
+  - ファイルを開く前にパスを解決するようにしました。リネームで変わるのはディレクトリ名のみでファイル名は変わらないため、同名のファイルを持つ兄弟ディレクトリをリネーム後のディレクトリとみなし、タブの関連付けも新しいパスへ更新します
+  - 該当するファイルが見つからない場合（ディレクトリごと削除された、ファイル名も変わった場合）は関連付けを破棄し、Editor Viewはそのままにします。エラーメッセージは表示されなくなりました
+
+### Technical
+- `TerminalProvider._activateTab()` を非同期化し、関連ファイルを開く処理を `_openAssociatedFile()` と `_resolveAssociatedFilePath()` に切り出しました
+- テストが1件も無かったターミナルのタブとファイルの関連付けについて、タブ切り替え時のファイル表示、Plans Viewの移動、再送信時の上書き、タブを閉じた際の削除、リネーム追従の5ケースを追加しました
+
 ## [1.2.5] - 2026-09-23
 
 ### Fixed
@@ -2098,3 +2109,5 @@ v0.8.33以前からアップグレードする場合:
 [1.2.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.1...v1.2.2
 [1.2.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.2...v1.2.3
 [1.2.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.3...v1.2.4
+[1.2.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.4...v1.2.5
+[1.2.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.5...v1.2.6

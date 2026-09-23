@@ -83,7 +83,7 @@ Claude Code向けに設計された、インテリジェントな自動化とコ
 | **Runショートカット** | Terminal Viewにフォーカスがある状態で `Cmd+R` / `Ctrl+R` を押すと、Editor ViewのRunコマンドを実行。未保存の編集内容は先に保存され、押下したキーはシェルへ送信されない |
 | **コマンド種別アイコン** | タブ名にコマンド種別を示すアイコンを表示：<br>▶️ Runボタン<br>📝 Planボタン<br>📑 Specボタン |
 | **動的プロセス名** | iTerm2のように、タブ名が現在実行中のプロセスを自動的に表示 |
-| **タブ-ファイル関連付け** | Editor viewからのコマンドはファイルをターミナルタブにリンク。タブ切り替え時に自動的に：<br>- 関連付けられたファイルをEditor viewで開く<br>- Plans viewをそのファイルのディレクトリに移動 |
+| **タブ-ファイル関連付け** | Editor viewからのコマンドはファイルをターミナルタブにリンク。タブ切り替え時に自動的に：<br>- 関連付けられたファイルをEditor viewで開く<br>- Plans viewをそのファイルのディレクトリに移動<br>- タスクディレクトリがリネームされている場合は追従 |
 | **セッション永続化** | ビュー切り替えや拡張機能の切り替え後もターミナルセッションと出力履歴が維持され、作業が失われない |
 | 複数タブ | 最大5つの独立したターミナルタブを作成可能。「+」ボタンで新規タブ追加、タブクリックで切り替え。閉じるボタン（× Close）はショートカット領域の右端に配置 |
 | 自動スクロール | 新しい出力が追加されたとき、またはビューのサイズが変更されたときに、最下部のスクロール位置を維持（最下部にいる場合のみ） |
@@ -385,14 +385,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.4.vsix
+   code --install-extension ai-coding-sidebar-1.2.6.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.2.4.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.6.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -406,7 +406,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.4.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.4.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.6.vsix
    ```
 4. VS Codeを再起動
 

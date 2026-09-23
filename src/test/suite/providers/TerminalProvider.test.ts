@@ -1,4 +1,7 @@
 import * as assert from 'assert';
+import * as os from 'os';
+import * as path from 'path';
+import { promises as fsPromises } from 'fs';
 import * as vscode from 'vscode';
 import { TerminalProvider } from '../../../providers/TerminalProvider';
 import { ITerminalService, TerminalOutputListener, TerminalExitListener, ProcessInfo, ProcessTreeResult } from '../../../interfaces/ITerminalService';
@@ -444,6 +447,341 @@ suite('TerminalProvider Bracket Paste Mode Test Suite', () => {
 			);
 
 			disposable.dispose();
+		});
+	});
+});
+
+/**
+ * テスト用MockWebviewView
+ *
+ * resolveWebviewView()が登録するメッセージハンドラを捕捉し、
+ * Webview（タブのクリック等）からのメッセージ送信を再現する
+ */
+class MockWebviewView {
+	public readonly postedMessages: any[] = [];
+	private _messageHandler?: (data: any) => void | Promise<void>;
+
+	public webview = {
+		options: {},
+		html: '',
+		cspSource: 'vscode-webview://mock',
+		asWebviewUri: (uri: vscode.Uri) => uri,
+		postMessage: async (message: any) => {
+			this.postedMessages.push(message);
+			return true;
+		},
+		onDidReceiveMessage: (handler: (data: any) => void | Promise<void>) => {
+			this._messageHandler = handler;
+			return { dispose: () => {} };
+		}
+	};
+
+	public visible = true;
+	public onDidChangeVisibility = () => ({ dispose: () => {} });
+	public onDidDispose = () => ({ dispose: () => {} });
+	public show = () => {};
+
+	/**
+	 * Webviewからのメッセージ送信を再現する
+	 */
+	public async receiveMessage(data: any): Promise<void> {
+		await this._messageHandler?.(data);
+	}
+}
+
+/**
+ * タブとファイルの関連付け（v0.9.3のTerminal Viewタブ連携）を検証する
+ *
+ * Run / Plan / Specの送信時にタブとファイルが関連付けられ、
+ * タブを切り替えるとそのファイルがEditor Viewで開かれ、
+ * Plans Viewが親ディレクトリへ移動する
+ */
+suite('TerminalProvider Tab-File Association Test Suite', () => {
+	let terminalProvider: TerminalProvider;
+	let mockService: MockTerminalService;
+	let mockView: MockWebviewView;
+	let showFileCalls: string[];
+	let setActiveFolderCalls: { folderPath: string | undefined; force?: boolean }[];
+
+	// 実ファイルを作成する（リネーム追従の検証にファイルシステムが必要なため）
+	let tmpRoot: string | undefined;
+	let plansRoot: string;
+	let dirA: string;
+	let fileA: string;
+	let fileB: string;
+
+	// 拡張機能のルート（out/test/suite/providers からの相対）
+	// _getHtmlForWebview()がresources/webview/terminal/index.htmlを読むため実パスが必要
+	const extensionRoot = path.resolve(__dirname, '..', '..', '..', '..');
+
+	/**
+	 * 新しいタブを作成し、そのタブへコマンドを送信してタブIDを返す
+	 * @param filePath 関連付けるファイルパス（未指定の場合は関連付けを行わない）
+	 */
+	async function sendToNewTab(filePath?: string): Promise<string> {
+		await terminalProvider.newTerminal();
+		const tabs = (terminalProvider as any)._tabs as { id: string }[];
+		const tabId = tabs[tabs.length - 1].id;
+		await terminalProvider.sendCommand(
+			'echo test',
+			true,
+			filePath,
+			filePath ? 'run' : undefined
+		);
+		return tabId;
+	}
+
+	/**
+	 * 条件が満たされるまで待機する
+	 * （_closeTab()はタブのアクティブ化を待たないため、結果の確認に使う）
+	 */
+	async function waitFor(condition: () => boolean, timeoutMs = 2000): Promise<void> {
+		const start = Date.now();
+		while (!condition()) {
+			if (Date.now() - start > timeoutMs) {
+				throw new Error('条件が満たされませんでした');
+			}
+			await new Promise(resolve => setTimeout(resolve, 5));
+		}
+	}
+
+	/**
+	 * タブに関連付けられているファイルパスを取得する
+	 */
+	function getAssociatedFilePath(tabId: string): string | undefined {
+		return ((terminalProvider as any)._tabFileMap as Map<string, string>).get(tabId);
+	}
+
+	setup(async function() {
+		// Windows環境ではシェルが見つからないためスキップ
+		if (process.platform === 'win32') {
+			this.skip();
+		}
+
+		// タスクディレクトリを模した構成を作成する
+		tmpRoot = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'terminal-provider-test-'));
+		plansRoot = path.join(tmpRoot, '.claude', 'plans');
+		dirA = path.join(plansRoot, '2026_0101_0000_00');
+		const dirB = path.join(plansRoot, '2026_0102_0000_00');
+		fileA = path.join(dirA, '2026_0101_0000_00_QUICK_START.md');
+		fileB = path.join(dirB, '2026_0102_0000_00_QUICK_START.md');
+		await fsPromises.mkdir(dirA, { recursive: true });
+		await fsPromises.mkdir(dirB, { recursive: true });
+		await fsPromises.writeFile(fileA, '# task A\n', 'utf8');
+		await fsPromises.writeFile(fileB, '# task B\n', 'utf8');
+
+		showFileCalls = [];
+		setActiveFolderCalls = [];
+
+		mockService = new MockTerminalService();
+		terminalProvider = new TerminalProvider(vscode.Uri.file(extensionRoot), mockService);
+
+		terminalProvider.setEditorProvider({
+			getCurrentFilePath: () => undefined,
+			clearFile: async () => {},
+			showFile: async (filePath: string) => { showFileCalls.push(filePath); },
+			runTask: async () => {}
+		} as IEditorProvider);
+
+		terminalProvider.setPlansProvider({
+			setActiveFolder: (folderPath: string | undefined, force?: boolean) => {
+				setActiveFolderCalls.push({ folderPath, force });
+			}
+		} as IPlansProvider);
+
+		// Webviewを解決してメッセージハンドラを登録させる
+		mockView = new MockWebviewView();
+		await terminalProvider.resolveWebviewView(mockView as any, {} as any, {} as any);
+	});
+
+	teardown(async () => {
+		terminalProvider?.dispose();
+		if (tmpRoot) {
+			await fsPromises.rm(tmpRoot, { recursive: true, force: true });
+			tmpRoot = undefined;
+		}
+	});
+
+	test('タブを切り替えると、そのタブへ送信したファイルがEditor Viewで開かれること', async () => {
+		const tabA = await sendToNewTab(fileA);
+		const tabB = await sendToNewTab(fileB);
+
+		showFileCalls = [];
+
+		await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
+		assert.deepStrictEqual(showFileCalls, [fileA], 'タブAのファイルが開かれること');
+
+		await mockView.receiveMessage({ type: 'activateTab', tabId: tabB });
+		assert.deepStrictEqual(showFileCalls, [fileA, fileB], 'タブBのファイルが開かれること');
+	});
+
+	test('タブを切り替えると、Plans Viewが関連ファイルの親ディレクトリへ移動すること', async () => {
+		const tabA = await sendToNewTab(fileA);
+		await sendToNewTab(fileB);
+
+		setActiveFolderCalls = [];
+
+		await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
+
+		assert.deepStrictEqual(
+			setActiveFolderCalls,
+			[{ folderPath: path.dirname(fileA), force: false }],
+			'親ディレクトリへforce=falseで移動すること'
+		);
+	});
+
+	test('ファイルパスを渡さない送信ではタブに関連付けされないこと', async () => {
+		// ファイル未オープン時のRun（runCommandWithoutFile）はfilePathを渡さない
+		const tabWithoutFile = await sendToNewTab(undefined);
+		await sendToNewTab(fileA);
+
+		showFileCalls = [];
+		setActiveFolderCalls = [];
+
+		await mockView.receiveMessage({ type: 'activateTab', tabId: tabWithoutFile });
+
+		assert.deepStrictEqual(showFileCalls, [], 'Editor Viewが更新されないこと');
+		assert.deepStrictEqual(setActiveFolderCalls, [], 'Plans Viewが移動しないこと');
+	});
+
+	test('同じタブへ続けて送信すると、関連付けが最後のファイルで上書きされること', async () => {
+		const tabA = await sendToNewTab(fileA);
+		// 同じタブでPlanを実行する
+		await terminalProvider.sendCommand('echo test', true, fileB, 'plan');
+
+		// 別のタブへ移動してから戻る
+		await sendToNewTab(undefined);
+		showFileCalls = [];
+
+		await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
+
+		assert.deepStrictEqual(showFileCalls, [fileB], '最後に送信したファイルが開かれること');
+	});
+
+	test('存在しないタブIDを指定してもEditor Viewが更新されないこと', async () => {
+		await sendToNewTab(fileA);
+		showFileCalls = [];
+
+		await mockView.receiveMessage({ type: 'activateTab', tabId: 'tab-does-not-exist' });
+
+		assert.deepStrictEqual(showFileCalls, [], 'Editor Viewが更新されないこと');
+	});
+
+	test('アクティブタブを閉じると、次にアクティブ化されるタブの関連ファイルが開かれること', async () => {
+		await sendToNewTab(fileA);
+		await sendToNewTab(fileB); // タブBがアクティブ
+
+		showFileCalls = [];
+
+		// killTerminal()はアクティブタブ（タブB）を閉じ、タブAをアクティブ化する
+		terminalProvider.killTerminal();
+		await waitFor(() => showFileCalls.length > 0);
+
+		assert.deepStrictEqual(showFileCalls, [fileA], 'タブAのファイルが開かれること');
+	});
+
+	test('タブを閉じると、そのタブの関連付けが削除されること', async () => {
+		const tabA = await sendToNewTab(fileA);
+		await sendToNewTab(fileB);
+
+		// タブAをアクティブにしてから閉じる
+		await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
+		terminalProvider.killTerminal();
+
+		assert.strictEqual(getAssociatedFilePath(tabA), undefined, '閉じたタブの関連付けが残らないこと');
+	});
+
+	suite('ディレクトリのリネームへの追従', () => {
+		// Quick Startのテンプレートは、タスク内容に応じたディレクトリ名へのリネームをAIエージェントへ指示する（v1.0.20）
+		const RENAMED_DIR_NAME = 'weather-osaka';
+
+		/**
+		 * ファイルが格納されているディレクトリをリネームし、リネーム後のファイルパスを返す
+		 */
+		async function renameDirectory(): Promise<string> {
+			const renamedDir = path.join(plansRoot, RENAMED_DIR_NAME);
+			await fsPromises.rename(dirA, renamedDir);
+			return path.join(renamedDir, path.basename(fileA));
+		}
+
+		test('ディレクトリ名が変更されていても、リネーム後のファイルが開かれること', async () => {
+			const tabA = await sendToNewTab(fileA);
+			await sendToNewTab(fileB);
+
+			const renamedFilePath = await renameDirectory();
+			showFileCalls = [];
+
+			await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
+
+			assert.deepStrictEqual(
+				showFileCalls,
+				[renamedFilePath],
+				'リネーム後のパスでファイルが開かれること'
+			);
+		});
+
+		test('ディレクトリ名が変更されていても、Plans Viewがリネーム後のディレクトリへ移動すること', async () => {
+			const tabA = await sendToNewTab(fileA);
+			await sendToNewTab(fileB);
+
+			const renamedFilePath = await renameDirectory();
+			setActiveFolderCalls = [];
+
+			await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
+
+			assert.deepStrictEqual(
+				setActiveFolderCalls,
+				[{ folderPath: path.dirname(renamedFilePath), force: false }],
+				'リネーム後のディレクトリへ移動すること'
+			);
+		});
+
+		test('リネームを検出したら、タブの関連付けが新しいパスへ更新されること', async () => {
+			const tabA = await sendToNewTab(fileA);
+			await sendToNewTab(fileB);
+
+			const renamedFilePath = await renameDirectory();
+			await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
+
+			assert.strictEqual(
+				getAssociatedFilePath(tabA),
+				renamedFilePath,
+				'関連付けがリネーム後のパスへ更新されること'
+			);
+		});
+
+		test('ディレクトリごと削除された場合は、Editor Viewを更新せず関連付けを破棄すること', async () => {
+			const tabA = await sendToNewTab(fileA);
+			await sendToNewTab(fileB);
+
+			await fsPromises.rm(dirA, { recursive: true, force: true });
+			showFileCalls = [];
+			setActiveFolderCalls = [];
+
+			await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
+
+			assert.deepStrictEqual(showFileCalls, [], 'Editor Viewが更新されないこと');
+			assert.deepStrictEqual(setActiveFolderCalls, [], 'Plans Viewが移動しないこと');
+			assert.strictEqual(getAssociatedFilePath(tabA), undefined, '関連付けが破棄されること');
+		});
+
+		test('同名ファイルを持つディレクトリが無い場合は、関連付けを破棄すること', async () => {
+			const tabA = await sendToNewTab(fileA);
+			await sendToNewTab(fileB);
+
+			// ファイル名も変わってしまった場合は追跡できない
+			const renamedDir = path.join(plansRoot, RENAMED_DIR_NAME);
+			await fsPromises.rename(dirA, renamedDir);
+			await fsPromises.rename(
+				path.join(renamedDir, path.basename(fileA)),
+				path.join(renamedDir, 'renamed.md')
+			);
+			showFileCalls = [];
+
+			await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
+
+			assert.deepStrictEqual(showFileCalls, [], 'Editor Viewが更新されないこと');
+			assert.strictEqual(getAssociatedFilePath(tabA), undefined, '関連付けが破棄されること');
 		});
 	});
 });

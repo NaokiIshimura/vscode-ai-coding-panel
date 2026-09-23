@@ -386,6 +386,74 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.6バグ修正: タスクディレクトリのリネーム後にタブ切り替えの追従が壊れる
+
+Terminal Viewのタブを切り替えると、そのタブへ Run / Plan / Spec を送信したMarkdownファイルがEditor Viewに表示される（v0.9.3）。Quick Startで作成したタスクのディレクトリ名がリネームされた後は、この追従が失敗して `Failed to read file: ENOENT` が表示される問題を修正した：
+
+**関連付けが送信時点の絶対パスのまま固定されていた**
+
+| 時点 | `_tabFileMap` の値 | 実体 |
+|---|---|---|
+| Run送信時 | `<plans>/2026_0923_1711_48/2026_0923_1711_48_QUICK_START.md` | 存在する |
+| エージェントによるリネーム後 | 同上（変わらない） | **存在しない** |
+
+`templates/quick_start.md` は「タスク内容に応じた短い英名へディレクトリをリネームせよ」とAIエージェントへ指示する（v1.0.20）。リネームはシェルの `mv` で行われるため `vscode.workspace.onDidRenameFiles` は発火せず、`FileSystemWatcher` もcreate / deleteとしてしか観測できない。**リネームをイベントで受け取る手段が無い**ため、開く直前にパスを解決する方式とした。
+
+**ファイル名は変わらないことを利用して兄弟ディレクトリから探す**
+
+```ts
+private async _resolveAssociatedFilePath(filePath: string): Promise<string | undefined> {
+    if (await this._pathExists(filePath)) { return filePath; }
+    const fileName = path.basename(filePath);
+    const parentPath = path.dirname(path.dirname(filePath));
+    // parentPath 直下の各ディレクトリに <fileName> があるかを確認する
+}
+```
+
+- リネームされるのは**ディレクトリ名のみ**で、その中のファイル名は変わらない。`<plans>` 直下の兄弟ディレクトリに同名のファイルがあればリネーム後のディレクトリとみなす
+- `PlansProvider.resolveRenamedDirectory()`（v1.0.20）は同じ問題をPlans View側で扱うが、判定は「**ディレクトリ名（タイムスタンプ）で始まるファイル**を含むか」の前方一致。今回はファイル名が確定しているため**完全一致**で探索している。誤検出しにくく、リネーム後の名前がタイムスタンプを含まなくても成立する
+- 探索範囲は元のディレクトリの兄弟のみ。`TerminalProvider` はPlans Viewのrootを知らないため、範囲を限定する意味でもこの形にしている
+
+**解決できたら関連付けを更新する（毎回走査しないため）**
+
+`_openAssociatedFile()` は解決後のパスを `_tabFileMap` へ書き戻す。2回目以降のタブ切り替えは `_pathExists()` 1回で済む。
+
+**見つからない場合は関連付けを破棄し、Editor Viewに触れない**
+- ディレクトリごと削除された場合や、ファイル名まで変わった場合は追跡できない
+- 従来どおり `showFile()` を呼ぶと `EditorProvider` が `Failed to read file: ...` をエラー表示するため、**呼ばずに関連付けを削除する**。Editor Viewの表示は直前のまま残る
+
+**`_activateTab()` を非同期化している（呼び出し3箇所に注意）**
+
+| 箇所 | 対応 |
+|---|---|
+| `activateTab` メッセージハンドラ | `await`。ハンドラ自体が `async` のため変更は1語のみ |
+| `_createTab()` | `await`。同じく `async` |
+| `_closeTab()` | **`void`**。`_closeTab()` は同期メソッドで、`killTerminal()` などから同期的に呼ばれる。`async` 化すると呼び出し元まで波及するため待たない |
+
+- `_closeTab()` 経由のアクティブ化だけはファイルを開く処理を待たない。閉じる処理自体は同期的に完了する必要があるため
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/providers/TerminalProvider.ts` | `_activateTab()` を非同期化。`_openAssociatedFile()` / `_resolveAssociatedFilePath()` / `_pathExists()` を追加 |
+| `src/test/suite/providers/TerminalProvider.test.ts` | `TerminalProvider Tab-File Association Test Suite` を追加（12ケース） |
+| `README.md` / `README-JA.md` | Tab-File Associationの説明にリネーム追従を追記。インストール手順のVSIXバージョン（v1.2.5で更新漏れ） |
+| `CHANGELOG.md` / `CHANGELOG-JA.md` | 1.2.6のエントリ。あわせて1.2.5の比較リンク（更新漏れ）を追加 |
+
+**テストが1件も無かった領域である**
+- `_activateTab()` / `_tabFileMap` は v0.9.3 の追加以来テストが無く、既存の `TerminalProvider.test.ts` は `sendCommand()` が引数を受け付けることしか確認していなかった
+- privateメソッドを直接呼ばず、`resolveWebviewView()` が登録するメッセージハンドラを `MockWebviewView` で捕捉し、**実際のタブクリックと同じ `activateTab` メッセージ**を流して検証している
+- リネーム追従の検証にはファイルシステムが必要なため、`fsPromises.mkdtemp()` で一時ディレクトリへ実ファイルを作成している
+
+**ローカルでのテスト実行について**
+- v1.1.15に記載のとおり、macOSローカルの `npm test` はmochaの結果が親プロセスへ返らず、失敗しても成功扱いになる
+- 本バージョンでは `vscode` をスタブ化したNode上でmocha（`--ui tdd`）を実行して確認している（新規スイート 12 passing）
+- あわせてミューテーションテストを行い、`_resolveAssociatedFilePath()` を修正前の挙動（常に元のパスを返す）へ戻すとリネーム関連の5ケースが失敗することを確認している
+
+**既知の不整合（本バージョンのスコープ外）**
+- `TerminalProvider Bracket Paste Mode Test Suite` の4ケースが失敗する。v1.0.12でBracketed Paste Modeを廃止し、Enterの遅延を20ms→100msに変更した際にテストが追従していないもので、本バージョンの変更前後で結果は変わらない（9 passing / 4 failing）
+
 ### v1.2.5バグ修正: Runでエディタの内容がシェルに解釈される
 
 v1.2.4でRunがエディタの内容を送信するようになった結果、Markdownのコードフェンスやインラインコードを含む本文を送ると、本文の一部がシェルコマンドとして実行され、`claude` には冒頭しか渡らない問題を修正した：

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.6] - 2026-09-23
+
+### Fixed
+- **Switching terminal tabs follows a renamed task directory**: A terminal tab remembers the file that Run, Plan or Spec was sent for, but it kept the path as it was at the time of the send. The Quick Start template asks the agent to rename the task directory, so once that rename happened the remembered path no longer existed, and switching back to the tab reported `Failed to read file: ENOENT` instead of showing the file
+  - The path is now resolved before the file is opened. A rename changes the directory name but leaves the file name alone, so a sibling directory holding a file of the same name is taken as the renamed one, and the tab's association is updated to the new path
+  - When no such file is found — the directory was deleted, or the file itself was renamed as well — the association is dropped and the Editor view is left untouched, so the error message is no longer shown
+
+### Technical
+- `TerminalProvider._activateTab()` is now asynchronous, and opening the associated file was split out into `_openAssociatedFile()` and `_resolveAssociatedFilePath()`
+- Added tests for the association between a terminal tab and its file, which had none: the file opening on a tab switch, the Plans view navigation, the overwrite on a second send, the removal when a tab is closed, and five cases around a renamed directory
+
 ## [1.2.5] - 2026-09-23
 
 ### Fixed
@@ -2627,3 +2638,5 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.2]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.1...v1.2.2
 [1.2.3]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.2...v1.2.3
 [1.2.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.3...v1.2.4
+[1.2.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.4...v1.2.5
+[1.2.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.5...v1.2.6

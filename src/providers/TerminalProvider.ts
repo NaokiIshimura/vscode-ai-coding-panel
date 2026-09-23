@@ -168,7 +168,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
                     await this._createTab();
                     break;
                 case 'activateTab':
-                    this._activateTab(data.tabId);
+                    await this._activateTab(data.tabId);
                     break;
                 case 'clearTerminal':
                     this.clearTerminal();
@@ -368,7 +368,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
             });
 
             // 新しいタブをアクティブ化
-            this._activateTab(tabId);
+            await this._activateTab(tabId);
 
             // ボタンの表示状態を更新
             this._updateNewTabButtonVisibility();
@@ -381,7 +381,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private _activateTab(tabId: string): void {
+    private async _activateTab(tabId: string): Promise<void> {
         const tab = this._tabs.find(t => t.id === tabId);
         if (tab) {
             this._activeTabId = tabId;
@@ -391,16 +391,81 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
             });
 
             // タブに関連するファイルがあればEditorViewで開く
-            const associatedFilePath = this._tabFileMap.get(tabId);
-            if (associatedFilePath && this._editorProvider) {
-                this._editorProvider.showFile(associatedFilePath);
+            await this._openAssociatedFile(tabId);
+        }
+    }
 
-                // Plans Viewのディレクトリも切り替える
-                if (this._plansProvider) {
-                    const parentDir = path.dirname(associatedFilePath);
-                    this._plansProvider.setActiveFolder(parentDir, false);
-                }
+    /**
+     * タブに関連付けられたファイルをEditor Viewで開き、Plans Viewを親ディレクトリへ移動する
+     *
+     * ディレクトリがリネームされている場合はパスを読み替え、関連付けも更新する
+     */
+    private async _openAssociatedFile(tabId: string): Promise<void> {
+        const associatedFilePath = this._tabFileMap.get(tabId);
+        if (!associatedFilePath || !this._editorProvider) {
+            return;
+        }
+
+        const resolvedFilePath = await this._resolveAssociatedFilePath(associatedFilePath);
+        if (!resolvedFilePath) {
+            // 追跡できないファイルを開こうとするとEditor View側でエラーになるため、関連付けを破棄する
+            this._tabFileMap.delete(tabId);
+            return;
+        }
+
+        if (resolvedFilePath !== associatedFilePath) {
+            this._tabFileMap.set(tabId, resolvedFilePath);
+        }
+
+        await this._editorProvider.showFile(resolvedFilePath);
+
+        // Plans Viewのディレクトリも切り替える
+        if (this._plansProvider) {
+            const parentDir = path.dirname(resolvedFilePath);
+            this._plansProvider.setActiveFolder(parentDir, false);
+        }
+    }
+
+    /**
+     * 関連付けられたファイルの現在のパスを解決する
+     *
+     * Quick Startのテンプレートは、タスク内容に応じたディレクトリ名へのリネームをAIエージェントへ指示する（v1.0.20）。
+     * リネームされるのはディレクトリ名のみでファイル名は変わらないため、
+     * 元のディレクトリの兄弟ディレクトリから同名のファイルを探してパスを読み替える
+     *
+     * @returns 解決できたパス。見つからない場合はundefined
+     */
+    private async _resolveAssociatedFilePath(filePath: string): Promise<string | undefined> {
+        if (await this._pathExists(filePath)) {
+            return filePath;
+        }
+
+        const fileName = path.basename(filePath);
+        const parentPath = path.dirname(path.dirname(filePath));
+
+        let siblingNames: string[];
+        try {
+            siblingNames = await fs.readdir(parentPath);
+        } catch {
+            return undefined;
+        }
+
+        for (const siblingName of siblingNames) {
+            const candidatePath = path.join(parentPath, siblingName, fileName);
+            if (await this._pathExists(candidatePath)) {
+                return candidatePath;
             }
+        }
+
+        return undefined;
+    }
+
+    private async _pathExists(targetPath: string): Promise<boolean> {
+        try {
+            await fs.access(targetPath);
+            return true;
+        } catch {
+            return false;
         }
     }
 
@@ -455,7 +520,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
             if (this._tabs.length > 0) {
                 // 前のタブか最後のタブをアクティブ化
                 const newActiveIndex = Math.min(tabIndex, this._tabs.length - 1);
-                this._activateTab(this._tabs[newActiveIndex].id);
+                void this._activateTab(this._tabs[newActiveIndex].id);
             } else {
                 this._activeTabId = undefined;
                 // タブが0件になったら自動で1件作成

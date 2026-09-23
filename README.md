@@ -85,7 +85,7 @@ The embedded terminal is purpose-built for Claude Code with intelligent automati
 | **Run Shortcut** | Press `Cmd+R` / `Ctrl+R` while the Terminal view is focused to run the Editor view's Run command. Unsaved editor changes are saved first, and the key is not forwarded to the shell |
 | **Command Type Icons** | Tab names display icons indicating command origin:<br>▶️ Run button<br>📝 Plan button<br>📑 Spec button |
 | **Dynamic Process Names** | Like iTerm2, tab names update automatically to show the currently running process |
-| **Tab-File Association** | Commands from Editor view link the file to the terminal tab. Switching tabs automatically:<br>- Opens the associated file in Editor view<br>- Navigates to the file's directory in Plans view |
+| **Tab-File Association** | Commands from Editor view link the file to the terminal tab. Switching tabs automatically:<br>- Opens the associated file in Editor view<br>- Navigates to the file's directory in Plans view<br>- Follows the task directory when it has been renamed |
 | **Session Persistence** | Terminal sessions and output history survive view switches or extension changes—your work is never lost |
 | Multiple tabs | Create up to 5 independent terminal tabs. Click the "+" button to add a new tab, click a tab to switch. Close button (× Close) is located at the right end of the shortcut area |
 | Auto-scroll | Maintains scroll position at bottom when new output arrives or when view is resized (only if already at the bottom) |
@@ -386,14 +386,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.4.vsix
+   code --install-extension ai-coding-sidebar-1.2.6.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.4.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.6.vsix
 ```
 
 #### Build the package yourself
@@ -407,7 +407,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.4.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.4.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.6.vsix
    ```
 4. Restart VS Code.
 

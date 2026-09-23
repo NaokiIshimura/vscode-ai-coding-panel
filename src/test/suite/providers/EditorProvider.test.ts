@@ -141,6 +141,71 @@ suite('EditorProvider Integration Test Suite', () => {
 		});
 	});
 
+	suite('_escapeShellArgument', () => {
+		// privateメソッドを直接検証する（コマンド生成の安全性はUIを介さず確認したい）
+		const escape = (arg: string): string =>
+			(editorProvider as unknown as { _escapeShellArgument(a: string): string })._escapeShellArgument(arg);
+
+		test('Should wrap the value in double quotes outside single quotes', () => {
+			// テンプレート側のダブルクォートを閉じて開き直す形になっている
+			assert.strictEqual(escape('hello'), '"\'hello\'"');
+		});
+
+		test('Should protect backticks so that the shell does not run them', () => {
+			// Markdownのインラインコードがコマンド置換として実行されないこと
+			const escaped = escape('Run `claude attach fdf4892c` to open it');
+			assert.strictEqual(escaped, '"\'Run `claude attach fdf4892c` to open it\'"');
+		});
+
+		test('Should protect a code fence', () => {
+			// コードフェンスは空のバッククォート対になり command not found を起こしていた
+			assert.strictEqual(escape('```'), '"\'```\'"');
+		});
+
+		test('Should protect an exclamation mark from history expansion', () => {
+			// 対話シェルではダブルクォート内の ! がヒストリ展開される
+			assert.strictEqual(escape('重要!注意'), '"\'重要!注意\'"');
+		});
+
+		test('Should protect dollar signs from parameter expansion', () => {
+			assert.strictEqual(escape('$HOME and ${PATH}'), '"\'$HOME and ${PATH}\'"');
+		});
+
+		test('Should protect backslashes', () => {
+			assert.strictEqual(escape('a\\b'), '"\'a\\b\'"');
+		});
+
+		test('Should close and reopen quoting around a single quote', () => {
+			// シングルクォートはクォートを閉じてエスケープし、再度開く
+			assert.strictEqual(escape("it's"), '"\'it\'\\\'\'s\'"');
+		});
+
+		test('Should keep newlines as is', () => {
+			// 本文全体を1引数として渡すため改行はそのまま保持する
+			assert.strictEqual(escape('line1\nline2'), '"\'line1\nline2\'"');
+		});
+
+		test('Should produce a single argument when embedded in a quoted template', () => {
+			// テンプレート "${editorContent}" へ埋め込むと ""'値'"" となり、
+			// シェルは隣接する引用符を連結して1つの引数として扱う
+			const command = '${commandPrefix} "${editorContent}"'
+				.replace('${commandPrefix}', 'claude')
+				.replace('${editorContent}', escape('# task\n```\n`ls`\n```'));
+			assert.strictEqual(command, 'claude ""\'# task\n```\n`ls`\n```\'""');
+		});
+
+		test('Should produce a single argument when embedded mid-sentence', () => {
+			// Plan / Spec は文の途中へ埋め込むため、前後のダブルクォートと連結される
+			const command = '${commandPrefix} "Review the file at ${filePath} and create a plan."'
+				.replace('${commandPrefix}', 'claude')
+				.replace(/\$\{filePath\}/g, escape('.claude/plans/x.md'));
+			assert.strictEqual(
+				command,
+				'claude "Review the file at "\'.claude/plans/x.md\'" and create a plan."'
+			);
+		});
+	});
+
 	suite('Integration with TemplateService', () => {
 		test('Should use TemplateService for file operations', () => {
 			// TemplateServiceが注入されていることを確認

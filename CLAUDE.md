@@ -386,6 +386,68 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.5バグ修正: Runでエディタの内容がシェルに解釈される
+
+v1.2.4でRunがエディタの内容を送信するようになった結果、Markdownのコードフェンスやインラインコードを含む本文を送ると、本文の一部がシェルコマンドとして実行され、`claude` には冒頭しか渡らない問題を修正した：
+
+**原因はエスケープの形とテンプレートの形が噛み合っていないこと**
+
+| 箇所 | 生成していたもの |
+|---|---|
+| `_escapeShellArgument()` | `'値'`（シングルクォート囲み） |
+| テンプレート既定値 | `${commandPrefix} "${editorContent}"`（さらにダブルクォートで囲む） |
+| 送信される文字列 | `claude "'# task ...'"` |
+
+外側がダブルクォートになるためシングルクォートはただの文字になり、`` ` `` `$` `\` が展開対象のまま残る。Markdownの本文には必ずバッククォートが入るため、`` `claude attach xxx` `` がコマンド置換として**実行され**、コードフェンス ` ``` ` は空のバッククォート対になって `command not found: `（空のコマンド名）を起こしていた。
+
+**対話シェルでは `!` のヒストリ展開まで起きる（修正方針を決めた根拠）**
+
+| 送信形 | 対話zshの結果 |
+|---|---|
+| `claude "重要!注意"` | `zsh: event not found: 注意` → コマンドが実行されない |
+| `claude '重要!注意'` | 正常に1引数として渡る |
+
+コマンドはPTY上の対話シェルへ送るため、`sh -c` では起きないヒストリ展開が起きる。本文に `!` は普通に現れるので、**値はシングルクォートで保護するしかない**。
+
+**`${filePath}` と揃えるために、テンプレートではなくエスケープ関数を直した**
+
+`${editorContent}` は引数まるごとなので「テンプレートの `"` を外す」修正でも直る。しかし `${filePath}` はPlan / Specで**英文の途中**へ埋め込まれ（`"Review the file at ${filePath} and create..."`）、文全体を1引数にするダブルクォートを外せないため同じ手が使えない。
+
+そこで戻り値の前後にもダブルクォートを付け、**テンプレート側のクォートを一度閉じ、値をシングルクォートで保護し、また開く**形にした。シェルは隣接する引用符を連結するため結果は1引数のままになる。
+
+```ts
+private _escapeShellArgument(arg: string): string {
+    return `"'${arg.replace(/'/g, "'\\''")}'"`;
+}
+```
+
+| テンプレート | 置換後 | 渡る引数 |
+|---|---|---|
+| `${commandPrefix} "${editorContent}"` | `claude ""'本文'""` | 本文全体（1引数） |
+| `..."Review the file at ${filePath} and..."` | `..."Review the file at "'path'" and..."` | 文全体（1引数） |
+
+- 変更は**この1関数のみ**。`${editorContent}` と `${filePath}` の計5箇所がすべてこの関数を通るため、Run / Plan / Spec が同時に直る
+- `package.json` の既定値・ユーザー設定・READMEの設定例は**変更していない**。既定値から `"` を外す案だと、旧既定値を設定として保存済みのユーザーが直らず、`${filePath}` 側には適用もできない
+- 副次的に、Plan / Specのプロンプト文からリテラルのクォートが消える（`Review the file at '.claude/x.md' and` → `Review the file at .claude/x.md and`）
+
+**「プレースホルダはダブルクォートで囲む」がテンプレートの契約になる（唯一の非互換）**
+- `"` で囲まないカスタムテンプレート（`${commandPrefix} ${editorContent}`）は、この変更後に `zsh: unmatched '` で壊れる
+- 既定値・README・`docs/editor-view.md` の例はすべて `"` 付きのため実害は無いが、`package.json` の `description`（6箇所）とREADME 2種・`docs/editor-view.md` に明記した
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/providers/EditorProvider.ts` | `_escapeShellArgument()` の戻り値とコメント |
+| `package.json` | `runCommand` / `runCommandWithoutFile` / `runPlanCommand` / `runSpecCommand`（＋旧キー2件）の `description` |
+| `README.md` / `README-JA.md` / `docs/editor-view.md` | プレースホルダの説明 |
+| `src/test/suite/providers/EditorProvider.test.ts` | `_escapeShellArgument()` のテスト10ケース |
+
+**ローカルでのテスト実行について**
+- v1.1.15に記載のとおり、macOSローカルの `npm test` はmochaの結果が親プロセスへ返らず、失敗しても成功扱いになる
+- 本バージョンでは `vscode` をスタブ化したNode上でmocha（`--ui tdd`）を実行して確認している（`EditorProvider.test.ts` 22 passing。既存12ケースへの影響なし）
+- あわせて、スタブ上で `EditorProvider` を生成して `runTask()` が実際に生成するコマンド文字列を取り出し、**対話zsh（`zsh -i`）へ流して**バッククォート・コードフェンス・`!`・`$`・`'` を含む本文が1引数のまま渡ることを確認している。非対話の `zsh -c` ではヒストリ展開が起きないため、この検証は `-i` で行う必要がある
+
 ### v1.2.4変更: Runボタンの送信内容とPlan / Specの設定キー名
 
 Editor ViewのRunボタンが送信する内容を「ファイルパス」から「エディタの内容」へ変更し、Plan / Spec のコマンド設定をリネームした：

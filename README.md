@@ -248,7 +248,7 @@ Steps 1 and 2 can be turned off individually with `editor.disableWorkspaceEditor
 
 | Item | Steps |
 | --- | --- |
-| Quick Start | Click the ⚡ Quick Start button at the top of Plans View.<br>Creates a timestamp-named directory (`YYYY_MMDD_HHMM_SS`) without asking for a folder name, and generates a `QUICK_START.md` file inside it.<br>The file opens in Editor View and is selected in Plans. If a directory with the same name already exists, a numeric suffix (`_2`, `_3`, ...) is appended. |
+| Quick Start | Click the ⚡ Quick Start button at the top of Plans View.<br>Creates a timestamp-named directory (`YYYY_MMDD_HHMM_SS`) without asking for a folder name, and generates a `QUICK_START.md` file inside it.<br>The file opens in Editor View and is selected in Plans. If a directory with the same name already exists, a numeric suffix (`_2`, `_3`, ...) is appended.<br>If the Plans directory does not exist yet (the view shows `Create directory: ...`), it is created first, just as clicking `Create directory` would, and the Quick Start directory is then created inside it. |
 | New Task | Press `Cmd+S` / `Ctrl+S` while the panel is focused.<br>Creates a new directory under the currently opened directory in Plans View and automatically generates a timestamped Markdown file.<br>The file is selected in Plans with "editing" label and opens in Editor View.<br>If the current path cannot be retrieved, it falls back to the default path. |
 | New Directory | Click the folder icon in the path display row.<br>Creates a new directory under the currently opened directory (without creating a Markdown file). |
 | Create PROMPT.md | Click the **Next** button in Editor View, the file icon in the path display row, or press `Cmd+M` / `Ctrl+M`.<br>A timestamped Markdown file is created (for example, `2025_1229_1430_25_PROMPT.md`) and opens in Editor View with the caret placed at the top of the file. |
@@ -386,14 +386,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.6.vsix
+   code --install-extension ai-coding-sidebar-1.2.7.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.6.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.7.vsix
 ```
 
 #### Build the package yourself
@@ -407,7 +407,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.6.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.6.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.7.vsix
    ```
 4. Restart VS Code.
 

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.7] - 2026-09-27
+
+### Fixed
+- **Quick Start creates the plans directory first when it does not exist yet**: When the Plans view showed `Create directory: .claude/plans`, the Quick Start button created the task directory and its `QUICK_START.md` under `.claude/plans` directly, without going through the directory creation. The Plans view kept showing the `Create directory` row, so the new file could not be reached from the view
+  - Quick Start now runs the same steps as clicking `Create directory` first (creating the directory and its initial `PROMPT.md`), and then continues with the usual Quick Start
+  - If creating the directory fails, Quick Start stops there
+
+### Technical
+- Added `PlansProvider.isRootPathNotFound()`, which reports whether the view is showing the `Create directory` row, with a test
+
 ## [1.2.6] - 2026-09-23
 
 ### Fixed
@@ -2640,3 +2650,4 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.3...v1.2.4
 [1.2.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.4...v1.2.5
 [1.2.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.5...v1.2.6
+[1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7

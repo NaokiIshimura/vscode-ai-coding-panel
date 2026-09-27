@@ -575,6 +575,20 @@ export function registerPlansCommands(
             }
 
             const workspaceRoot = workspaceFolders[0].uri.fsPath;
+
+            // rootディレクトリが未作成（「Create directory」を表示中）の場合は、
+            // 先に「Create directory」と同じ処理を実行してからQuick Startを続行する
+            if (plansProvider.isRootPathNotFound()) {
+                await vscode.commands.executeCommand(
+                    'aiCodingSidebar.createDefaultPath',
+                    plansProvider.getRootPath(),
+                    plansProvider.getConfiguredRelativePath()
+                );
+                if (plansProvider.isRootPathNotFound()) {
+                    return;
+                }
+            }
+
             const rootPath = plansProvider.getRootPath();
             let targetPath: string;
 

@@ -82,6 +82,14 @@ suite('PlansProvider Integration Test Suite', () => {
 			assert.strictEqual(items[0].kind, 'createDirectory');
 			assert.strictEqual(items[0].contextValue, 'createDirectoryButton');
 		});
+
+		test('Should report whether the root path is missing', async () => {
+			await plansProvider.setRootPath(path.join(testDir, 'nonexistent'));
+			assert.strictEqual(plansProvider.isRootPathNotFound(), true);
+
+			await plansProvider.setRootPath(testDir);
+			assert.strictEqual(plansProvider.isRootPathNotFound(), false);
+		});
 	});
 
 	suite('buildItems', () => {

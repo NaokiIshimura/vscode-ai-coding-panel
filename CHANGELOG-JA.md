@@ -5,6 +5,16 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.7] - 2026-09-27
+
+### Fixed
+- **Plansのディレクトリが未作成の状態でQuick Startを実行すると、先にディレクトリを作成するように修正**: Plans Viewに `Create directory: .claude/plans` が表示されている状態でQuick Startボタンを押すと、ディレクトリ作成の処理を経由せずに `.claude/plans` 配下へタスクディレクトリと `QUICK_START.md` を直接作成していました。Plans Viewは `Create directory` の行を表示したままとなり、作成したファイルをビューから辿れませんでした
+  - `Create directory` を押下したときと同じ処理（ディレクトリと初期 `PROMPT.md` の作成）を先に実行し、続けて通常のQuick Startを実行するようにしました
+  - ディレクトリの作成に失敗した場合は、Quick Startをそこで中止します
+
+### Technical
+- `Create directory` の行を表示している状態かを返す `PlansProvider.isRootPathNotFound()` を追加し、テストを追加しました
+
 ## [1.2.6] - 2026-09-23
 
 ### Fixed
@@ -2111,3 +2121,4 @@ v0.8.33以前からアップグレードする場合:
 [1.2.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.3...v1.2.4
 [1.2.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.4...v1.2.5
 [1.2.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.5...v1.2.6
+[1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7

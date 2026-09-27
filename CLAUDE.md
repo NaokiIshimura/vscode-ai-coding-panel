@@ -386,6 +386,44 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.7バグ修正: Plansのディレクトリ未作成時のQuick Start
+
+Plans Viewに `Create directory: .claude/plans` が表示されている状態でQuick Startを押すと、「Create directory」の処理を経由せずに `.claude/plans/<タイムスタンプ>/<タイムスタンプ>_QUICK_START.md` を直接作成していた問題を修正した：
+
+**`pathNotFound` は `setRootPath()` でしか更新されない（原因）**
+- `aiCodingSidebar.quickStart` は `mkdir({ recursive: true })` で `.claude/plans` ごと作れてしまうため、ファイル作成自体は成功していた
+- しかし `PlansProvider.pathNotFound` を更新するのは `setRootPath()` のみで、`buildItems()` は `pathNotFound` が立っている間 `createDirectory` の1行しか返さない。そのためPlans Viewは「Create directory」を表示したままで、作成したファイルを辿れなかった
+
+**「Create directory」→「Quick Start」の順に実行する**
+
+```ts
+if (plansProvider.isRootPathNotFound()) {
+    await vscode.commands.executeCommand(
+        'aiCodingSidebar.createDefaultPath',
+        plansProvider.getRootPath(),
+        plansProvider.getConfiguredRelativePath()
+    );
+    if (plansProvider.isRootPathNotFound()) {
+        return;
+    }
+}
+```
+
+- 引数は `PlansProvider._handleItemClick()` の `createDirectory` 行クリック時と同じ。「Create directory」を押したときと完全に同じ処理になる
+- `createDefaultPath` は成功時に `setRootPath()` を呼ぶため `pathNotFound` が解除される。**失敗時はエラーを表示するだけで例外を投げない**ため、実行後にもう一度 `isRootPathNotFound()` を確認して中止している
+
+**初期 `PROMPT.md` も作成される（仕様）**
+- `createDefaultPath` は `.claude/plans` 直下に初期プロンプトファイル（v0.9.14）を作成してEditor Viewで開く。その直後にQuick Startが `QUICK_START.md` を開くため、Editor Viewの表示は `QUICK_START.md` になり、`PROMPT.md` は `.claude/plans` 直下に残る
+- 「Create directory押下時の動作 → Quick Start押下時の動作」という要求をそのまま実装したもの。ディレクトリのみ作成したい場合は `createDefaultPath` を呼ばずに `fsPromises.mkdir()` ＋ `setRootPath()` とする
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/providers/PlansProvider.ts` | `isRootPathNotFound()` を追加 |
+| `src/commands/plans.ts` | `aiCodingSidebar.quickStart` の冒頭で未作成時に `createDefaultPath` を実行 |
+| `src/test/suite/providers/PlansProvider.test.ts` | `isRootPathNotFound()` のテストを追加 |
+
 ### v1.2.6バグ修正: タスクディレクトリのリネーム後にタブ切り替えの追従が壊れる
 
 Terminal Viewのタブを切り替えると、そのタブへ Run / Plan / Spec を送信したMarkdownファイルがEditor Viewに表示される（v0.9.3）。Quick Startで作成したタスクのディレクトリ名がリネームされた後は、この追従が失敗して `Failed to read file: ENOENT` が表示される問題を修正した：

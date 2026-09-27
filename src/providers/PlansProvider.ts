@@ -436,6 +436,13 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
         this.refresh();
     }
 
+    /**
+     * rootディレクトリが存在せず「Create directory」行を表示している状態か
+     */
+    isRootPathNotFound(): boolean {
+        return this.pathNotFound;
+    }
+
     getConfiguredRelativePath(): string | undefined {
         return this.configuredRelativePath;
     }

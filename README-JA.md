@@ -247,7 +247,7 @@ Editor Viewの **prompts** ボタン向けに、以下のスニペットを同�
 
 | 項目 | 手順 |
 | --- | --- |
-| Quick Start | Plans View最上部の⚡ Quick Startボタンをクリック<br>フォルダ名の入力を求めずに、タイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成します<br>作成されたファイルはEditor Viewで開かれ、Plansで選択状態になります。同名ディレクトリが既に存在する場合は連番サフィックス（`_2`, `_3`, ...）が付与されます |
+| Quick Start | Plans View最上部の⚡ Quick Startボタンをクリック<br>フォルダ名の入力を求めずに、タイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成します<br>作成されたファイルはEditor Viewで開かれ、Plansで選択状態になります。同名ディレクトリが既に存在する場合は連番サフィックス（`_2`, `_3`, ...）が付与されます<br>Plansのディレクトリが未作成（`Create directory: ...` が表示されている状態）の場合は、`Create directory` を押下したときと同じ処理でディレクトリを作成してから、その配下にQuick Startのディレクトリを作成します |
 | New Task | パネルにフォーカスした状態で`Cmd+S` / `Ctrl+S`を押す<br>Plans Viewで現在開いているディレクトリ配下に新しいディレクトリを作成し、タイムスタンプ付きのMarkdownファイルを自動生成します<br>作成されたファイルはPlansで「editing」ラベルとともに選択され、Editor Viewで開かれます<br>現在のパスが取得できない場合は、デフォルトパス配下に作成されます |
 | 新規ディレクトリ | パス表示行のフォルダアイコンをクリック<br>現在開いているディレクトリ配下に新しいディレクトリを作成します（Markdownファイルは作成しない） |
 | PROMPT.md作成 | Editor Viewの**Next**ボタン、パス表示行のファイルアイコン、または`Cmd+M` / `Ctrl+M`<br>タイムスタンプ付きのMarkdownファイルが作成され、Editor Viewで開かれます（例: `2025_1229_1430_25_PROMPT.md`）。カーソルはファイル先頭に配置されます |
@@ -385,14 +385,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.6.vsix
+   code --install-extension ai-coding-sidebar-1.2.7.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.2.6.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.7.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -406,7 +406,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.6.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.6.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.7.vsix
    ```
 4. VS Codeを再起動
 

@@ -2255,6 +2255,18 @@ npm run test:coverage
    - **重要**: PR作成前に必ずVSIXパッケージを作成する
    - `releases/ai-coding-sidebar-*.vsix` が生成されることを確認
 
+### READMEのバッジ
+
+`package.json` の `version` / `engines.vscode` を変更した場合は、READMEのバッジも同じ値へ更新すること：
+
+| バッジ | 合わせる値 | 表記例 |
+|---|---|---|
+| Version | `package.json` の `version` | `https://img.shields.io/badge/version-1.2.7-blue` |
+| VS Code | `package.json` の `engines.vscode`（`^` を外して `+` を付ける） | `https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue` |
+
+- 対象はREADME 6ファイルすべて（`README.md` / `README-JA.md` / `README-KO.md` / `README-ZH-CN.md` / `README-ZH-TW.md` / `README-PT-BR.md`）。バッジ行は各ファイルで同一の文字列
+- v1.2.7以前はVersionバッジが `1.1.5` のまま更新されていなかった
+
 ## CI/CD
 
 ### GitHub Actions ワークフロー

@@ -1,10 +1,14 @@
 # AI Coding Panel for Claude Code
 
+[![Version](https://img.shields.io/badge/version-1.2.7-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+
+[English](README.md) | 日本語 | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português (BR)](README-PT-BR.md)
+
 Claude Codeでの生産性を最大化するために設計された、強力なVS Codeパネル拡張機能。
 
 プロンプトファイルの管理、AIコマンドの実行、結果の確認を1つの統合パネルで完結。ファイルエクスプローラー、エディタ、ターミナル間のコンテキスト切り替えが不要になります。
 
-![Screenshot](images/screenshot.png)
+![Screenshot](images/screenshot_usage_ja.png)
 
 ## Claude Codeでこの拡張機能を使う理由
 

@@ -60,4 +60,4 @@ The path header row displays the current path and provides quick action buttons:
 
 ---
 
-[Back to Getting Started](getting-started.md)
+[Back to Quick Start](quick-start.md)

@@ -50,11 +50,11 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
                 new vscode.ThemeIcon('book'),
                 [
                     new MenuItem(
-                        'Getting Started',
+                        'Quick Start',
                         'Basic usage and workflow overview',
                         {
                             command: 'aiCodingSidebar.openGettingStarted',
-                            title: 'Open Getting Started'
+                            title: 'Open Quick Start'
                         },
                         new vscode.ThemeIcon('rocket')
                     ),

@@ -16,11 +16,11 @@ export function registerDocumentationCommands(
         })
     );
 
-    // Getting Startedを開くコマンド
+    // Quick Startを開くコマンド
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openGettingStarted', async () => {
             const extensionPath = context.extensionPath;
-            const guidePath = path.join(extensionPath, 'docs', 'getting-started.md');
+            const guidePath = path.join(extensionPath, 'docs', 'quick-start.md');
             const uri = vscode.Uri.file(guidePath);
             await vscode.commands.executeCommand('markdown.showPreview', uri);
         })

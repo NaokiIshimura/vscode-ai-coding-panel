@@ -67,4 +67,4 @@ The Terminal view receives commands from the Editor view:
 
 ---
 
-[Back to Getting Started](getting-started.md)
+[Back to Quick Start](quick-start.md)

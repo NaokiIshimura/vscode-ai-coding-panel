@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.7-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.8-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | 繁體中文 | [Português (BR)](README-PT-BR.md)
 
@@ -388,14 +388,14 @@ npm run watch
 1. 從 [GitHub Releases 頁面](https://github.com/NaokiIshimura/vscode-panel/releases) 下載最新的 VSIX 檔案。
 2. 透過命令列安裝：
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.7.vsix
+   code --install-extension ai-coding-sidebar-1.2.8.vsix
    ```
 3. 重新啟動 VS Code。
 
 #### 使用本機建置
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.7.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.8.vsix
 ```
 
 #### 自行建置套件
@@ -409,7 +409,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.7.vsix
    ```
 3. 安裝產生的 VSIX 檔案：
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.7.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.8.vsix
    ```
 4. 重新啟動 VS Code。
 

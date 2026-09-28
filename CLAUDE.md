@@ -386,6 +386,28 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.8変更: Usage Guideの「Getting Started」を「Quick Start」に変更
+
+Menu ViewのUsage Guideの先頭項目を「Quick Start」に改名し、開くガイドを `images/screenshot_usage.png` に沿った簡易な説明へ書き直した：
+
+**ガイドの構成**
+- スクリーンショット ＋ 5ステップの表（Quick Start / Write the task / Spec / Plan / Run / Claude Code runs / Next）＋「2〜5を繰り返す」の一文のみ
+- ステップ名と説明はスクリーンショット下部の凡例と一致させている。スクリーンショットを差し替えた場合は表も合わせて更新する
+
+**画像は `docs/images/` に複製している（最も見落としやすい箇所）**
+- Markdownプレビューの `localResourceRoots` は、対象ファイルがワークスペース外の場合**そのファイルのディレクトリのみ**になる（VS Code同梱 `markdown-language-features` の実装で確認）
+- インストール済み拡張機能の `docs/quick-start.md` はワークスペース外のため、`../images/screenshot_usage.png` は読み込めない。F5（Extension Development Host）ではリポジトリがワークスペースに含まれるため表示されてしまい、気づきにくい
+- そのため `docs/images/screenshot_usage.png` に同じ画像を置いている。**`images/screenshot_usage.png` を更新した際は両方を差し替えること**
+
+**変更したのは表示名とファイル名のみ**
+
+| 対象 | 変更 |
+|---|---|
+| `MenuProvider` のラベルと `Command.title` | `Quick Start` / `Open Quick Start` |
+| `package.json` の `contributes.commands` の `title` | `Open Quick Start` |
+| `docs/getting-started.md` | `docs/quick-start.md` にリネーム。`commands/documentation.ts` のパスと、他ガイド4件の戻りリンクを更新 |
+| コマンドID `aiCodingSidebar.openGettingStarted` | **変更なし**。キーバインドと既存テスト（`extension.test.ts` / `documentation.test.ts`）への影響を避けるため |
+
 ### v1.2.7バグ修正: Plansのディレクトリ未作成時のQuick Start
 
 Plans Viewに `Create directory: .claude/plans` が表示されている状態でQuick Startを押すと、「Create directory」の処理を経由せずに `.claude/plans/<タイムスタンプ>/<タイムスタンプ>_QUICK_START.md` を直接作成していた問題を修正した：

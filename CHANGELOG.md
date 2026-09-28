@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.8] - 2026-09-28
+
+### Changed
+- **Usage Guide: "Getting Started" is now "Quick Start"**: The first item under Usage Guide in the Menu view is renamed, and the guide it opens is rewritten as a short walkthrough of the usage screenshot
+  - The guide shows the screenshot and a five-step table (Quick Start, Write the task, Spec / Plan / Run, Claude Code runs, Next), followed by "Repeat steps 2 to 5 until the task is done"
+  - The command palette entry is now `Open Quick Start`. The command ID `aiCodingSidebar.openGettingStarted` is unchanged, so existing key bindings keep working
+- **Updated the README screenshot** (`images/screenshot.png`)
+
+### Technical
+- Renamed `docs/getting-started.md` to `docs/quick-start.md` and updated the "Back to" links in the other guides
+- Added `docs/images/screenshot_usage.png`, a copy of `images/screenshot_usage.png`. The Markdown preview only loads local files from the guide's own folder when the extension is not part of the workspace, so the guide cannot refer to `../images/`
+
 ## [1.2.7] - 2026-09-27
 
 ### Fixed
@@ -2650,4 +2662,5 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.4]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.3...v1.2.4
 [1.2.5]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.4...v1.2.5
 [1.2.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.5...v1.2.6
+[1.2.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.7...v1.2.8
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7

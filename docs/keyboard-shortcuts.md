@@ -46,4 +46,4 @@ Quick reference for all keyboard shortcuts in AI Coding Panel.
 
 ---
 
-[Back to Getting Started](getting-started.md)
+[Back to Quick Start](quick-start.md)

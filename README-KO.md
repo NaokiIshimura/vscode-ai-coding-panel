@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.8-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.9-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | 한국어 | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português (BR)](README-PT-BR.md)
 
@@ -388,14 +388,14 @@ npm run watch
 1. [GitHub Releases 페이지](https://github.com/NaokiIshimura/vscode-panel/releases)에서 최신 VSIX 파일을 다운로드합니다.
 2. 명령줄로 설치합니다:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.8.vsix
+   code --install-extension ai-coding-sidebar-1.2.9.vsix
    ```
 3. VS Code를 재시작합니다.
 
 #### 로컬 빌드 사용
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.8.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
 ```
 
 #### 직접 패키지 빌드
@@ -409,7 +409,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.8.vsix
    ```
 3. 생성된 VSIX 파일을 설치합니다:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.8.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
    ```
 4. VS Code를 재시작합니다.
 

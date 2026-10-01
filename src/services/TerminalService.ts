@@ -28,7 +28,23 @@ interface TerminalSession {
     id: string;
     pty: IPty;
     outputCallbacks: Set<TerminalOutputListener>;
+    /** PTYへ未書き込みのチャンク */
+    writeQueue: string[];
+    /** 次のチャンクを書き込むタイマー（書き込み中のみ設定） */
+    writeTimer?: NodeJS.Timeout;
 }
+
+/**
+ * PTYへ1回に書き込む最大文字数
+ * macOSのPTY入力バッファは約1KBしかなく、一括で書き込むと超過分が欠落するため、
+ * VS Code本体のターミナルと同様に小さなチャンクへ分割して書き込む
+ */
+const WRITE_CHUNK_SIZE = 50;
+
+/**
+ * チャンクを書き込む間隔（ミリ秒）
+ */
+const WRITE_INTERVAL_MS = 5;
 
 /**
  * プロセス情報
@@ -155,7 +171,8 @@ export class TerminalService implements ITerminalService {
             const session: TerminalSession = {
                 id: sessionId,
                 pty: pty,
-                outputCallbacks: new Set()
+                outputCallbacks: new Set(),
+                writeQueue: []
             };
             this.sessions.set(sessionId, session);
 
@@ -182,6 +199,7 @@ export class TerminalService implements ITerminalService {
                 });
 
                 // セッションを削除
+                this._clearWriteQueue(session);
                 this.sessions.delete(sessionId);
                 this.lastResizeParams.delete(sessionId);
             });
@@ -205,6 +223,7 @@ export class TerminalService implements ITerminalService {
                 console.error('Error killing terminal session:', error);
             }
             session.outputCallbacks.clear();
+            this._clearWriteQueue(session);
             this.sessions.delete(sessionId);
             this.lastResizeParams.delete(sessionId);
         }
@@ -215,13 +234,64 @@ export class TerminalService implements ITerminalService {
      */
     write(sessionId: string, data: string): void {
         const session = this.sessions.get(sessionId);
-        if (session) {
-            try {
-                session.pty.write(data);
-            } catch (error) {
-                console.error('Error writing to terminal:', error);
-            }
+        if (!session || !data) {
+            return;
         }
+
+        // 長いコマンドの欠落を防ぐため、チャンクに分割して順番に書き込む
+        session.writeQueue.push(...this._splitIntoChunks(data));
+        if (!session.writeTimer) {
+            this._flushWriteQueue(session);
+        }
+    }
+
+    /**
+     * 書き込み待ちのチャンクを1つ書き込み、残りがあれば間隔を空けて続きを書き込む
+     */
+    private _flushWriteQueue(session: TerminalSession): void {
+        const chunk = session.writeQueue.shift();
+        if (chunk === undefined) {
+            session.writeTimer = undefined;
+            return;
+        }
+
+        try {
+            session.pty.write(chunk);
+        } catch (error) {
+            console.error('Error writing to terminal:', error);
+        }
+
+        session.writeTimer = setTimeout(() => this._flushWriteQueue(session), WRITE_INTERVAL_MS);
+    }
+
+    /**
+     * 書き込み待ちのチャンクを破棄する
+     */
+    private _clearWriteQueue(session: TerminalSession): void {
+        if (session.writeTimer) {
+            clearTimeout(session.writeTimer);
+            session.writeTimer = undefined;
+        }
+        session.writeQueue = [];
+    }
+
+    /**
+     * データをWRITE_CHUNK_SIZE文字ごとのチャンクに分割する
+     * サロゲートペア（絵文字等）の途中では分割しない
+     */
+    private _splitIntoChunks(data: string): string[] {
+        const chunks: string[] = [];
+        let start = 0;
+        while (start < data.length) {
+            let end = Math.min(start + WRITE_CHUNK_SIZE, data.length);
+            const lastCode = data.charCodeAt(end - 1);
+            if (end < data.length && lastCode >= 0xD800 && lastCode <= 0xDBFF) {
+                end--;
+            }
+            chunks.push(data.substring(start, end));
+            start = end;
+        }
+        return chunks;
     }
 
     /**
@@ -800,6 +870,7 @@ export class TerminalService implements ITerminalService {
                 console.error('Error disposing terminal session:', error);
             }
             session.outputCallbacks.clear();
+            this._clearWriteQueue(session);
         });
         this.sessions.clear();
         this.exitCallbacks.clear();

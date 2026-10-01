@@ -5,6 +5,17 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.9] - 2026-10-01
+
+### Fixed
+- **長いプロンプトをEditor ViewからRunしてもClaude Codeが起動するように修正**: プロンプトがUTF-8で約1KBを超えると、Terminal Viewのシェルが `quote>` の入力待ちで止まり、Claude Codeが起動しませんでした
+  - macOSのPTYは一度に約1KBまでしか入力を受け付けないため、閉じクォートと改行を含むコマンドの残りが欠落していました
+  - Terminal Viewは入力を50文字ずつ5ms間隔で書き込むようになりました（VS Code本体のターミナルと同じ方式）
+
+### Technical
+- `TerminalService.write()` はセッションごとにチャンクをキューに入れて後続の書き込みの順序を保ち、サロゲートペアは分割せず、セッション終了時に書き込み待ちのチャンクを破棄します
+- `TerminalService` のテストを追加
+
 ## [1.2.8] - 2026-09-28
 
 ### Changed
@@ -2135,3 +2146,4 @@ v0.8.33以前からアップグレードする場合:
 [1.2.6]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.5...v1.2.6
 [1.2.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.7...v1.2.8
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
+[1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9

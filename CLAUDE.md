@@ -51,7 +51,7 @@ src/
 │   ├── templateUtils.ts  # loadTemplate
 │   └── workspaceSetup.ts # setupSettingsJson, setupTemplate, setupClaudeFolder
 ├── services/             # ビジネスロジック
-│   ├── TerminalService.ts      # PTYセッション管理（node-pty、セッション終了検知、リサイズ最適化、環境変数の安全化）
+│   ├── TerminalService.ts      # PTYセッション管理（node-pty、セッション終了検知、リサイズ最適化、環境変数の安全化、チャンク分割書き込み）
 │   ├── FileOperationService.ts # ファイル操作（v0.9.1で完全非同期化）
 │   ├── TemplateService.ts      # タイムスタンプ・テンプレート生成（v0.9.1で新設）
 │   ├── FileWatcherService.ts   # ファイル変更監視
@@ -385,6 +385,23 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `package.json`: 設定スキーマのデフォルト値
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
+
+### v1.2.9バグ修正: 長いプロンプトをRunするとClaude Codeが起動しない
+
+Editor ViewからUTF-8で約1KBを超えるプロンプトをRunすると、Terminal Viewのシェルが `quote>` の入力待ちのまま止まり、Claude Codeが起動しない問題を修正：
+
+**原因**
+- macOSのPTY入力バッファは約1KBしかなく、`TerminalService.write()` でコマンドを一括書き込みすると超過分が欠落する
+- 1174バイトのRunコマンドを書き込んだところ1022バイトしか受け付けられず、閉じクォートと改行が届かなかった
+
+**修正内容**（`src/services/TerminalService.ts`）
+- `write()` はデータを50文字ごとのチャンクに分割し、5ms間隔で順に書き込む（VS Code本体のターミナルと同じ方式）
+- セッションごとに書き込みキュー（`writeQueue`）を持ち、後続の書き込み（Claude Code起動中に別送信する `\r` 等）の順序を保証する
+- サロゲートペア（絵文字等）の途中では分割しない
+- セッション終了・破棄時に書き込み待ちのキューを破棄する
+
+**テスト**
+- `src/test/suite/services/TerminalService.test.ts` を追加（モックPTYをセッションに登録して検証）
 
 ### v1.2.8変更: Usage Guideの「Getting Started」を「Quick Start」に変更
 

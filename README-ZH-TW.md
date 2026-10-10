@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.12-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.13-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | 繁體中文 | [Português](README-PT-BR.md)
 
@@ -44,7 +44,7 @@
 | **Quick Start** | 檢視頂端的 ⚡ Quick Start 按鈕會建立以時間戳記命名的目錄（`YYYY_MMDD_HHMM_SS`）與 `QUICK_START.md` 檔案，不需要輸入資料夾名稱。適合想立即開始撰寫任務時使用 |
 | **Search** | 檢視頂端的搜尋方塊可依目錄名稱、檔案名稱與 Markdown 內文搜尋整個 Plans 目錄（包含 `archived/`）。以空白分隔多個字詞時，只顯示包含所有字詞的結果（不區分大小寫）。結果會顯示相對於 Plans 根目錄的目錄，內文相符時將游標移到上方即可看到相符的行。點擊檔案會移至其所在目錄並開啟，點擊目錄會移至該目錄。按 `Escape` 或清除按鈕返回清單 |
 | 路徑顯示 | 目前路徑會顯示為清單中的第一個項目，並附有行內操作按鈕（New PROMPT.md、New TASK.md、New SPEC.md、Copy、Rename、New Directory、Archive） |
-| **日期/時間前綴** | 目錄名稱前會顯示日期或時間：當天顯示 `[HH:MM]`，其他日期顯示 `[MM/DD]`。在子目錄中，檔案名稱前也會顯示（根目錄中的檔案不顯示前綴） |
+| **日期/時間前綴** | 目錄名稱前會顯示日期或時間：當天顯示 `[HH:MM]`，其他日期顯示 `[MM/DD]`。在子目錄中，檔案名稱前也會顯示（根目錄中的檔案不顯示前綴）。時間戳記格式的提示詞檔案會以前綴取代時間戳記來縮短顯示（例如 `2026_1011_0206_17_QUICK_START.md` → `[02:06] QUICK_START.md`），實際檔案名稱不變 |
 | **Editor 目標檔案圖示** | 在 Editor 檢視中開啟的檔案（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）會顯示 `edit` 圖示，以便與一般 Markdown 檔案區分 |
 | 排序 | 預設依建立日期（遞增）排序檔案 |
 | 拖放 | 在檢視內或從外部來源拖曳檔案即可複製。從檢視外部拖入時請按住 **Shift**：除非按住 Shift，否則 VS Code 會在拖曳期間停用以 webview 為基礎之檢視的指標事件。放到目錄列上會複製到該目錄，放到檢視中的其他位置則會複製到目前顯示的目錄。無法拖放資料夾（僅限檔案）。檢視右下角會顯示提示 |
@@ -389,14 +389,14 @@ npm run watch
 1. 從 [GitHub Releases 頁面](https://github.com/NaokiIshimura/vscode-panel/releases) 下載最新的 VSIX 檔案。
 2. 透過命令列安裝：
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.12.vsix
+   code --install-extension ai-coding-sidebar-1.2.13.vsix
    ```
 3. 重新啟動 VS Code。
 
 #### 使用本機建置
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.12.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.13.vsix
 ```
 
 #### 自行建置套件
@@ -410,7 +410,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.12.vsix
    ```
 3. 安裝產生的 VSIX 檔案：
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.12.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.13.vsix
    ```
 4. 重新啟動 VS Code。
 

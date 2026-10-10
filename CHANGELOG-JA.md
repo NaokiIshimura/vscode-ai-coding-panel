@@ -5,6 +5,19 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.13] - 2026-10-11
+
+### Changed
+- **Plans Viewのファイル名を短縮表示**: タイムスタンプ形式のプロンプトファイル（`YYYY_MMDD_HHMM_SS_<PROMPT|TASK|SPEC|QUICK_START>.md`）を、タイムスタンプを日付/時間プレフィックスに置き換えて表示します
+  - 例: `2026_1011_0206_17_QUICK_START.md` は `[02:06] QUICK_START.md`（当日）または `[10/11] QUICK_START.md`（当日以外）と表示されます
+  - プレフィックスはファイルの作成日時ではなく、ファイル名のタイムスタンプから生成します
+  - ルートディレクトリ・サブディレクトリ・検索結果のすべてに適用されます。実ファイル名は変わらず、ツールチップには従来どおりフルパスを表示します
+  - ディレクトリ名と、形式に一致しないファイルの表示は変わりません
+
+### Technical
+- `PlansProvider` に `parseTimestampedFileName()` を追加し、ファイル行のラベルとEditor View対象の判定で共用
+- 短縮表示の `PlansProvider` テストを追加
+
 ## [1.2.12] - 2026-10-11
 
 ### Added
@@ -2183,6 +2196,7 @@ v0.8.33以前からアップグレードする場合:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.12...v1.2.13
 [1.2.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.11...v1.2.12
 [1.2.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.10...v1.2.11
 [1.2.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.9...v1.2.10

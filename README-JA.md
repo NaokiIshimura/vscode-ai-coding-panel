@@ -1,8 +1,8 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.9-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.10-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
-[English](README.md) | 日本語 | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português (BR)](README-PT-BR.md)
+[English](README.md) | 日本語 | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português](README-PT-BR.md)
 
 Claude Codeでの生産性を最大化するために設計された、強力なVS Codeパネル拡張機能。
 
@@ -83,7 +83,7 @@ Claude Code向けに設計された、インテリジェントな自動化とコ
 | 機能 | 説明 |
 | --- | --- |
 | **Claude Code自動検知** | プロセスベースの検知（1.5秒ごとにチェック）により、プロンプト変更に影響されずClaude Codeセッションを確実に識別。Claude Codeの起動・終了時にUIとショートカットを自動切り替え |
-| **コンテキスト対応ショートカット** | 状態に応じて変化するスマートボタン：<br>- 未起動時: `claude`, `claude -c`, `claude -r`, `claude --from-pr`（挿入のみで実行しない）, `↑`<br>- `↑` 押下後（updateコマンド）: `claude update`, `←`<br>- 起動中: `/model sonnet`, `/model opus`, `/compact`, `/clear`, `←`<br>Claude Codeセッション中に素早いモデル切り替えとupdateコマンドが実行可能 |
+| **コンテキスト対応ショートカット** | 状態に応じて変化するスマートボタン：<br>- 未起動時: `claude`, `claude -c`, `claude -r`, `claude --from-pr`（挿入のみで実行しない）, `claude update`<br>- 起動中: `/model sonnet`, `/model opus`, `/compact`, `/clear`, `/exit`<br>Claude Codeセッション中に素早いモデル切り替えとupdateコマンドが実行可能 |
 | **Runショートカット** | Terminal Viewにフォーカスがある状態で `Cmd+R` / `Ctrl+R` を押すと、Editor ViewのRunコマンドを実行。未保存の編集内容は先に保存され、押下したキーはシェルへ送信されない |
 | **コマンド種別アイコン** | タブ名にコマンド種別を示すアイコンを表示：<br>▶️ Runボタン<br>📝 Planボタン<br>📑 Specボタン |
 | **動的プロセス名** | iTerm2のように、タブ名が現在実行中のプロセスを自動的に表示 |
@@ -389,14 +389,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.9.vsix
+   code --install-extension ai-coding-sidebar-1.2.10.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -410,7 +410,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
    ```
 4. VS Codeを再起動
 

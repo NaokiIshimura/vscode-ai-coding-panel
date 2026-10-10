@@ -59,15 +59,6 @@ body.focused {
 .shortcut-button:hover {
     background-color: var(--vscode-button-secondaryHoverBackground);
 }
-.shortcut-button.toggle-button {
-    padding: 2px 6px;
-    margin-left: 4px;
-    opacity: 0.6;
-}
-.shortcut-button.toggle-button:hover {
-    opacity: 1;
-    background-color: var(--vscode-button-secondaryHoverBackground);
-}
 .tab-bar {
     display: flex;
     align-items: center;

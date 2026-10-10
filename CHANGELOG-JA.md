@@ -5,6 +5,17 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.10] - 2026-10-10
+
+### Added
+- **Terminal Viewに `/exit` ショートカットを追加**: Claude Code起動中のショートカットバーで、`/clear` の右に `/exit` ボタンを表示します
+
+### Changed
+- **`claude update` を `claude --from-pr` の右に表示**: ショートカットバーを `↑` / `←` ボタンで切り替えるのをやめました。Claude Code未起動時は `claude`、`claude -c`、`claude -r`、`claude --from-pr`、`claude update` を1行に表示します
+
+### Removed
+- **Terminal Viewショートカットバーの `↑` / `←` 切り替えボタン**: updateコマンドのグループをシェルコマンドのグループに統合しました。Claude Code起動中に表示していた `←` ボタンも削除したため、ショートカットバーはClaude Codeの起動・終了の検知時にのみ切り替わります
+
 ## [1.2.9] - 2026-10-01
 
 ### Fixed
@@ -2147,3 +2158,5 @@ v0.8.33以前からアップグレードする場合:
 [1.2.8]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.7...v1.2.8
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
+
+[1.2.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.9...v1.2.10

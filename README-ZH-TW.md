@@ -1,8 +1,8 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.9-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.10-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
-[English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | 繁體中文 | [Português (BR)](README-PT-BR.md)
+[English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | 繁體中文 | [Português](README-PT-BR.md)
 
 一款強大的 VS Code 面板擴充功能，專為最大化 Claude Code 的生產力而設計。
 
@@ -83,7 +83,7 @@
 | 功能 | 說明 |
 | --- | --- |
 | **Claude Code 自動偵測** | 以處理程序為基礎的偵測（每 1.5 秒檢查一次），不受提示字元變化影響，能可靠地辨識 Claude Code 工作階段。Claude Code 啟動或結束時會自動切換 UI 與捷徑 |
-| **情境感知捷徑** | 依狀態變化的智慧按鈕：<br>- 未執行時：`claude`、`claude -c`、`claude -r`、`claude --from-pr`（僅插入，不執行）、`↑`<br>- 按下 `↑` 後（更新指令）：`claude update`、`←`<br>- 執行中：`/model sonnet`、`/model opus`、`/compact`、`/clear`、`←`<br>可在 Claude Code 工作階段中快速切換模型及執行更新指令 |
+| **情境感知捷徑** | 依狀態變化的智慧按鈕：<br>- 未執行時：`claude`、`claude -c`、`claude -r`、`claude --from-pr`（僅插入，不執行）、`claude update`<br>- 執行中：`/model sonnet`、`/model opus`、`/compact`、`/clear`、`/exit`<br>可在 Claude Code 工作階段中快速切換模型及執行更新指令 |
 | **Run 快捷鍵** | 在 Terminal 檢視取得焦點時按下 `Cmd+R` / `Ctrl+R`，即可執行 Editor 檢視的 Run 指令。編輯器中未儲存的變更會先儲存，且該按鍵不會傳送到 shell |
 | **指令類型圖示** | 分頁名稱會顯示表示指令來源的圖示：<br>▶️ Run 按鈕<br>📝 Plan 按鈕<br>📑 Spec 按鈕 |
 | **動態處理程序名稱** | 像 iTerm2 一樣，分頁名稱會自動更新為目前正在執行的處理程序 |
@@ -388,14 +388,14 @@ npm run watch
 1. 從 [GitHub Releases 頁面](https://github.com/NaokiIshimura/vscode-panel/releases) 下載最新的 VSIX 檔案。
 2. 透過命令列安裝：
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.9.vsix
+   code --install-extension ai-coding-sidebar-1.2.10.vsix
    ```
 3. 重新啟動 VS Code。
 
 #### 使用本機建置
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
 ```
 
 #### 自行建置套件
@@ -409,7 +409,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
    ```
 3. 安裝產生的 VSIX 檔案：
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
    ```
 4. 重新啟動 VS Code。
 

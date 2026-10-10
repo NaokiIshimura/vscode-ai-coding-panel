@@ -205,15 +205,12 @@
     // ショートカットバーの表示切り替え
     function updateShortcutBar(isClaudeCodeRunning) {
         const notRunning = document.getElementById('shortcuts-not-running');
-        const updateGroup = document.getElementById('shortcuts-update');
         const running = document.getElementById('shortcuts-running');
         if (isClaudeCodeRunning) {
             notRunning.classList.add('hidden');
-            updateGroup.classList.add('hidden');
             running.classList.remove('hidden');
         } else {
             notRunning.classList.remove('hidden');
-            updateGroup.classList.add('hidden');
             running.classList.add('hidden');
         }
     }
@@ -1036,26 +1033,7 @@
     document.getElementById('btn-model-opus')?.addEventListener('click', () => sendShortcut('/model opus', false));
     document.getElementById('btn-compact')?.addEventListener('click', () => sendShortcut('/compact', false));
     document.getElementById('btn-clear')?.addEventListener('click', () => sendShortcut('/clear', false));
-
-    // ↑ボタン: not-running → update グループ切り替え
-    document.getElementById('toggle-update-shortcuts')?.addEventListener('click', () => {
-        document.getElementById('shortcuts-not-running').classList.add('hidden');
-        document.getElementById('shortcuts-update').classList.remove('hidden');
-    });
-
-    // ←ボタン（updateグループ）: update → not-running グループ切り替え
-    document.getElementById('toggle-update-back')?.addEventListener('click', () => {
-        document.getElementById('shortcuts-update').classList.add('hidden');
-        document.getElementById('shortcuts-not-running').classList.remove('hidden');
-    });
-
-    // ←ボタン（runningグループ）: running → not-running グループ切り替え
-    document.getElementById('toggle-shortcuts-2')?.addEventListener('click', () => {
-        if (!activeTabId) return;
-        claudeCodeState.set(activeTabId, false);
-        updateShortcutBar(false);
-        vscode.postMessage({ type: 'setClaudeCodeRunning', tabId: activeTabId, isRunning: false });
-    });
+    document.getElementById('btn-exit')?.addEventListener('click', () => sendShortcut('/exit', false));
 
     // スクロールボタンのイベントハンドラ
     scrollToBottomBtn?.addEventListener('click', () => {

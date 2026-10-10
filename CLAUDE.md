@@ -386,6 +386,36 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.10変更: Terminal Viewショートカットバーの1行化と `/exit` の追加
+
+v1.0.18で導入した3グループ構成（未起動 / update / 起動中）を2グループ構成に戻し、Claude Code起動中のショートカットに `/exit` を追加した：
+
+**変更後の構成**
+```
+Claude Code未起動時:
+[claude] [claude -c] [claude -r] [claude --from-pr] [claude update]
+
+Claude Code起動中:
+[/model sonnet] [/model opus] [/compact] [/clear] [/exit]
+```
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `resources/webview/terminal/index.html` | `shortcuts-update` グループと `↑` / `←` ボタン（`toggle-update-shortcuts` / `toggle-update-back` / `toggle-shortcuts-2`）を削除し、`btn-claude-update` を `shortcuts-not-running` へ移動。`shortcuts-running` に `btn-exit` を追加 |
+| `resources/webview/terminal/main.js` | `updateShortcutBar()` から `shortcuts-update` の扱いを削除。トグルボタン3つのリスナーを削除し、`btn-exit` のリスナーを追加 |
+| `resources/webview/terminal/style.css` | `.shortcut-button.toggle-button` のルールを削除 |
+| README 6ファイル | Context-Aware Shortcuts の一覧 |
+
+**`/exit` 押下後もショートカットバーは即座には切り替わらない**
+- `/exit` は他のslashコマンドと同じく `sendShortcut('/exit', false)` で送信するだけで、`setClaudeCodeRunning` は送らない
+- 未起動側への切り替えはプロセスベースの検知（v0.9.10。Claude Code起動中は1.5秒間隔でチェック、v1.0.9）に任せている。終了を検知するまでの数秒は起動中のボタンが表示される
+
+**起動中の `←`（手動で未起動側へ戻すボタン）も削除した（トレードオフ）**
+- 従来の `toggle-shortcuts-2` は、検知が外れたときに `setClaudeCodeRunning: false` を送って手動で未起動側へ戻す役割も持っていた
+- 削除したことで、検知が誤って起動中のままになった場合にユーザーが戻す手段は無くなった。`setClaudeCodeRunning` メッセージのハンドラ（`TerminalProvider`）は残っているため、必要になれば再びボタンを追加できる
+
 ### v1.2.9バグ修正: 長いプロンプトをRunするとClaude Codeが起動しない
 
 Editor ViewからUTF-8で約1KBを超えるプロンプトをRunすると、Terminal Viewのシェルが `quote>` の入力待ちのまま止まり、Claude Codeが起動しない問題を修正：

@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.12-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.13-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | Português
 
@@ -44,7 +44,7 @@ Navegue e gerencie arquivos em uma lista plana com navegação por diretórios.
 | **Quick Start** | O botão ⚡ Quick Start no topo da view cria um diretório nomeado com timestamp (`YYYY_MMDD_HHMM_SS`) e um arquivo `QUICK_START.md` sem pedir um nome de pasta. Use-o quando quiser apenas começar a escrever uma tarefa imediatamente |
 | **Search** | A caixa de busca no topo da view pesquisa todo o diretório Plans (incluindo `archived/`) por nome de diretório, nome de arquivo e conteúdo Markdown. Separe palavras com espaços para exigir todas elas (sem diferenciar maiúsculas e minúsculas). Os resultados mostram o diretório relativo à raiz do Plans e, ao passar o mouse sobre uma correspondência no conteúdo, a linha correspondente é exibida. Clique em um arquivo para abri-lo em seu diretório ou em um diretório para navegar até ele. Pressione `Escape` ou o botão de limpar para voltar à lista |
 | Exibição do caminho | O caminho atual é mostrado como o primeiro item da lista, com botões de ação inline (New PROMPT.md, New TASK.md, New SPEC.md, Copy, Rename, New Directory, Archive) |
-| **Prefixo de data/hora** | Exibe a data ou a hora antes dos nomes dos diretórios: `[HH:MM]` para hoje, `[MM/DD]` para outras datas. Nos subdiretórios, os nomes dos arquivos também recebem o prefixo (os arquivos do diretório raiz são exibidos sem prefixo) |
+| **Prefixo de data/hora** | Exibe a data ou a hora antes dos nomes dos diretórios: `[HH:MM]` para hoje, `[MM/DD]` para outras datas. Nos subdiretórios, os nomes dos arquivos também recebem o prefixo (os arquivos do diretório raiz são exibidos sem prefixo). Arquivos de prompt com timestamp são encurtados substituindo o timestamp pelo prefixo (ex.: `2026_1011_0206_17_QUICK_START.md` → `[02:06] QUICK_START.md`); o nome real do arquivo não muda |
 | **Ícones dos arquivos do Editor** | Arquivos abertos na Editor view (TASK.md, PROMPT.md, SPEC.md, QUICK_START.md) exibem um ícone `edit` para diferenciá-los de arquivos Markdown comuns |
 | Ordenação | Por padrão, os arquivos são ordenados por data de criação (crescente) |
 | Arrastar e soltar | Copie arquivos arrastando-os dentro da view ou de fontes externas. Mantenha **Shift** pressionado ao arrastar de fora da view: o VS Code desativa os eventos de ponteiro em views baseadas em webview durante um arrasto, a menos que o Shift esteja pressionado. Solte sobre a linha de um diretório para copiar para esse diretório, ou em qualquer outro ponto da view para copiar para o diretório exibido no momento. Pastas não podem ser soltas (somente arquivos). Um lembrete é exibido no canto inferior direito da view |
@@ -389,14 +389,14 @@ npm run watch
 1. Baixe o arquivo VSIX mais recente na [página de GitHub Releases](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Instale pela linha de comando:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.12.vsix
+   code --install-extension ai-coding-sidebar-1.2.13.vsix
    ```
 3. Reinicie o VS Code.
 
 #### Use um build local
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.12.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.13.vsix
 ```
 
 #### Gere o pacote você mesmo
@@ -410,7 +410,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.12.vsix
    ```
 3. Instale o arquivo VSIX gerado:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.12.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.13.vsix
    ```
 4. Reinicie o VS Code.
 

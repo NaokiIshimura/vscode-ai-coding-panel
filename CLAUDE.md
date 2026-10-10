@@ -386,6 +386,38 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.13変更: Plans Viewのファイル名の短縮表示
+
+タイムスタンプ形式のプロンプトファイル（`YYYY_MMDD_HHMM_SS_<PROMPT|TASK|SPEC|QUICK_START>.md`）を、タイムスタンプを日付/時間プレフィックスへ置き換えて表示するようにした。**実ファイル名は変えていない**：
+
+| 実ファイル名 | 表示 |
+|---|---|
+| `2026_1011_0206_17_QUICK_START.md`（当日） | `[02:06] QUICK_START.md` |
+| `2026_0102_0304_05_PROMPT.md`（当日以外） | `[01/02] PROMPT.md` |
+| `2026_0102_0304_05_plan.md` 等の形式外 | 従来どおり（サブディレクトリでは作成日時のプレフィックス＋全名） |
+
+**実ファイル名を短くしなかった理由**
+- `PlansProvider.resolveRenamedDirectory()`（v1.0.20）は「ファイル名がディレクトリ名（タイムスタンプ）で始まる」こと、`TerminalProvider._resolveAssociatedFilePath()`（v1.2.6）は「ファイル名が兄弟ディレクトリ間で一意」であることを前提にしている。ファイル名からタイムスタンプを外すとリネーム追従が壊れる
+
+**仕様**
+- プレフィックスの日時は**ファイル名のタイムスタンプ**から取る（`file.created` ではない）。コピーやgit checkoutで作成日時が変わっても表示が揺れないため
+- ルート直下でも短縮表示する。ルートのファイルはv1.0.6からプレフィックス無しだが、短縮後は `PROMPT.md` だけになり区別できないため
+- 検索結果（v1.2.12）も同じラベル生成（`formatFileLabel()`）を通す
+- ディレクトリ名は短縮しない
+- `tooltip` は実ファイルのパスのまま。Renameの初期値などコマンド側は `.label` を参照しないため影響なし
+- 日時として不正な値（`2026_1340_...` 等）は `Date` が繰り上げるため、分解後の値と一致するかを確認し、不一致なら全名表示にする
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/providers/PlansProvider.ts` | `TIMESTAMPED_TARGET_FILE_PATTERN` / `parseTimestampedFileName()`（export）/ `formatFileLabel()` を追加。`buildItems()` と `search()` のファイル行ラベル、`_openFile()` の判定に使用 |
+| `src/test/suite/providers/PlansProvider.test.ts` | `parseTimestampedFileName`（4ケース）・`short file labels`（5ケース）を追加。検索結果のラベル検証を追加。edit アイコンのテストはラベルではなく `filePath` で行を引くよう変更 |
+| README 6ファイル | Date/time prefix の説明 |
+
+**ローカルでのテスト実行について**
+- `vscode` をスタブ化したNode上でmocha（`--ui tdd`）を実行して確認している（`PlansProvider.test.ts` 60 passing）
+
 ### v1.2.12新機能: Plans Viewの検索
 
 Plans Viewのヘッダー左側に検索ボックスを追加し、Plansのrootディレクトリ配下全体を検索できるようにした：

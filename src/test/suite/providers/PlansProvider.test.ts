@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { PlansProvider, MAX_SEARCH_RESULTS, MAX_SEARCH_FILE_SIZE } from '../../../providers/PlansProvider';
+import { PlansProvider, MAX_SEARCH_RESULTS, MAX_SEARCH_FILE_SIZE, parseTimestampedFileName } from '../../../providers/PlansProvider';
 import { FileItem } from '../../../providers/items/FileItem';
 import { FileWatcherService } from '../../../services/FileWatcherService';
 
@@ -172,8 +172,8 @@ suite('PlansProvider Integration Test Suite', () => {
 			await plansProvider.setRootPath(testDir);
 
 			const items = await plansProvider.buildItems();
-			const promptItem = items.find(item => item.label === '2026_0101_0101_01_PROMPT.md');
-			const otherItem = items.find(item => item.label === 'other.md');
+			const promptItem = items.find(item => item.filePath === path.join(testDir, '2026_0101_0101_01_PROMPT.md'));
+			const otherItem = items.find(item => item.filePath === path.join(testDir, 'other.md'));
 
 			assert.strictEqual(promptItem!.icon, 'edit');
 			assert.strictEqual(otherItem!.icon, 'markdown');
@@ -485,6 +485,111 @@ suite('PlansProvider Integration Test Suite', () => {
 		});
 	});
 
+	suite('parseTimestampedFileName', () => {
+		test('Should split a timestamped target file name into the date and the short name', () => {
+			const parsed = parseTimestampedFileName('2026_1011_0206_17_QUICK_START.md');
+
+			assert.ok(parsed);
+			assert.strictEqual(parsed!.shortName, 'QUICK_START.md');
+			assert.strictEqual(parsed!.date.getTime(), new Date(2026, 9, 11, 2, 6, 17).getTime());
+		});
+
+		test('Should accept every Editor View target type', () => {
+			for (const type of ['PROMPT', 'TASK', 'SPEC', 'QUICK_START']) {
+				assert.strictEqual(parseTimestampedFileName(`2026_0101_0101_01_${type}.md`)?.shortName, `${type}.md`);
+			}
+		});
+
+		test('Should return undefined for names that are not timestamped target files', () => {
+			assert.strictEqual(parseTimestampedFileName('2026_0101_0101_01_plan.md'), undefined);
+			assert.strictEqual(parseTimestampedFileName('2026_0101_0101_01_PROMPT.txt'), undefined);
+			assert.strictEqual(parseTimestampedFileName('PROMPT.md'), undefined);
+			assert.strictEqual(parseTimestampedFileName('x2026_0101_0101_01_PROMPT.md'), undefined);
+		});
+
+		test('Should return undefined for out-of-range date/time values', () => {
+			assert.strictEqual(parseTimestampedFileName('2026_1340_0101_01_PROMPT.md'), undefined);
+			assert.strictEqual(parseTimestampedFileName('2026_0230_0101_01_PROMPT.md'), undefined);
+			assert.strictEqual(parseTimestampedFileName('2026_0101_2460_01_PROMPT.md'), undefined);
+		});
+	});
+
+	suite('short file labels', () => {
+		test('Should replace the timestamp with a [MM/DD] prefix taken from the file name in subdirectories', async () => {
+			const subDir = path.join(testDir, 'subdir');
+			fs.mkdirSync(subDir, { recursive: true });
+			const filePath = path.join(subDir, '2020_0102_0304_05_QUICK_START.md');
+			fs.writeFileSync(filePath, 'content', 'utf8');
+
+			await plansProvider.setRootPath(testDir);
+			plansProvider.setActiveFolder(subDir);
+
+			const items = await plansProvider.buildItems();
+			const fileItem = items.find(item => item.filePath === filePath);
+
+			assert.ok(fileItem);
+			// ファイルの作成日時（今日）ではなくファイル名の日時を使う
+			assert.strictEqual(fileItem!.label, '[01/02] QUICK_START.md');
+			// tooltipには実ファイルのパスを残す
+			assert.strictEqual(fileItem!.tooltip, filePath);
+		});
+
+		test('Should use a [HH:MM] prefix when the file name timestamp is today', async () => {
+			const subDir = path.join(testDir, 'subdir');
+			fs.mkdirSync(subDir, { recursive: true });
+			const now = new Date();
+			const pad = (value: number) => String(value).padStart(2, '0');
+			const fileName = `${now.getFullYear()}_${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}_${pad(now.getSeconds())}_PROMPT.md`;
+			fs.writeFileSync(path.join(subDir, fileName), 'content', 'utf8');
+
+			await plansProvider.setRootPath(testDir);
+			plansProvider.setActiveFolder(subDir);
+
+			const items = await plansProvider.buildItems();
+			const fileItem = items.find(item => item.filePath === path.join(subDir, fileName));
+
+			assert.strictEqual(fileItem!.label, `[${pad(now.getHours())}:${pad(now.getMinutes())}] PROMPT.md`);
+		});
+
+		test('Should shorten timestamped files in the root directory as well', async () => {
+			fs.writeFileSync(path.join(testDir, '2020_0102_0304_05_PROMPT.md'), 'content', 'utf8');
+			fs.writeFileSync(path.join(testDir, 'notes.md'), 'content', 'utf8');
+
+			await plansProvider.setRootPath(testDir);
+
+			const items = await plansProvider.buildItems();
+
+			assert.strictEqual(items.find(item => item.filePath === path.join(testDir, '2020_0102_0304_05_PROMPT.md'))!.label, '[01/02] PROMPT.md');
+			// タイムスタンプ形式以外のルートのファイルは従来どおりプレフィックス無し
+			assert.strictEqual(items.find(item => item.filePath === path.join(testDir, 'notes.md'))!.label, 'notes.md');
+		});
+
+		test('Should keep the full name for files that are not timestamped target files', async () => {
+			const subDir = path.join(testDir, 'subdir');
+			fs.mkdirSync(subDir, { recursive: true });
+			fs.writeFileSync(path.join(subDir, '2020_0102_0304_05_plan.md'), 'content', 'utf8');
+
+			await plansProvider.setRootPath(testDir);
+			plansProvider.setActiveFolder(subDir);
+
+			const items = await plansProvider.buildItems();
+			const fileItem = items.find(item => item.filePath === path.join(subDir, '2020_0102_0304_05_plan.md'));
+
+			assert.match(fileItem!.label, /^\[(\d{2}:\d{2}|\d{2}\/\d{2})\] 2020_0102_0304_05_plan\.md$/);
+		});
+
+		test('Should not shorten directory names', async () => {
+			fs.mkdirSync(path.join(testDir, '2020_0102_0304_05'), { recursive: true });
+
+			await plansProvider.setRootPath(testDir);
+
+			const items = await plansProvider.buildItems();
+			const dirItem = items.find(item => item.filePath === path.join(testDir, '2020_0102_0304_05'));
+
+			assert.match(dirItem!.label, /^\[(\d{2}:\d{2}|\d{2}\/\d{2})\] 2020_0102_0304_05$/);
+		});
+	});
+
 	suite('polling', () => {
 		test('Should start polling on handleVisibilityChange(true)', () => {
 			plansProvider.handleVisibilityChange(true);
@@ -621,6 +726,8 @@ suite('PlansProvider Integration Test Suite', () => {
 			assert.strictEqual(fileItem!.description, path.join('archived', 'old_task'));
 			assert.strictEqual(fileItem!.contextValue, 'file');
 			assert.strictEqual(fileItem!.matchPreview, undefined);
+			// 検索結果もタイムスタンプ形式のファイルは短縮表示する
+			assert.strictEqual(fileItem!.label, '[01/02] TASK.md');
 		});
 
 		test('Should match Markdown content and return the matched line as a preview', async () => {

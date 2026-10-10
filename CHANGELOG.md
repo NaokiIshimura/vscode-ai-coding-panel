@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.13] - 2026-10-11
+
+### Changed
+- **Shorter file names in the Plans view**: Timestamped prompt files (`YYYY_MMDD_HHMM_SS_<PROMPT|TASK|SPEC|QUICK_START>.md`) are now shown with the timestamp replaced by the date/time prefix
+  - Example: `2026_1011_0206_17_QUICK_START.md` is shown as `[02:06] QUICK_START.md` (today) or `[10/11] QUICK_START.md` (other dates)
+  - The prefix is taken from the timestamp in the file name, not from the file's creation time
+  - Applies to the root directory, subdirectories, and search results. The actual file names are unchanged, and the tooltip still shows the full path
+  - Directory names and files in other formats are shown as before
+
+### Technical
+- Added `parseTimestampedFileName()` to `PlansProvider` and shared it between the file labels and the Editor View target check
+- Added `PlansProvider` tests for the shortened labels
+
 ## [1.2.12] - 2026-10-11
 
 ### Added
@@ -2712,6 +2725,7 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.12...v1.2.13
 [1.2.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.11...v1.2.12
 [1.2.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.10...v1.2.11
 [1.2.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.9...v1.2.10

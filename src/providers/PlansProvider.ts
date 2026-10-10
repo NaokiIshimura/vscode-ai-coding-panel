@@ -38,6 +38,33 @@ export const MAX_SEARCH_FILE_SIZE = 1024 * 1024;
 /** 本文抜粋の最大文字数 */
 const MATCH_PREVIEW_LENGTH = 120;
 
+/**
+ * タイムスタンプ形式のEditor View対象ファイル（YYYY_MMDD_HHMM_SS_<TYPE>.md）
+ * キャプチャ: 年 / 月 / 日 / 時 / 分 / 秒 / タイムスタンプを除いた名前
+ */
+const TIMESTAMPED_TARGET_FILE_PATTERN = /^(\d{4})_(\d{2})(\d{2})_(\d{2})(\d{2})_(\d{2})_((?:PROMPT|TASK|SPEC|QUICK_START)\.md)$/;
+
+/**
+ * タイムスタンプ形式のファイル名を、作成日時とタイムスタンプを除いた名前に分解する
+ * 形式に一致しない、または日時として不正な場合はundefinedを返す
+ */
+export function parseTimestampedFileName(fileName: string): { date: Date; shortName: string } | undefined {
+    const match = TIMESTAMPED_TARGET_FILE_PATTERN.exec(fileName);
+    if (!match) {
+        return undefined;
+    }
+
+    const [year, month, day, hour, minute, second] = match.slice(1, 7).map(Number);
+    const date = new Date(year, month - 1, day, hour, minute, second);
+    // 2026_1340_... のような値はDateが繰り上げてしまうため、元の値と一致するかを確認する
+    if (date.getMonth() !== month - 1 || date.getDate() !== day
+        || date.getHours() !== hour || date.getMinutes() !== minute || date.getSeconds() !== second) {
+        return undefined;
+    }
+
+    return { date, shortName: match[7] };
+}
+
 export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposable {
     public static readonly viewType = 'aiCodingSidebarExplorer';
 
@@ -206,9 +233,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
      */
     private async _openFile(filePath: string): Promise<void> {
         const fileName = path.basename(filePath);
-        const timestampPattern = /^\d{4}_\d{4}_\d{4}_\d{2}_(PROMPT|TASK|SPEC|QUICK_START)\.md$/;
 
-        if (timestampPattern.test(fileName) && this.editorProvider) {
+        if (TIMESTAMPED_TARGET_FILE_PATTERN.test(fileName) && this.editorProvider) {
             await this.editorProvider.showFile(filePath);
             return;
         }
@@ -415,13 +441,11 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
         const isRoot = currentPath === this.rootPath;
 
         const fileItems: PlansViewItem[] = files.map(file => {
-            const prefixedName = `${this.formatDateTimePrefix(file.created)} ${file.name}`;
-
             if (file.isDirectory) {
                 // ディレクトリは常に日付/時間をディレクトリ名の前に表示
                 return {
                     kind: 'directory',
-                    label: prefixedName,
+                    label: `${this.formatDateTimePrefix(file.created)} ${file.name}`,
                     filePath: file.path,
                     icon: 'folder',
                     tooltip: file.path,
@@ -433,8 +457,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
 
             return {
                 kind: 'file',
-                // ファイルはルートディレクトリ以外の場合のみ日付/時間を表示
-                label: isRoot ? file.name : prefixedName,
+                // ファイルはルートディレクトリ以外の場合のみ日付/時間を表示（タイムスタンプ形式は常に短縮表示）
+                label: this.formatFileLabel(file, !isRoot),
                 description: isEditing ? 'editing' : undefined,
                 filePath: file.path,
                 icon: getFileIconName(file.name),
@@ -608,7 +632,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             const isEditing = !!currentFilePath && info.path === currentFilePath;
             items.push({
                 kind: 'file',
-                label: info.name,
+                label: this.formatFileLabel(info, false),
                 description: [isEditing ? 'editing' : undefined, relativeDir || undefined].filter(Boolean).join(' · ') || undefined,
                 filePath: info.path,
                 icon: getFileIconName(info.name),
@@ -1233,6 +1257,20 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             console.error('Failed to find oldest target file:', error);
             return undefined;
         }
+    }
+
+    /**
+     * ファイル行のラベルを生成する
+     * タイムスタンプ形式のファイルは、タイムスタンプを日付/時間プレフィックスに置き換えて短縮表示する
+     * （例: 2026_1011_0206_17_QUICK_START.md → [02:06] QUICK_START.md）。日時はファイル名から取る
+     * それ以外のファイルは withPrefix が真の場合のみ作成日時のプレフィックスを付ける
+     */
+    private formatFileLabel(file: FileInfo, withPrefix: boolean): string {
+        const parsed = parseTimestampedFileName(file.name);
+        if (parsed) {
+            return `${this.formatDateTimePrefix(parsed.date)} ${parsed.shortName}`;
+        }
+        return withPrefix ? `${this.formatDateTimePrefix(file.created)} ${file.name}` : file.name;
     }
 
     /**

@@ -376,16 +376,16 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
         const files = await this.getFilesInDirectory(currentPath);
         const currentFilePath = this.editorProvider?.getCurrentFilePath();
 
-        const fileItems: PlansViewItem[] = files.map(file => {
-            if (file.isDirectory) {
-                // ルートパスのディレクトリの場合、日付/時間をファイル名の前に表示
-                const label = currentPath === this.rootPath
-                    ? `${this.formatDateTimePrefix(file.created)} ${file.name}`
-                    : file.name;
+        const isRoot = currentPath === this.rootPath;
 
+        const fileItems: PlansViewItem[] = files.map(file => {
+            const prefixedName = `${this.formatDateTimePrefix(file.created)} ${file.name}`;
+
+            if (file.isDirectory) {
+                // ディレクトリは常に日付/時間をディレクトリ名の前に表示
                 return {
                     kind: 'directory',
-                    label,
+                    label: prefixedName,
                     filePath: file.path,
                     icon: 'folder',
                     tooltip: file.path,
@@ -397,7 +397,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
 
             return {
                 kind: 'file',
-                label: file.name,
+                // ファイルはルートディレクトリ以外の場合のみ日付/時間を表示
+                label: isRoot ? file.name : prefixedName,
                 description: isEditing ? 'editing' : undefined,
                 filePath: file.path,
                 icon: getFileIconName(file.name),
@@ -996,7 +997,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * Format date/time prefix for root directory display
+     * Format date/time prefix for directory and non-root file display
      * Today: [HH:MM], otherwise: [MM/DD]
      */
     private formatDateTimePrefix(date: Date): string {

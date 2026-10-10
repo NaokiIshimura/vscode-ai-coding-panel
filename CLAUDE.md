@@ -386,6 +386,35 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.11変更: Plans Viewサブディレクトリでの日付/時間プレフィックス表示
+
+v1.0.5で導入した日付/時間プレフィックス（当日 `[HH:MM]`、それ以外 `[MM/DD]`）を、サブディレクトリ表示中のファイル行・ディレクトリ行にも付けるようにした：
+
+| 表示中のディレクトリ | ディレクトリ行 | ファイル行 |
+|---|---|---|
+| ルート | `[..] name`（変更なし） | `name`（変更なし。v1.0.6で削除したまま） |
+| サブディレクトリ | **`[..] name`** | **`[..] name`** |
+
+**設定は追加していない（常に表示）**
+- 当初は `aiCodingSidebar.plans.showTimestampInSubdirectories`（既定 `false`）で切り替える案だったが、ON固定とする指示により設定は設けていない。そのため既存ユーザーのサブディレクトリ表示も一律に変わる
+- 設定を追加する場合は、`onDidChangeConfiguration` の監視対象にも加えること。ラベルは `itemCache` に保持されるため、`refresh()` でキャッシュを破棄しないと切り替えが反映されない
+
+**ラベルの変更はコマンドへ影響しない**
+- Webviewから `_executeItemCommand()` へ `label` が渡り `FileItem` のラベルになるが、`src/commands/*.ts` は `.label` を参照していない
+- ルートのディレクトリ行は v1.0.5 から既にプレフィックス付きのラベルで同じ経路を通っている
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/providers/PlansProvider.ts` | `buildItems()` でディレクトリ行は常に、ファイル行はルート以外でプレフィックスを付与。`formatDateTimePrefix()` のJSDoc |
+| `src/test/suite/providers/PlansProvider.test.ts` | スイート名を `date/time prefix` に変更。サブディレクトリのファイル行・ディレクトリ行へのプレフィックス、パス表示行・`..` 行に付かないことを検証 |
+| README 6ファイル | Date/time prefix の説明 |
+
+**ローカルでのテスト実行について**
+- v1.1.15に記載のとおり、macOSローカルの `npm test` はmochaの結果が親プロセスへ返らない
+- 本バージョンでは `vscode` をスタブ化したNode上でmocha（`--ui tdd`）を実行して確認している（`PlansProvider.test.ts` 40 passing）
+
 ### v1.2.10変更: Terminal Viewショートカットバーの1行化と `/exit` の追加
 
 v1.0.18で導入した3グループ構成（未起動 / update / 起動中）を2グループ構成に戻し、Claude Code起動中のショートカットに `/exit` を追加した：

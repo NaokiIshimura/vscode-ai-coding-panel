@@ -5,6 +5,16 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.11] - 2026-10-10
+
+### Changed
+- **Plans Viewのサブディレクトリに日付/時間プレフィックスを表示**: サブディレクトリでも、ファイル名・ディレクトリ名の前にルートディレクトリと同じ `[HH:MM]`（当日）/ `[MM/DD]`（当日以外）を表示します
+  - ルートディレクトリのファイルは従来どおりプレフィックスなしです
+  - パス表示行と `..` 行には表示しません
+
+### Technical
+- サブディレクトリのプレフィックスに合わせて `PlansProvider` のテストを更新
+
 ## [1.2.10] - 2026-10-10
 
 ### Added
@@ -2159,4 +2169,5 @@ v0.8.33以前からアップグレードする場合:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.10...v1.2.11
 [1.2.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.9...v1.2.10

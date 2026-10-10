@@ -410,7 +410,7 @@ suite('PlansProvider Integration Test Suite', () => {
 		});
 	});
 
-	suite('root directory date/time prefix', () => {
+	suite('date/time prefix', () => {
 		test('Should not display date/time prefix for files in root directory', async () => {
 			fs.writeFileSync(path.join(testDir, 'test.md'), 'content', 'utf8');
 
@@ -438,7 +438,7 @@ suite('PlansProvider Integration Test Suite', () => {
 			assert.ok(dirItem!.label.startsWith('['));
 		});
 
-		test('Should not display date/time prefix for files in subdirectory', async () => {
+		test('Should display date/time prefix for files in subdirectory', async () => {
 			const subDir = path.join(testDir, 'subdir');
 			fs.mkdirSync(subDir, { recursive: true });
 			fs.writeFileSync(path.join(subDir, 'sub.md'), 'content', 'utf8');
@@ -450,8 +450,38 @@ suite('PlansProvider Integration Test Suite', () => {
 			const fileItem = items.find(item => item.filePath === path.join(subDir, 'sub.md'));
 
 			assert.ok(fileItem);
-			// サブディレクトリのファイルはプレフィックスなし
-			assert.strictEqual(fileItem!.label, 'sub.md');
+			// サブディレクトリのファイルはプレフィックス付きラベル
+			assert.match(fileItem!.label, /^\[(\d{2}:\d{2}|\d{2}\/\d{2})\] sub\.md$/);
+		});
+
+		test('Should display date/time prefix for directories in subdirectory', async () => {
+			const subDir = path.join(testDir, 'subdir');
+			fs.mkdirSync(path.join(subDir, 'nested'), { recursive: true });
+
+			await plansProvider.setRootPath(testDir);
+			plansProvider.setActiveFolder(subDir);
+
+			const items = await plansProvider.buildItems();
+			const dirItem = items.find(item => item.filePath === path.join(subDir, 'nested'));
+
+			assert.ok(dirItem);
+			// サブディレクトリのディレクトリもプレフィックス付きラベル
+			assert.match(dirItem!.label, /^\[(\d{2}:\d{2}|\d{2}\/\d{2})\] nested$/);
+		});
+
+		test('Should not display date/time prefix for path and parent rows in subdirectory', async () => {
+			const subDir = path.join(testDir, 'subdir');
+			fs.mkdirSync(subDir, { recursive: true });
+
+			await plansProvider.setRootPath(testDir);
+			plansProvider.setActiveFolder(subDir);
+
+			const items = await plansProvider.buildItems();
+			const pathItem = items.find(item => item.kind === 'path');
+			const parentItem = items.find(item => item.kind === 'parent');
+
+			assert.strictEqual(pathItem!.label, 'subdir');
+			assert.strictEqual(parentItem!.label, '..');
 		});
 	});
 

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.11] - 2026-10-10
+
+### Changed
+- **Date/time prefix in Plans view subdirectories**: In subdirectories, file and directory names are now shown with the same `[HH:MM]` (today) / `[MM/DD]` (other dates) prefix as directories in the root directory
+  - Files in the root directory are still shown without a prefix
+  - The path row and the `..` row are not prefixed
+
+### Technical
+- Updated `PlansProvider` tests for the prefix in subdirectories
+
 ## [1.2.10] - 2026-10-10
 
 ### Added
@@ -2688,4 +2698,5 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.10...v1.2.11
 [1.2.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.9...v1.2.10

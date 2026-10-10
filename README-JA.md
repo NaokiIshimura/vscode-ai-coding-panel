@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.10-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.11-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | 日本語 | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português](README-PT-BR.md)
 
@@ -43,7 +43,7 @@ Claude Codeでの生産性を最大化するために設計された、強力な
 | **初期プロンプト付きディレクトリ作成** | 「Create directory」ボタンで`.claude/plans`ディレクトリと初期プロンプトファイル（`YYYY_MMDD_HHMM_SS_PROMPT.md`）を自動作成。Run/Plan/Specボタンの使い方を説明するテンプレート付き。ファイルは自動的にEditor Viewで開かれる |
 | **Quick Start** | ビュー最上部の⚡ Quick Startボタンで、フォルダ名を入力せずにタイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成。すぐにタスクを書き始めたいときに便利 |
 | パス表示 | 現在のパスをリストの先頭アイテムとして表示（New PROMPT.md、New TASK.md、New SPEC.md、Copy、Rename、New Directory、Archiveボタン付き） |
-| **日付/時間プレフィックス** | ルートディレクトリのディレクトリ名の前に日付または時間を表示: 当日は`[HH:MM]`、当日以外は`[MM/DD]`（ファイルはプレフィックスなし） |
+| **日付/時間プレフィックス** | ディレクトリ名の前に日付または時間を表示: 当日は`[HH:MM]`、当日以外は`[MM/DD]`。サブディレクトリではファイル名の前にも表示（ルートディレクトリのファイルはプレフィックスなし） |
 | **Editor対象ファイルアイコン** | Editor Viewで開くファイル（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）は`edit`アイコンで表示し、通常のMarkdownファイルと区別 |
 | ソート | ファイルはデフォルトで作成日時の昇順でソート |
 | ドラッグ&ドロップ | ビュー内または外部からのファイルをドラッグしてコピー。ビューの外からドラッグする場合は**Shiftキーを押しながら**ドロップする（VS Codeはドラッグ中、Shiftキーが押されていないとWebviewベースのビューへのポインタイベントを無効化するため）。ディレクトリ行にドロップするとそのディレクトリへ、それ以外の場所にドロップすると現在表示中のディレクトリへコピーされる。フォルダのドロップには非対応（ファイルのみ）。ビュー右下に注意書きを常時表示 |
@@ -389,14 +389,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.10.vsix
+   code --install-extension ai-coding-sidebar-1.2.11.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.11.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -410,7 +410,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.11.vsix
    ```
 4. VS Codeを再起動
 

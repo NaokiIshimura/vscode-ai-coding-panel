@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.10-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.11-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | 简体中文 | [繁體中文](README-ZH-TW.md) | [Português](README-PT-BR.md)
 
@@ -43,7 +43,7 @@
 | **创建目录并生成提示词文件** | "Create directory" 按钮会自动创建 `.claude/plans` 以及一个初始提示词文件（`YYYY_MMDD_HHMM_SS_PROMPT.md`），其中包含 Run/Plan/Spec 按钮的使用说明。文件会自动在 Editor 视图中打开 |
 | **Quick Start** | 视图顶部的 ⚡ Quick Start 按钮无需输入文件夹名称，即可创建以时间戳命名的目录（`YYYY_MMDD_HHMM_SS`）和 `QUICK_START.md` 文件。适合想立即开始编写任务的场景 |
 | 路径显示 | 当前路径作为列表的第一项显示，并带有内联操作按钮（New PROMPT.md、New TASK.md、New SPEC.md、Copy、Rename、New Directory、Archive） |
-| **日期/时间前缀** | 根目录中的目录名前会显示日期或时间：当天显示 `[HH:MM]`，其他日期显示 `[MM/DD]`（文件不显示前缀） |
+| **日期/时间前缀** | 目录名前会显示日期或时间：当天显示 `[HH:MM]`，其他日期显示 `[MM/DD]`。在子目录中，文件名前也会显示（根目录中的文件不显示前缀） |
 | **Editor 目标文件图标** | 在 Editor 视图中打开的文件（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）显示 `edit` 图标，以便与普通 Markdown 文件区分 |
 | 排序 | 默认按创建日期（升序）排序 |
 | Drag & Drop | 在视图内或从外部拖动文件即可复制。从视图外部拖入时请按住 **Shift**：拖动过程中，除非按住 Shift，否则 VS Code 会禁用基于 webview 的视图上的指针事件。拖放到目录行上会复制到该目录，拖放到视图的其他位置则复制到当前显示的目录。不能拖放文件夹（仅限文件）。视图右下角会显示相应提示 |
@@ -388,14 +388,14 @@ npm run watch
 1. 从 [GitHub Releases 页面](https://github.com/NaokiIshimura/vscode-panel/releases)下载最新的 VSIX 文件。
 2. 通过命令行安装：
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.10.vsix
+   code --install-extension ai-coding-sidebar-1.2.11.vsix
    ```
 3. 重启 VS Code。
 
 #### 使用本地构建
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.11.vsix
 ```
 
 #### 自行构建包
@@ -409,7 +409,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
    ```
 3. 安装生成的 VSIX 文件：
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.11.vsix
    ```
 4. 重启 VS Code。
 

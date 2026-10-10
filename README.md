@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.11-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.12-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 English | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português](README-PT-BR.md)
 
@@ -42,6 +42,7 @@ Browse and manage files in a flat list view with directory navigation.
 | Auto-file selection | Automatically selects and displays the oldest TASK.md, PROMPT.md, SPEC.md, or QUICK_START.md file when navigating into a subdirectory. Navigating back to the root directory selects nothing, keeping the root as a plain task list |
 | **Create directory with prompt** | "Create directory" button automatically creates `.claude/plans` and an initial prompt file (`YYYY_MMDD_HHMM_SS_PROMPT.md`) with helpful guidance on using Run/Plan/Spec buttons. File opens automatically in Editor view |
 | **Quick Start** | ⚡ Quick Start button at the top of the view creates a timestamp-named directory (`YYYY_MMDD_HHMM_SS`) and a `QUICK_START.md` file without asking for a folder name. Use it when you just want to start writing a task immediately |
+| **Search** | The search box at the top of the view searches the whole Plans directory (including `archived/`) by directory name, file name, and Markdown content. Separate words with spaces to require all of them (case-insensitive). Results show the directory relative to the Plans root, and hovering a content match shows the matching line. Click a file to open it in its directory, or a directory to navigate into it. Press `Escape` or the clear button to return to the list |
 | Path display | Current path shown as the first item in the list with inline action buttons (New PROMPT.md, New TASK.md, New SPEC.md, Copy, Rename, New Directory, Archive) |
 | **Date/time prefix** | Displays date or time before directory names: `[HH:MM]` for today, `[MM/DD]` for other dates. In subdirectories, file names are prefixed as well (files in the root directory are shown without prefix) |
 | **Editor target file icons** | Files opened in Editor view (TASK.md, PROMPT.md, SPEC.md, QUICK_START.md) display an `edit` icon to distinguish them from regular Markdown files |
@@ -388,14 +389,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.11.vsix
+   code --install-extension ai-coding-sidebar-1.2.12.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.11.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.12.vsix
 ```
 
 #### Build the package yourself
@@ -409,7 +410,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.11.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.11.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.12.vsix
    ```
 4. Restart VS Code.
 

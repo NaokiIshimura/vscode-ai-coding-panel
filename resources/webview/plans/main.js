@@ -4,6 +4,8 @@ const quickStartButton = document.getElementById('quick-start-button');
 const listElement = document.getElementById('list');
 const contextMenuElement = document.getElementById('context-menu');
 const tooltipElement = document.getElementById('tooltip');
+const searchInput = document.getElementById('search-input');
+const searchClearButton = document.getElementById('search-clear');
 
 // 内部ドラッグ用のMIMEタイプ（VS Codeのtext/uri-listと区別する）
 const INTERNAL_MIME = 'application/vnd.aicodingsidebar.paths';
@@ -17,8 +19,12 @@ const RESOURCE_URLS_MIME = 'resourceurls';
 // 内容を読み取って転送するドロップファイルの上限サイズ（50MB）
 const MAX_DROP_FILE_SIZE = 50 * 1024 * 1024;
 
+// 検索入力から拡張側へ送るまでの待ち時間（ms）
+const SEARCH_DEBOUNCE = 250;
+
 let items = [];
 let selectedPath;
+let searchTimer;
 
 /**
  * コンテキストメニュー定義
@@ -128,11 +134,19 @@ window.addEventListener('message', event => {
         case 'update':
             items = message.items || [];
             selectedPath = message.selectedPath;
+            // rootディレクトリが無い（Create directory表示中）間は検索できない
+            searchInput.disabled = items.some(item => item.kind === 'createDirectory');
             render(message.message);
             break;
         case 'select':
             selectedPath = message.filePath;
             updateSelection();
+            break;
+        case 'searchCleared':
+            // ディレクトリ移動などで拡張側が検索を終了した
+            clearTimeout(searchTimer);
+            searchInput.value = '';
+            updateSearchClearButton();
             break;
     }
 });
@@ -191,6 +205,12 @@ function createRow(item) {
         description.className = 'description';
         description.textContent = item.description;
         row.appendChild(description);
+    }
+
+    // 検索結果の件数行は表示のみ（選択・メニュー・ドラッグの対象外）
+    if (item.kind === 'searchHeader') {
+        row.classList.add('search-header');
+        return row;
     }
 
     const actions = createRowActions(item);
@@ -626,17 +646,37 @@ document.addEventListener('contextmenu', (event) => {
     }
 });
 
+/**
+ * キーボードで選択できる行（検索結果の件数行は除く）
+ */
+function getSelectableItems() {
+    return items.filter(item => item.kind !== 'searchHeader');
+}
+
+/**
+ * 指定した行を選択し、見える位置までスクロールする
+ */
+function selectItem(item) {
+    selectedPath = item.filePath;
+    updateSelection();
+    const selectedRow = listElement.querySelector('.row.selected');
+    if (selectedRow) {
+        selectedRow.scrollIntoView({ block: 'nearest' });
+    }
+}
+
 // キーボード操作（↑↓で選択移動、Enterで実行）
 listElement.addEventListener('keydown', (event) => {
     if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' && event.key !== 'Enter') {
         return;
     }
 
-    const currentIndex = items.findIndex(item => item.filePath === selectedPath);
+    const selectableItems = getSelectableItems();
+    const currentIndex = selectableItems.findIndex(item => item.filePath === selectedPath);
 
     if (event.key === 'Enter') {
         if (currentIndex >= 0) {
-            const item = items[currentIndex];
+            const item = selectableItems[currentIndex];
             vscode.postMessage({ type: 'itemClick', kind: item.kind, filePath: item.filePath });
         }
         event.preventDefault();
@@ -645,18 +685,72 @@ listElement.addEventListener('keydown', (event) => {
 
     const delta = event.key === 'ArrowDown' ? 1 : -1;
     const nextIndex = currentIndex < 0
-        ? (delta > 0 ? 0 : items.length - 1)
-        : Math.min(items.length - 1, Math.max(0, currentIndex + delta));
+        ? (delta > 0 ? 0 : selectableItems.length - 1)
+        : Math.min(selectableItems.length - 1, Math.max(0, currentIndex + delta));
 
-    if (items[nextIndex]) {
-        selectedPath = items[nextIndex].filePath;
-        updateSelection();
-        const selectedRow = listElement.querySelector('.row.selected');
-        if (selectedRow) {
-            selectedRow.scrollIntoView({ block: 'nearest' });
-        }
+    if (selectableItems[nextIndex]) {
+        selectItem(selectableItems[nextIndex]);
     }
     event.preventDefault();
+});
+
+// ---------------------------------------------------------------------
+// 検索
+// ---------------------------------------------------------------------
+
+function updateSearchClearButton() {
+    searchClearButton.classList.toggle('hidden', searchInput.value.length === 0);
+}
+
+/**
+ * 入力中の検索語を拡張側へ送る（空なら検索を終了する）
+ */
+function sendSearchQuery() {
+    clearTimeout(searchTimer);
+    const query = searchInput.value.trim();
+    vscode.postMessage(query ? { type: 'search', query } : { type: 'clearSearch' });
+}
+
+function clearSearchInput() {
+    searchInput.value = '';
+    updateSearchClearButton();
+    sendSearchQuery();
+}
+
+searchInput.addEventListener('input', () => {
+    updateSearchClearButton();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(sendSearchQuery, SEARCH_DEBOUNCE);
+});
+
+searchInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        clearSearchInput();
+        event.preventDefault();
+        return;
+    }
+
+    if (event.key === 'Enter') {
+        // デバウンスを待たずに検索する
+        sendSearchQuery();
+        event.preventDefault();
+        return;
+    }
+
+    // ↓で一覧へフォーカスを移し、先頭の結果を選択する
+    if (event.key === 'ArrowDown') {
+        const first = getSelectableItems()[0];
+        if (first) {
+            listElement.focus();
+            selectItem(first);
+        }
+        event.preventDefault();
+    }
+});
+
+searchClearButton.addEventListener('click', () => {
+    clearSearchInput();
+    searchInput.focus();
 });
 
 setupViewDropTarget();

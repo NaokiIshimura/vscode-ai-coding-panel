@@ -5,6 +5,20 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.12] - 2026-10-11
+
+### Added
+- **Plans Viewに検索機能を追加**: ビュー最上部の検索ボックスで、`archived/` を含むPlansディレクトリ全体を検索できます
+  - ディレクトリ名・ファイル名・Markdownの本文（1MB以下のファイル）を、大文字小文字を区別せずに検索します
+  - 空白で区切った複数の語は、すべてを含むものに絞り込みます
+  - 結果にはPlansルートからの相対ディレクトリを表示し、本文に一致した場合はマウスオーバーで該当行を表示します
+  - ファイルをクリックするとそのディレクトリへ移動して開き、ディレクトリをクリックするとそのディレクトリへ移動します
+  - `Escape` またはクリアボタンで一覧に戻ります。結果は200件までです
+
+### Technical
+- Plans Viewのソート処理を `sortFileInfos()` に切り出し、一覧と検索結果で共用
+- 検索の `PlansProvider` テストを追加
+
 ## [1.2.11] - 2026-10-10
 
 ### Changed
@@ -2169,5 +2183,6 @@ v0.8.33以前からアップグレードする場合:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.11...v1.2.12
 [1.2.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.10...v1.2.11
 [1.2.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.9...v1.2.10

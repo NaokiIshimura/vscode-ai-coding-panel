@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.12] - 2026-10-11
+
+### Added
+- **Search in the Plans view**: A search box at the top of the view searches the whole Plans directory, including `archived/`
+  - Matches directory names, file names, and Markdown content (files up to 1MB), case-insensitively
+  - Separate words with spaces to require all of them
+  - Results show the directory relative to the Plans root; hovering a content match shows the matching line
+  - Clicking a file opens it in its directory; clicking a directory navigates into it
+  - Press `Escape` or the clear button to return to the list. Results are capped at 200
+
+### Technical
+- Extracted the Plans view sort logic into `sortFileInfos()` so that the directory list and search results share it
+- Added `PlansProvider` tests for search
+
 ## [1.2.11] - 2026-10-10
 
 ### Changed
@@ -2698,5 +2712,6 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.11...v1.2.12
 [1.2.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.10...v1.2.11
 [1.2.10]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.9...v1.2.10

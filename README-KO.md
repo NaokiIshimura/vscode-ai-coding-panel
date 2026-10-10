@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.11-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.12-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | 한국어 | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português](README-PT-BR.md)
 
@@ -42,6 +42,7 @@ Claude Code의 생산성을 극대화하도록 설계된 강력한 VS Code 패�
 | 파일 자동 선택 | 하위 디렉터리로 이동하면 가장 오래된 TASK.md, PROMPT.md, SPEC.md 또는 QUICK_START.md 파일을 자동으로 선택해 표시합니다. 루트 디렉터리로 돌아가면 아무것도 선택하지 않으므로 루트는 단순한 작업 목록으로 유지됩니다 |
 | **프롬프트 포함 디렉터리 생성** | "Create directory" 버튼을 누르면 `.claude/plans`와 Run/Plan/Spec 버튼 사용법 안내가 담긴 초기 프롬프트 파일(`YYYY_MMDD_HHMM_SS_PROMPT.md`)이 자동으로 생성됩니다. 파일은 Editor 뷰에서 자동으로 열립니다 |
 | **Quick Start** | 뷰 상단의 ⚡ Quick Start 버튼을 누르면 폴더 이름을 묻지 않고 타임스탬프 이름의 디렉터리(`YYYY_MMDD_HHMM_SS`)와 `QUICK_START.md` 파일을 생성합니다. 바로 작업 내용을 작성하고 싶을 때 사용하세요 |
+| **Search** | 뷰 상단의 검색 상자로 Plans 디렉터리 전체(`archived/` 포함)를 디렉터리 이름, 파일 이름, Markdown 본문에서 검색합니다. 공백으로 여러 단어를 구분하면 모두 포함하는 항목만 표시합니다(대소문자 구분 없음). 결과에는 Plans 루트 기준 상대 디렉터리가 표시되고, 본문 일치 시 마우스를 올리면 해당 줄이 표시됩니다. 파일을 클릭하면 해당 디렉터리로 이동해 열고, 디렉터리를 클릭하면 그 디렉터리로 이동합니다. `Escape` 또는 지우기 버튼으로 목록으로 돌아갑니다 |
 | 경로 표시 | 현재 경로가 목록의 첫 번째 항목으로 표시되며, 인라인 액션 버튼(New PROMPT.md, New TASK.md, New SPEC.md, Copy, Rename, New Directory, Archive)이 함께 제공됩니다 |
 | **날짜/시간 접두어** | 디렉터리 이름 앞에 날짜 또는 시간을 표시합니다. 오늘이면 `[HH:MM]`, 그 외 날짜는 `[MM/DD]`입니다. 하위 디렉터리에서는 파일 이름 앞에도 표시합니다(루트 디렉터리의 파일에는 접두어가 붙지 않음) |
 | **Editor 대상 파일 아이콘** | Editor 뷰에서 열리는 파일(TASK.md, PROMPT.md, SPEC.md, QUICK_START.md)은 일반 Markdown 파일과 구분되도록 `edit` 아이콘으로 표시됩니다 |
@@ -388,14 +389,14 @@ npm run watch
 1. [GitHub Releases 페이지](https://github.com/NaokiIshimura/vscode-panel/releases)에서 최신 VSIX 파일을 다운로드합니다.
 2. 명령줄로 설치합니다:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.11.vsix
+   code --install-extension ai-coding-sidebar-1.2.12.vsix
    ```
 3. VS Code를 재시작합니다.
 
 #### 로컬 빌드 사용
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.11.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.12.vsix
 ```
 
 #### 직접 패키지 빌드
@@ -409,7 +410,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.11.vsix
    ```
 3. 생성된 VSIX 파일을 설치합니다:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.11.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.12.vsix
    ```
 4. VS Code를 재시작합니다.
 

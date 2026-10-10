@@ -17,7 +17,7 @@ export interface IEditorProvider {
  * Webviewへ送信する1行分のデータ
  */
 export interface PlansViewItem {
-    kind: 'path' | 'parent' | 'directory' | 'file' | 'createDirectory';
+    kind: 'path' | 'parent' | 'directory' | 'file' | 'createDirectory' | 'searchHeader';
     label: string;
     description?: string;
     filePath: string;
@@ -25,7 +25,18 @@ export interface PlansViewItem {
     tooltip?: string;
     isEditing?: boolean;
     contextValue: string;
+    /** 検索結果で本文にマッチした行の抜粋 */
+    matchPreview?: string;
 }
+
+/** 検索結果の最大件数 */
+export const MAX_SEARCH_RESULTS = 200;
+
+/** 本文を検索するファイルの最大サイズ（1MB） */
+export const MAX_SEARCH_FILE_SIZE = 1024 * 1024;
+
+/** 本文抜粋の最大文字数 */
+const MATCH_PREVIEW_LENGTH = 120;
 
 export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposable {
     public static readonly viewType = 'aiCodingSidebarExplorer';
@@ -49,6 +60,9 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     private _pollingTimer: NodeJS.Timeout | undefined;
     private _lastDirFileCount: number = -1;
     private _lastDirModTime: number = 0;
+    private _searchQuery: string | undefined;
+    // 最新の描画要求の番号。await中に新しい描画が始まった場合、古い結果を送らない
+    private _renderToken: number = 0;
 
     constructor(fileWatcherService?: FileWatcherService, extensionUri?: vscode.Uri) {
         this.fileWatcherService = fileWatcherService;
@@ -145,6 +159,12 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             case 'dropUnsupported':
                 vscode.window.showWarningMessage('Could not read the dropped item.');
                 break;
+            case 'search':
+                this.setSearchQuery(message.query);
+                break;
+            case 'clearSearch':
+                this.setSearchQuery(undefined);
+                break;
         }
     }
 
@@ -165,6 +185,12 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
                 await this.navigateToDirectory(filePath);
                 break;
             case 'file':
+                // 検索結果から開く場合は、ファイルのあるディレクトリへ移動してから開く
+                // （移動時の自動表示で別ファイルが開かれるため、その後に対象を開き直す）
+                if (this.isSearching()) {
+                    await this.navigateToDirectory(path.dirname(filePath));
+                    await this.revealFile(filePath);
+                }
                 this.selectedItem = await this._createFileItem(filePath, false);
                 await this._openFile(filePath);
                 break;
@@ -262,14 +288,24 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             return;
         }
 
+        const token = ++this._renderToken;
+
         try {
-            const items = await this.buildItems();
+            const items = this.isSearching()
+                ? await this.search(this._searchQuery!)
+                : await this.buildItems();
+            if (token !== this._renderToken) {
+                return;
+            }
             await this._view.webview.postMessage({
                 type: 'update',
                 items,
                 selectedPath: this.selectedItem?.filePath
             });
         } catch (error) {
+            if (token !== this._renderToken) {
+                return;
+            }
             await this._view.webview.postMessage({
                 type: 'update',
                 items: [],
@@ -414,6 +450,205 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     // ---------------------------------------------------------------------
+    // 検索
+    // ---------------------------------------------------------------------
+
+    /**
+     * 検索中かどうか（rootディレクトリが無い間は検索しない）
+     */
+    isSearching(): boolean {
+        return !!this._searchQuery && !this.pathNotFound;
+    }
+
+    getSearchQuery(): string | undefined {
+        return this._searchQuery;
+    }
+
+    /**
+     * 検索語を設定して一覧を再描画する。空文字・undefinedで検索を終了する
+     */
+    setSearchQuery(query: string | undefined): void {
+        const normalized = typeof query === 'string' ? query.trim() : '';
+        const next = normalized || undefined;
+        if (next === this._searchQuery) {
+            return;
+        }
+        this._searchQuery = next;
+        void this._render();
+    }
+
+    /**
+     * 検索を終了し、Webviewの入力欄も空にする（ディレクトリ移動時など）
+     */
+    private _clearSearch(): void {
+        if (!this._searchQuery) {
+            return;
+        }
+        this._searchQuery = undefined;
+        void this._view?.webview.postMessage({ type: 'searchCleared' });
+    }
+
+    /**
+     * rootディレクトリ配下を再帰的に検索し、表示アイテム一覧を返す
+     * - 空白区切りの各語を、名前または本文（.mdのみ）のいずれかに含むものを対象とする（大文字小文字は区別しない）
+     * - 隠しディレクトリ・ファイル（.始まり）とシンボリックリンクは辿らない
+     * - 先頭には件数を表示する searchHeader 行を置く
+     */
+    async search(query: string): Promise<PlansViewItem[]> {
+        const terms = query.trim().toLowerCase().split(/\s+/).filter(term => term.length > 0);
+        if (!this.rootPath || terms.length === 0) {
+            return [];
+        }
+
+        const directories: FileInfo[] = [];
+        const files: FileInfo[] = [];
+        const previews = new Map<string, string>();
+        let truncated = false;
+
+        const walk = async (dirPath: string): Promise<void> => {
+            let entries: fs.Dirent[];
+            try {
+                entries = await fsPromises.readdir(dirPath, { withFileTypes: true });
+            } catch {
+                return;
+            }
+
+            for (const entry of entries) {
+                if (directories.length + files.length >= MAX_SEARCH_RESULTS) {
+                    truncated = true;
+                    return;
+                }
+                if (entry.name.startsWith('.') || entry.isSymbolicLink()) {
+                    continue;
+                }
+
+                const fullPath = path.join(dirPath, entry.name);
+                const isDirectory = entry.isDirectory();
+                if (!isDirectory && !entry.isFile()) {
+                    continue;
+                }
+
+                let stat: fs.Stats;
+                try {
+                    stat = await fsPromises.stat(fullPath);
+                } catch {
+                    continue;
+                }
+
+                const name = entry.name.toLowerCase();
+                const remaining = terms.filter(term => !name.includes(term));
+                let matched = remaining.length === 0;
+
+                // 名前だけで一致しない語は本文から探す
+                if (!matched && !isDirectory && name.endsWith('.md') && stat.size <= MAX_SEARCH_FILE_SIZE) {
+                    const preview = await this.findContentMatch(fullPath, remaining);
+                    if (preview !== undefined) {
+                        matched = true;
+                        previews.set(fullPath, preview);
+                    }
+                }
+
+                if (matched) {
+                    const info: FileInfo = {
+                        name: entry.name,
+                        path: fullPath,
+                        isDirectory,
+                        size: isDirectory ? 0 : stat.size,
+                        modified: stat.mtime,
+                        created: stat.birthtime
+                    };
+                    (isDirectory ? directories : files).push(info);
+                }
+
+                if (isDirectory) {
+                    await walk(fullPath);
+                    if (truncated) {
+                        return;
+                    }
+                }
+            }
+        };
+
+        await walk(this.rootPath);
+
+        this.sortFileInfos(directories);
+        this.sortFileInfos(files);
+
+        const rootPath = this.rootPath;
+        const currentFilePath = this.editorProvider?.getCurrentFilePath();
+        const count = directories.length + files.length;
+        const countLabel = truncated ? `${count}+ results` : `${count} result${count === 1 ? '' : 's'}`;
+
+        const items: PlansViewItem[] = [{
+            kind: 'searchHeader',
+            label: `${countLabel} for "${query.trim()}"`,
+            filePath: '',
+            icon: 'search',
+            tooltip: truncated ? `Showing the first ${MAX_SEARCH_RESULTS} results` : undefined,
+            contextValue: 'searchHeader'
+        }];
+
+        for (const info of [...directories, ...files]) {
+            const relativeDir = path.relative(rootPath, path.dirname(info.path));
+            const preview = previews.get(info.path);
+
+            if (info.isDirectory) {
+                items.push({
+                    kind: 'directory',
+                    label: info.name,
+                    description: relativeDir || undefined,
+                    filePath: info.path,
+                    icon: 'folder',
+                    tooltip: info.path,
+                    contextValue: 'directory'
+                });
+                continue;
+            }
+
+            const isEditing = !!currentFilePath && info.path === currentFilePath;
+            items.push({
+                kind: 'file',
+                label: info.name,
+                description: [isEditing ? 'editing' : undefined, relativeDir || undefined].filter(Boolean).join(' · ') || undefined,
+                filePath: info.path,
+                icon: getFileIconName(info.name),
+                tooltip: preview ? `${info.path}\n${preview}` : info.path,
+                isEditing,
+                contextValue: 'file',
+                matchPreview: preview
+            });
+        }
+
+        return items;
+    }
+
+    /**
+     * ファイル本文が全ての語を含むか確認し、含む場合は最初に一致した行の抜粋を返す
+     */
+    private async findContentMatch(filePath: string, terms: readonly string[]): Promise<string | undefined> {
+        let content: string;
+        try {
+            content = await fsPromises.readFile(filePath, 'utf8');
+        } catch {
+            return undefined;
+        }
+
+        const lowerContent = content.toLowerCase();
+        if (!terms.every(term => lowerContent.includes(term))) {
+            return undefined;
+        }
+
+        const line = content.split(/\r?\n/).find(text => {
+            const lowerLine = text.toLowerCase();
+            return terms.some(term => lowerLine.includes(term));
+        }) ?? '';
+        const trimmed = line.trim();
+        return trimmed.length > MATCH_PREVIEW_LENGTH
+            ? `${trimmed.slice(0, MATCH_PREVIEW_LENGTH)}…`
+            : trimmed;
+    }
+
+    // ---------------------------------------------------------------------
     // 公開API（コマンド・他プロバイダーから利用）
     // ---------------------------------------------------------------------
 
@@ -425,6 +660,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
         this.rootPath = rootPath;
         this.activeFolderPath = rootPath;
         this.configuredRelativePath = relativePath;
+        this._clearSearch();
 
         // パスの存在確認
         try {
@@ -526,6 +762,9 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
 
         // ディレクトリ移動時にEditorのファイル選択をクリア（自動保存含む）
         await this.editorProvider?.clearFile();
+
+        // 移動先の一覧を表示するため検索を終了する
+        this._clearSearch();
 
         this.activeFolderPath = targetPath;
         this.selectedItem = undefined;
@@ -1069,37 +1308,9 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
                 }
             }
 
-            // ソート設定を取得
-            const config = vscode.workspace.getConfiguration('aiCodingSidebar.plans');
-            const sortBy = config.get<string>('sortBy', 'created');
-            const sortOrder = config.get<string>('sortOrder', 'ascending');
-
-            // ソート処理を関数化
-            const sortItems = (items: FileInfo[]) => {
-                items.sort((a, b) => {
-                    let comparison = 0;
-
-                    switch (sortBy) {
-                        case 'name':
-                            comparison = a.name.localeCompare(b.name);
-                            break;
-                        case 'created':
-                            comparison = a.created.getTime() - b.created.getTime();
-                            break;
-                        case 'modified':
-                            comparison = a.modified.getTime() - b.modified.getTime();
-                            break;
-                        default:
-                            comparison = a.created.getTime() - b.created.getTime();
-                    }
-
-                    return sortOrder === 'descending' ? -comparison : comparison;
-                });
-            };
-
             // ディレクトリとファイルの両方をソート
-            sortItems(directories);
-            sortItems(files);
+            this.sortFileInfos(directories);
+            this.sortFileInfos(files);
 
             // ディレクトリを先に、その後ファイルを返す
             return [...directories, ...files];
@@ -1113,5 +1324,34 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             const message = err && err.message ? err.message : String(error);
             throw new Error(`Failed to read directory: ${message}`);
         }
+    }
+
+    /**
+     * 設定（plans.sortBy / plans.sortOrder）に従って並べ替える
+     */
+    private sortFileInfos(items: FileInfo[]): void {
+        const config = vscode.workspace.getConfiguration('aiCodingSidebar.plans');
+        const sortBy = config.get<string>('sortBy', 'created');
+        const sortOrder = config.get<string>('sortOrder', 'ascending');
+
+        items.sort((a, b) => {
+            let comparison = 0;
+
+            switch (sortBy) {
+                case 'name':
+                    comparison = a.name.localeCompare(b.name);
+                    break;
+                case 'created':
+                    comparison = a.created.getTime() - b.created.getTime();
+                    break;
+                case 'modified':
+                    comparison = a.modified.getTime() - b.modified.getTime();
+                    break;
+                default:
+                    comparison = a.created.getTime() - b.created.getTime();
+            }
+
+            return sortOrder === 'descending' ? -comparison : comparison;
+        });
     }
 }

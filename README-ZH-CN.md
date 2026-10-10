@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.9-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.10-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | 简体中文 | [繁體中文](README-ZH-TW.md) | [Português (BR)](README-PT-BR.md)
 
@@ -83,7 +83,7 @@
 | 功能 | 说明 |
 | --- | --- |
 | **Claude Code 自动检测** | 基于进程的检测（每 1.5 秒检查一次）可可靠识别 Claude Code 会话，不受提示符变化影响。Claude Code 启动/退出时自动切换 UI 和快捷方式 |
-| **上下文感知快捷方式** | 根据状态变化的智能按钮：<br>- 未运行：`claude`、`claude -c`、`claude -r`、`claude --from-pr`（仅插入，不执行）、`↑`<br>- 按下 `↑` 后（更新命令）：`claude update`、`←`<br>- 运行中：`/model sonnet`、`/model opus`、`/compact`、`/clear`、`←`<br>可在 Claude Code 会话中快速切换模型和执行更新命令 |
+| **上下文感知快捷方式** | 根据状态变化的智能按钮：<br>- 未运行：`claude`、`claude -c`、`claude -r`、`claude --from-pr`（仅插入，不执行）、`claude update`<br>- 运行中：`/model sonnet`、`/model opus`、`/compact`、`/clear`、`/exit`<br>可在 Claude Code 会话中快速切换模型和执行更新命令 |
 | **Run 快捷键** | 在 Terminal 视图获得焦点时按 `Cmd+R` / `Ctrl+R`，即可执行 Editor 视图的 Run 命令。编辑器中未保存的更改会先被保存，且该按键不会传递给 shell |
 | **命令类型图标** | 标签页名称显示表示命令来源的图标：<br>▶️ Run 按钮<br>📝 Plan 按钮<br>📑 Spec 按钮 |
 | **动态进程名称** | 与 iTerm2 类似，标签页名称会自动更新为当前正在运行的进程 |
@@ -388,14 +388,14 @@ npm run watch
 1. 从 [GitHub Releases 页面](https://github.com/NaokiIshimura/vscode-panel/releases)下载最新的 VSIX 文件。
 2. 通过命令行安装：
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.9.vsix
+   code --install-extension ai-coding-sidebar-1.2.10.vsix
    ```
 3. 重启 VS Code。
 
 #### 使用本地构建
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
 ```
 
 #### 自行构建包
@@ -409,7 +409,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
    ```
 3. 安装生成的 VSIX 文件：
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
    ```
 4. 重启 VS Code。
 

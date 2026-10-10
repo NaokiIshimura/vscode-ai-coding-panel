@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.9-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.10-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 English | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português (BR)](README-PT-BR.md)
 
@@ -83,7 +83,7 @@ The embedded terminal is purpose-built for Claude Code with intelligent automati
 | Feature | Description |
 | --- | --- |
 | **Claude Code Auto-Detection** | Process-based detection (checks every 1.5s) reliably identifies Claude Code sessions independent of prompt changes. Automatically switches UI and shortcuts when Claude Code starts/exits |
-| **Context-Aware Shortcuts** | Smart buttons that change based on state:<br>- Not running: `claude`, `claude -c`, `claude -r`, `claude --from-pr` (inserts only, does not run), `↑`<br>- After `↑` (update commands): `claude update`, `←`<br>- Running: `/model sonnet`, `/model opus`, `/compact`, `/clear`, `←`<br>Enables quick model switching and update commands during Claude Code sessions |
+| **Context-Aware Shortcuts** | Smart buttons that change based on state:<br>- Not running: `claude`, `claude -c`, `claude -r`, `claude --from-pr` (inserts only, does not run), `claude update`<br>- Running: `/model sonnet`, `/model opus`, `/compact`, `/clear`, `/exit`<br>Enables quick model switching and update commands during Claude Code sessions |
 | **Run Shortcut** | Press `Cmd+R` / `Ctrl+R` while the Terminal view is focused to run the Editor view's Run command. Unsaved editor changes are saved first, and the key is not forwarded to the shell |
 | **Command Type Icons** | Tab names display icons indicating command origin:<br>▶️ Run button<br>📝 Plan button<br>📑 Spec button |
 | **Dynamic Process Names** | Like iTerm2, tab names update automatically to show the currently running process |
@@ -388,14 +388,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.9.vsix
+   code --install-extension ai-coding-sidebar-1.2.10.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
 ```
 
 #### Build the package yourself
@@ -409,7 +409,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
    ```
 4. Restart VS Code.
 

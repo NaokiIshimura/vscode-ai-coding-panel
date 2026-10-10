@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.9-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.10-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | 한국어 | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português (BR)](README-PT-BR.md)
 
@@ -83,7 +83,7 @@ Claude Code의 생산성을 극대화하도록 설계된 강력한 VS Code 패�
 | 기능 | 설명 |
 | --- | --- |
 | **Claude Code 자동 감지** | 프로세스 기반 감지(1.5초마다 확인)로 프롬프트 변경과 관계없이 Claude Code 세션을 안정적으로 식별합니다. Claude Code가 시작/종료되면 UI와 단축 버튼이 자동으로 전환됩니다 |
-| **상황별 단축 버튼** | 상태에 따라 바뀌는 스마트 버튼:<br>- 미실행 시: `claude`, `claude -c`, `claude -r`, `claude --from-pr`(입력만 하고 실행하지 않음), `↑`<br>- `↑` 누른 후(업데이트 명령): `claude update`, `←`<br>- 실행 중: `/model sonnet`, `/model opus`, `/compact`, `/clear`, `←`<br>Claude Code 세션 중에 모델 전환과 업데이트 명령을 빠르게 실행할 수 있습니다 |
+| **상황별 단축 버튼** | 상태에 따라 바뀌는 스마트 버튼:<br>- 미실행 시: `claude`, `claude -c`, `claude -r`, `claude --from-pr`(입력만 하고 실행하지 않음), `claude update`<br>- 실행 중: `/model sonnet`, `/model opus`, `/compact`, `/clear`, `/exit`<br>Claude Code 세션 중에 모델 전환과 업데이트 명령을 빠르게 실행할 수 있습니다 |
 | **Run 단축키** | Terminal 뷰에 포커스가 있을 때 `Cmd+R` / `Ctrl+R`을 누르면 Editor 뷰의 Run 명령이 실행됩니다. 저장되지 않은 에디터 변경 사항은 먼저 저장되며, 키 입력은 셸로 전달되지 않습니다 |
 | **명령 종류 아이콘** | 탭 이름에 명령의 출처를 나타내는 아이콘이 표시됩니다:<br>▶️ Run 버튼<br>📝 Plan 버튼<br>📑 Spec 버튼 |
 | **동적 프로세스 이름** | iTerm2처럼 탭 이름이 현재 실행 중인 프로세스를 표시하도록 자동으로 갱신됩니다 |
@@ -388,14 +388,14 @@ npm run watch
 1. [GitHub Releases 페이지](https://github.com/NaokiIshimura/vscode-panel/releases)에서 최신 VSIX 파일을 다운로드합니다.
 2. 명령줄로 설치합니다:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.9.vsix
+   code --install-extension ai-coding-sidebar-1.2.10.vsix
    ```
 3. VS Code를 재시작합니다.
 
 #### 로컬 빌드 사용
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
 ```
 
 #### 직접 패키지 빌드
@@ -409,7 +409,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
    ```
 3. 생성된 VSIX 파일을 설치합니다:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.9.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.10.vsix
    ```
 4. VS Code를 재시작합니다.
 

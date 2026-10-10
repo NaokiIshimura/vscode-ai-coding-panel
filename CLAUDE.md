@@ -75,9 +75,9 @@ src/
         │   ├── style.css   # スタイルシート
         │   └── main.js     # JavaScript
         └── plans/        # PlansProvider用外部ファイル（v1.0.22で追加）
-            ├── index.html  # HTMLテンプレート（Quick Startボタン＋一覧＋コンテキストメニュー）
+            ├── index.html  # HTMLテンプレート（検索ボックス＋Quick Startボタン＋一覧＋コンテキストメニュー）
             ├── style.css   # スタイルシート
-            └── main.js     # JavaScript（一覧描画、右クリックメニュー、Drag&Drop、キーボード操作）
+            └── main.js     # JavaScript（一覧描画、検索入力、右クリックメニュー、Drag&Drop、キーボード操作）
 ```
 
 ### Provider間の依存関係
@@ -385,6 +385,70 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `package.json`: 設定スキーマのデフォルト値
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
+
+### v1.2.12新機能: Plans Viewの検索
+
+Plans Viewのヘッダー左側に検索ボックスを追加し、Plansのrootディレクトリ配下全体を検索できるようにした：
+
+**仕様**
+
+| 項目 | 内容 |
+|---|---|
+| 検索範囲 | rootディレクトリ配下を再帰的に走査（`archived/` を含む）。`.` 始まりのエントリとシンボリックリンクは辿らない |
+| 検索対象 | ディレクトリ名・ファイル名、および `.md` ファイルの本文（`MAX_SEARCH_FILE_SIZE` = 1MB以下） |
+| マッチ方式 | 大文字小文字を区別しない部分一致。空白区切りの各語を**名前または本文**のどちらかに含めばよい（AND） |
+| 件数上限 | `MAX_SEARCH_RESULTS` = 200件。超えた場合は走査を打ち切り、件数行を `200+ results` と表示 |
+| 並び順 | ディレクトリ → ファイル。各グループ内は `plans.sortBy` / `plans.sortOrder` に従う |
+
+- ファイル名はタイムスタンプ（`YYYY_MMDD_HHMM_SS_PROMPT.md` 等）でタスク内容を表さないため、**本文検索を含めている**
+- 本文は、名前だけで一致しなかった語がある場合のみ読む
+
+**一覧の構成**
+- 先頭に `kind: 'searchHeader'` の件数行（`N results for "query"`）。クリック・右クリック・ドラッグ・キーボード選択の対象外
+- 結果行は通常の `directory` / `file` と同じ `contextValue` を使うため、コンテキストメニュー・インラインアクションはそのまま動く。`pathDisplayNonRoot` は使わないので `archiveDirectory` の判定に影響しない
+- `description` にrootからの相対ディレクトリ、本文一致時は `matchPreview`（該当行の抜粋、120文字まで）をtooltipへ追記
+- 結果行にはv1.2.11の日付/時間プレフィックスを付けていない（相対ディレクトリを `description` で示すため）
+
+**メッセージ**
+
+| 送信元 | メッセージ | 内容 |
+|---|---|---|
+| Webview | `search`（`query`） | 入力から250msデバウンス。`Enter` で即時送信 |
+| Webview | `clearSearch` | 入力が空になった・`Escape`・クリアボタン |
+| 拡張 | `searchCleared` | 拡張側が検索を終了した（ディレクトリ移動・`setRootPath()`）。Webviewは入力欄を空にし、保留中のデバウンスを破棄する |
+
+**`_render()` は検索中なら `buildItems()` の代わりに `search()` を使う**
+- `refresh()`（ファイル監視・ポーリング・設定変更）はすべて `_render()` を通るため、検索中は同じ語で自動的に再検索される
+- `_renderToken` で最新の描画要求のみ送信する。入力中に古い検索結果が後から届いて上書きするのを防ぐため（通常一覧の描画にも適用される）
+- `isSearching()` は `pathNotFound` の間 `false` を返す。Webview側も `createDirectory` 行がある間は入力欄を無効化する
+
+**検索結果のファイルを開く順序（最も壊れやすい箇所）**
+- `_handleItemClick('file')` は検索中なら `navigateToDirectory(親)` → `revealFile()` → `_openFile()` の順に実行する
+- `navigateToDirectory()` はroot以外で「最も古い対象ファイル」を自動表示するため、先に移動してから対象を開き直さないと別のファイルが表示される
+- `navigateToDirectory()` 自身が `_clearSearch()` を呼ぶため、移動後は通常の一覧に戻る
+
+**ソート処理を `sortFileInfos()` に切り出した**
+- `getFilesInDirectory()` 内にあったソートを、`search()` と共用するためメソッド化した。挙動は変更していない
+
+**今回のスコープ外**
+- `Cmd+F` / `Ctrl+F` で検索欄へフォーカスする操作。Webview内のキー入力はVS Code本体のキーバインドにも転送されるため、競合を確認してから追加する
+- ポーリング（v1.0.15）は表示中ディレクトリのみを監視するため、検索中に別ディレクトリが変化した場合はFileSystemWatcher経由の更新に依存する
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/providers/PlansProvider.ts` | `search()` / `findContentMatch()` / `setSearchQuery()` / `isSearching()` / `getSearchQuery()` / `_clearSearch()` / `sortFileInfos()` を追加。`PlansViewItem` に `searchHeader` と `matchPreview`、定数 `MAX_SEARCH_RESULTS` / `MAX_SEARCH_FILE_SIZE` |
+| `resources/webview/plans/index.html` | `#header` に `.search-box`（`#search-input` / `#search-clear`） |
+| `resources/webview/plans/style.css` | `#header` を `space-between` に変更、検索ボックスと `.row.search-header` |
+| `resources/webview/plans/main.js` | 入力のデバウンス・`Escape` / `Enter` / `↓`、`searchCleared` の受信、キーボード選択で件数行をスキップ |
+| `src/test/suite/providers/PlansProvider.test.ts` | `search` スイート（11ケース） |
+| README 6ファイル | Plansの機能表に Search を追加 |
+
+**ローカルでのテスト実行について**
+- v1.1.15に記載のとおり、macOSローカルの `npm test` はmochaの結果が親プロセスへ返らない
+- 本バージョンでは `vscode` をスタブ化したNode上でmocha（`--ui tdd`）を実行して確認している（`PlansProvider.test.ts` 51 passing）
+- Webviewの検索入力（デバウンス、`Escape` / `Enter` / `↓`、クリアボタン、件数行の非選択、`searchCleared`、無効化）はjsdom上で `main.js` を実行して確認している
 
 ### v1.2.11変更: Plans Viewサブディレクトリでの日付/時間プレフィックス表示
 

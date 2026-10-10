@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { PlansProvider } from '../../../providers/PlansProvider';
+import { PlansProvider, MAX_SEARCH_RESULTS, MAX_SEARCH_FILE_SIZE } from '../../../providers/PlansProvider';
 import { FileItem } from '../../../providers/items/FileItem';
 import { FileWatcherService } from '../../../services/FileWatcherService';
 
@@ -555,6 +555,153 @@ suite('PlansProvider Integration Test Suite', () => {
 			// スナップショットがリセットされているか確認
 			assert.strictEqual((plansProvider as any)._lastDirFileCount, -1, 'File count should be reset after navigation');
 			assert.strictEqual((plansProvider as any)._lastDirModTime, 0, 'Mod time should be reset after navigation');
+		});
+	});
+
+	suite('search', () => {
+		/**
+		 * 検索用のフィクスチャを作成する
+		 *   login-feature/2026_0101_0000_00_PROMPT.md  （本文: Add OAuth login）
+		 *   login-feature/notes.txt                     （本文: oauth ※.md以外）
+		 *   archived/old_task/2026_0102_0000_00_TASK.md （本文: Refactor search）
+		 *   .hidden/secret.md                           （本文: oauth）
+		 */
+		function createSearchFixture(): void {
+			const loginDir = path.join(testDir, 'login-feature');
+			const oldDir = path.join(testDir, 'archived', 'old_task');
+			const hiddenDir = path.join(testDir, '.hidden');
+			fs.mkdirSync(loginDir, { recursive: true });
+			fs.mkdirSync(oldDir, { recursive: true });
+			fs.mkdirSync(hiddenDir, { recursive: true });
+			fs.writeFileSync(path.join(loginDir, '2026_0101_0000_00_PROMPT.md'), '# task\n\n  Add OAuth login  \n', 'utf8');
+			fs.writeFileSync(path.join(loginDir, 'notes.txt'), 'oauth', 'utf8');
+			fs.writeFileSync(path.join(oldDir, '2026_0102_0000_00_TASK.md'), '# task\nRefactor search\n', 'utf8');
+			fs.writeFileSync(path.join(hiddenDir, 'secret.md'), 'oauth', 'utf8');
+		}
+
+		function resultPaths(items: { kind: string; filePath: string }[]): string[] {
+			return items.filter(item => item.kind !== 'searchHeader').map(item => item.filePath);
+		}
+
+		test('Should return an empty array when no root path is set', async () => {
+			const items = await plansProvider.search('task');
+			assert.deepStrictEqual(items, []);
+		});
+
+		test('Should return an empty array for a blank query', async () => {
+			await plansProvider.setRootPath(testDir);
+			const items = await plansProvider.search('   ');
+			assert.deepStrictEqual(items, []);
+		});
+
+		test('Should match directory names case-insensitively', async () => {
+			createSearchFixture();
+			await plansProvider.setRootPath(testDir);
+
+			const items = await plansProvider.search('LOGIN-feat');
+
+			assert.strictEqual(items[0].kind, 'searchHeader');
+			assert.strictEqual(items[0].label, '1 result for "LOGIN-feat"');
+			assert.strictEqual(items[1].kind, 'directory');
+			assert.strictEqual(items[1].filePath, path.join(testDir, 'login-feature'));
+			assert.strictEqual(items[1].contextValue, 'directory');
+			// rootの直下のため相対ディレクトリは表示しない
+			assert.strictEqual(items[1].description, undefined);
+		});
+
+		test('Should match file names and show the relative directory', async () => {
+			createSearchFixture();
+			await plansProvider.setRootPath(testDir);
+
+			const items = await plansProvider.search('_TASK.md');
+			const fileItem = items.find(item => item.kind === 'file');
+
+			assert.ok(fileItem);
+			assert.strictEqual(fileItem!.filePath, path.join(testDir, 'archived', 'old_task', '2026_0102_0000_00_TASK.md'));
+			assert.strictEqual(fileItem!.description, path.join('archived', 'old_task'));
+			assert.strictEqual(fileItem!.contextValue, 'file');
+			assert.strictEqual(fileItem!.matchPreview, undefined);
+		});
+
+		test('Should match Markdown content and return the matched line as a preview', async () => {
+			createSearchFixture();
+			await plansProvider.setRootPath(testDir);
+
+			const items = await plansProvider.search('oauth');
+
+			assert.deepStrictEqual(resultPaths(items), [
+				path.join(testDir, 'login-feature', '2026_0101_0000_00_PROMPT.md')
+			]);
+			assert.strictEqual(items[1].matchPreview, 'Add OAuth login');
+		});
+
+		test('Should require every term to match (AND) across name and content', async () => {
+			createSearchFixture();
+			await plansProvider.setRootPath(testDir);
+
+			assert.deepStrictEqual(resultPaths(await plansProvider.search('prompt oauth')), [
+				path.join(testDir, 'login-feature', '2026_0101_0000_00_PROMPT.md')
+			]);
+			assert.deepStrictEqual(resultPaths(await plansProvider.search('prompt refactor')), []);
+		});
+
+		test('Should skip hidden entries, non-Markdown content and oversized files', async () => {
+			createSearchFixture();
+			fs.writeFileSync(path.join(testDir, 'large.md'), 'x'.repeat(MAX_SEARCH_FILE_SIZE) + 'oauth', 'utf8');
+			await plansProvider.setRootPath(testDir);
+
+			const paths = resultPaths(await plansProvider.search('oauth'));
+
+			assert.ok(!paths.some(p => p.includes('.hidden')), 'Hidden directories should not be searched');
+			assert.ok(!paths.some(p => p.endsWith('notes.txt')), 'Only Markdown content should be searched');
+			assert.ok(!paths.some(p => p.endsWith('large.md')), 'Oversized files should not be read');
+		});
+
+		test('Should return only the header when nothing matches', async () => {
+			createSearchFixture();
+			await plansProvider.setRootPath(testDir);
+
+			const items = await plansProvider.search('nothing-matches-this');
+
+			assert.strictEqual(items.length, 1);
+			assert.strictEqual(items[0].kind, 'searchHeader');
+			assert.strictEqual(items[0].label, '0 results for "nothing-matches-this"');
+		});
+
+		test('Should stop at the maximum number of results', async () => {
+			for (let i = 0; i < MAX_SEARCH_RESULTS + 5; i++) {
+				fs.writeFileSync(path.join(testDir, `hit_${i}.md`), '', 'utf8');
+			}
+			await plansProvider.setRootPath(testDir);
+
+			const items = await plansProvider.search('hit_');
+
+			assert.strictEqual(resultPaths(items).length, MAX_SEARCH_RESULTS);
+			assert.strictEqual(items[0].label, `${MAX_SEARCH_RESULTS}+ results for "hit_"`);
+		});
+
+		test('Should manage the search state', async () => {
+			const subDir = path.join(testDir, 'subdir');
+			fs.mkdirSync(subDir, { recursive: true });
+			await plansProvider.setRootPath(testDir);
+
+			plansProvider.setSearchQuery('  task  ');
+			assert.strictEqual(plansProvider.getSearchQuery(), 'task');
+			assert.strictEqual(plansProvider.isSearching(), true);
+
+			plansProvider.setSearchQuery('');
+			assert.strictEqual(plansProvider.isSearching(), false);
+
+			// ディレクトリ移動で検索を終了する
+			plansProvider.setSearchQuery('task');
+			await plansProvider.navigateToDirectory(subDir);
+			assert.strictEqual(plansProvider.getSearchQuery(), undefined);
+		});
+
+		test('Should not search while the root directory is missing', async () => {
+			await plansProvider.setRootPath(path.join(testDir, 'nonexistent'));
+			plansProvider.setSearchQuery('task');
+			assert.strictEqual(plansProvider.isSearching(), false);
 		});
 	});
 });

@@ -22,9 +22,82 @@ body {
     border-bottom: 1px solid var(--vscode-panel-border);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 8px;
     flex-shrink: 0;
+}
+
+/* 検索ボックス（幅が狭いときは検索ボックス側を縮める） */
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.search-box .search-icon {
+    position: absolute;
+    left: 4px;
+    font-size: 14px;
+    line-height: 16px;
+    color: var(--vscode-input-placeholderForeground);
+    pointer-events: none;
+}
+
+#search-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 22px;
+    padding: 0 22px 0 22px;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--vscode-input-foreground);
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border, transparent);
+    border-radius: 2px;
+    outline: none;
+}
+
+#search-input::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+}
+
+#search-input:focus {
+    border-color: var(--vscode-focusBorder);
+}
+
+#search-input:disabled {
+    opacity: 0.5;
+}
+
+.search-clear {
+    position: absolute;
+    right: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    color: var(--vscode-icon-foreground);
+    background: none;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.search-clear:hover {
+    background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.search-clear.hidden {
+    display: none;
+}
+
+.search-clear .codicon {
+    font-size: 14px;
 }
 
 .header-actions {
@@ -120,6 +193,17 @@ body {
 
 .row:hover {
     background-color: var(--vscode-list-hoverBackground);
+}
+
+/* 検索結果の件数行（選択・クリックの対象外） */
+.row.search-header {
+    cursor: default;
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+}
+
+.row.search-header:hover {
+    background-color: transparent;
 }
 
 .row.selected {

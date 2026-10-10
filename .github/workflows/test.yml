@@ -38,6 +38,8 @@ jobs:
       # Cache the VS Code build downloaded by @vscode/test-electron.
       # A dropped download on Windows is not retried (the process exits), so avoid downloading on every run.
       # The key rotates weekly so that a new stable release is saved to the cache.
+      # Only the VS Code builds are cached. user-data is still being written by VS Code after the tests,
+      # which makes tar fail, and it should not be shared between runs anyway.
       - name: Get cache week
         id: cache-week
         run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
@@ -45,7 +47,7 @@ jobs:
       - name: Cache VS Code for tests
         uses: actions/cache@v4
         with:
-          path: .vscode-test
+          path: .vscode-test/vscode-*
           key: vscode-test-${{ runner.os }}-${{ steps.cache-week.outputs.week }}
           restore-keys: |
             vscode-test-${{ runner.os }}-

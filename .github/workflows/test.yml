@@ -35,6 +35,21 @@ jobs:
       - name: Compile TypeScript
         run: npm run compile
 
+      # Cache the VS Code build downloaded by @vscode/test-electron.
+      # A dropped download on Windows is not retried (the process exits), so avoid downloading on every run.
+      # The key rotates weekly so that a new stable release is saved to the cache.
+      - name: Get cache week
+        id: cache-week
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache VS Code for tests
+        uses: actions/cache@v4
+        with:
+          path: .vscode-test
+          key: vscode-test-${{ runner.os }}-${{ steps.cache-week.outputs.week }}
+          restore-keys: |
+            vscode-test-${{ runner.os }}-
+
       - name: Run tests (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run -a npm test
@@ -42,6 +57,14 @@ jobs:
       - name: Run tests (macOS/Windows)
         if: runner.os != 'Linux'
         run: npm test
+
+      # Keep only the newest VS Code build so that the cache does not grow with every release
+      - name: Prune old VS Code builds
+        if: always()
+        run: |
+          if [ -d .vscode-test ]; then
+            ls -dt .vscode-test/vscode-* 2>/dev/null | tail -n +2 | xargs -r rm -rf
+          fi
 
       - name: Upload test results
         if: always()

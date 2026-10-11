@@ -386,6 +386,51 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.15新機能: Editor Viewの `output md` / `output memory` ボタン
+
+v1.2.14で空になった最下段（`#footer`）の左グループに、起動中のClaude Codeへ出力指示を送る2つのボタンを追加した：
+
+| ボタン | 出力させるファイル | 内容 | 設定 |
+|---|---|---|---|
+| `output md` | `<dir>/YYYY_MMDD_HHMM_SS_status.md` | タスクの状況（済んだこと・残り・判断理由）。同梱スニペット `output_status.md`（v1.2.2）と同じ形式 | `aiCodingSidebar.editor.outputMdPrompt` |
+| `output memory` | `<dir>/YYYY_MMDD_HHMM_SS_memory.md` | 次のセッションで再利用する知見（好み・慣習・ハマりどころ） | `aiCodingSidebar.editor.outputMemoryPrompt` |
+
+- `<dir>` は開いているファイルのディレクトリ（`${dirPath}`）。「memory」は **Claude Code自身のメモリ機能（auto memory / `/memory`）ではなく、`.claude/plans/<dir>` への作業メモ**を指す（要求者に確認済み）
+- ラベルは要求どおり小文字（`output md` / `output memory`）。既存の `Prompts` / `Next` とは揃えていない
+- 送信履歴（`## sent history`）へは記録しない。`SendCommandType` は変更していない
+
+**新しいセッションは起動しない（Run / Plan / Spec との違い）**
+- `EditorProvider.sendSessionPrompt(type)` が、Run系で開始済みのセッションへ追加指示として送る
+- 判定順: ① `isClaudeCodeRunning()` が `true` ② ファイルを開いている。どちらかを満たさなければ警告を出して送らない
+- **未起動時に送らないのが最重要**。シェルへ流れると英文がコマンドとして実行され、カスタム文言に `!` や `$` があれば展開される
+- `ITerminalProvider.isClaudeCodeRunning` はオプショナル（v1.2.1）。未実装のプロバイダーでは `undefined` になり「起動していない」扱いで**送らない**。`_prepareResumeSession()` は同じ `undefined` を「起動していない」＝セッションIDを付与する側に倒しており、安全側の向きが逆になる
+
+**シェルのエスケープをしない**
+- Claude Code起動中の `sendCommand()` は入力欄へテキストとして書き込む（v1.0.12）。`_escapeShellArgument()` を通すと `"'...'"` のクォートがそのままプロンプトに残る
+- 途中の改行は送信扱いになり得るため、既定値は1行で、設定の `description` にも「1行で」と明記している
+
+**`sendCommand()` に `filePath` / `commandType` を渡さない**
+- 渡すと `_tabFileMap`（v0.9.3）とタブのアイコン（v0.9.4）が上書きされる。追加指示であってタブの用途は変わらないため
+
+**Webview側**
+- クリックで `outputMd` / `outputMemory` を送るだけ。Claude Codeが読むのはセッションの文脈であり、エディタ内容の保存は行わない。読み取り専用時も送信できる
+- ラベルが長いため `white-space: nowrap` を指定している。配色は `Prompts` と同じセカンダリ系（Nextの赤と競合させない）
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `resources/webview/editor/{index.html,style.css,main.js}` | 左の `footer-actions` にボタン2つ（codicon `markdown` / `database`）とクリックハンドラ |
+| `src/providers/EditorProvider.ts` | `SessionPromptType` / `SESSION_PROMPTS`、`public sendSessionPrompt()`、`outputMd` / `outputMemory` メッセージ |
+| `package.json` | 設定2件 |
+| `src/test/suite/providers/EditorProvider.test.ts` | `sendSessionPrompt` スイート（8ケース） |
+| README 6ファイル / `docs/editor-view.md` | レイアウト・ボタン・設定表 |
+
+**ローカルでのテスト実行について**
+- `vscode` をスタブ化したNode上でmocha（`--ui tdd`）を実行して確認している（`EditorProvider.test.ts` 30 passing。ワークスペース有りでも `sendSessionPrompt` 8 passing）
+- 起動判定を `=== false`（未実装を「起動中」扱い）に変えると2ケースが失敗することをミューテーションで確認している
+- Webviewのボタン押下で `outputMd` / `outputMemory` が送られることはjsdom上で `main.js` を実行して確認している
+
 ### v1.2.14変更: Editor ViewのPromptsボタンの移動とメニューの整理
 
 v1.1.19で最下段（`#footer`）の左端に置いた `prompts` ボタンを上段（`#sub-header`）へ移し、ラベルとテンプレートメニューの構成を変更した：
@@ -2426,6 +2471,8 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 - `aiCodingSidebar.editor.runPlanCommand`: Planボタン実行コマンド（旧 `aiCodingSidebar.editor.planCommand`）
 - `aiCodingSidebar.editor.runSpecCommand`: Specボタン実行コマンド（旧 `aiCodingSidebar.editor.specCommand`）
 - `aiCodingSidebar.editor.recordResumeCommand`: Spec / Plan / Run の実行時にセッションIDを指定し、resumeコマンドを送信履歴へ記録するか（デフォルト: `true`）
+- `aiCodingSidebar.editor.outputMdPrompt`: output mdボタンで起動中のClaude Codeへ送る指示文（`${filePath}` / `${dirPath}`）
+- `aiCodingSidebar.editor.outputMemoryPrompt`: output memoryボタンで起動中のClaude Codeへ送る指示文（`${filePath}` / `${dirPath}`）
 - `aiCodingSidebar.editor.disableWorkspaceEditorTemplates`: ワークスペースのファイル雛形を読み込まないか（デフォルト: `false`）
 - `aiCodingSidebar.editor.disableGlobalEditorTemplates`: グローバルのファイル雛形を読み込まないか（デフォルト: `false`）
 - `aiCodingSidebar.editor.disableWorkspacePromptTemplates`: ワークスペースのプロンプトテンプレートを一覧に出さないか（デフォルト: `false`）

@@ -8,6 +8,8 @@ const planButton = document.getElementById('plan-button');
 const runButton = document.getElementById('run-button');
 const nextButton = document.getElementById('next-button');
 const templateButton = document.getElementById('template-button');
+const outputMdButton = document.getElementById('output-md-button');
+const outputMemoryButton = document.getElementById('output-memory-button');
 const linkOverlay = document.getElementById('link-overlay');
 const contextMenuElement = document.getElementById('context-menu');
 let originalContent = '';
@@ -514,6 +516,20 @@ templateButton.addEventListener('click', (event) => {
 nextButton.addEventListener('click', () => {
     vscode.postMessage({
         type: 'createMarkdownFile'
+    });
+});
+
+// output md / output memory button click handlers - 起動中のClaude Codeへ出力指示を送る
+// Claude Codeが読むのはセッションの文脈のため、エディタ内容の保存は行わない
+outputMdButton.addEventListener('click', () => {
+    vscode.postMessage({
+        type: 'outputMd'
+    });
+});
+
+outputMemoryButton.addEventListener('click', () => {
+    vscode.postMessage({
+        type: 'outputMemory'
     });
 });
 

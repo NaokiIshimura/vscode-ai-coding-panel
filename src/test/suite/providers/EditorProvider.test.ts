@@ -206,6 +206,128 @@ suite('EditorProvider Integration Test Suite', () => {
 		});
 	});
 
+	suite('sendSessionPrompt', () => {
+		interface SentCommand {
+			command: string;
+			addNewline?: boolean;
+			filePath?: string;
+			commandType?: string;
+		}
+
+		const createTerminalProvider = (isRunning: boolean | undefined) => {
+			const sent: SentCommand[] = [];
+			let focused = 0;
+			const provider: {
+				focus(): void;
+				sendCommand(command: string, addNewline?: boolean, filePath?: string, commandType?: 'run' | 'plan' | 'spec'): Promise<void>;
+				isClaudeCodeRunning?(): boolean;
+			} = {
+				focus: () => { focused++; },
+				sendCommand: async (command, addNewline, filePath, commandType) => {
+					sent.push({ command, addNewline, filePath, commandType });
+				}
+			};
+			if (isRunning !== undefined) {
+				provider.isClaudeCodeRunning = () => isRunning;
+			}
+			return { provider, sent, getFocused: () => focused };
+		};
+
+		// EditorProviderと同じ基準（ワークスペースルートからの相対パス）で期待値を求める
+		const expectedRelativeDir = (): string => {
+			const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+			const relativeFilePath = workspaceRoot ? path.relative(workspaceRoot, testFilePath) : testFilePath;
+			return path.dirname(relativeFilePath);
+		};
+
+		test('Should send the output md prompt with the directory to a running session', async () => {
+			const terminal = createTerminalProvider(true);
+			editorProvider.setTerminalProvider(terminal.provider);
+			await editorProvider.showFile(testFilePath);
+
+			await editorProvider.sendSessionPrompt('md');
+
+			assert.strictEqual(terminal.sent.length, 1);
+			assert.ok(terminal.sent[0].command.includes('_status.md'));
+			assert.ok(terminal.sent[0].command.includes(` in ${expectedRelativeDir()}.`));
+			assert.strictEqual(terminal.getFocused(), 1);
+		});
+
+		test('Should send the output memory prompt with the directory to a running session', async () => {
+			const terminal = createTerminalProvider(true);
+			editorProvider.setTerminalProvider(terminal.provider);
+			await editorProvider.showFile(testFilePath);
+
+			await editorProvider.sendSessionPrompt('memory');
+
+			assert.strictEqual(terminal.sent.length, 1);
+			assert.ok(terminal.sent[0].command.includes('_memory.md'));
+			assert.ok(terminal.sent[0].command.includes(` in ${expectedRelativeDir()}.`));
+		});
+
+		test('Should send the prompt as typed text without shell quoting or placeholders', async () => {
+			const terminal = createTerminalProvider(true);
+			editorProvider.setTerminalProvider(terminal.provider);
+			await editorProvider.showFile(testFilePath);
+
+			await editorProvider.sendSessionPrompt('md');
+
+			const command = terminal.sent[0].command;
+			assert.ok(!command.includes('"\''));
+			assert.ok(!command.includes('${'));
+			assert.ok(!command.includes('\n'));
+		});
+
+		test('Should not associate the tab with the file or change its command type', async () => {
+			const terminal = createTerminalProvider(true);
+			editorProvider.setTerminalProvider(terminal.provider);
+			await editorProvider.showFile(testFilePath);
+
+			await editorProvider.sendSessionPrompt('memory');
+
+			assert.strictEqual(terminal.sent[0].addNewline, true);
+			assert.strictEqual(terminal.sent[0].filePath, undefined);
+			assert.strictEqual(terminal.sent[0].commandType, undefined);
+		});
+
+		test('Should not send when Claude Code is not running', async () => {
+			const terminal = createTerminalProvider(false);
+			editorProvider.setTerminalProvider(terminal.provider);
+			await editorProvider.showFile(testFilePath);
+
+			await editorProvider.sendSessionPrompt('md');
+			await editorProvider.sendSessionPrompt('memory');
+
+			assert.strictEqual(terminal.sent.length, 0);
+			assert.strictEqual(terminal.getFocused(), 0);
+		});
+
+		test('Should not send when the provider cannot tell whether Claude Code is running', async () => {
+			const terminal = createTerminalProvider(undefined);
+			editorProvider.setTerminalProvider(terminal.provider);
+			await editorProvider.showFile(testFilePath);
+
+			await editorProvider.sendSessionPrompt('md');
+
+			assert.strictEqual(terminal.sent.length, 0);
+		});
+
+		test('Should not send either prompt when no file is open', async () => {
+			const terminal = createTerminalProvider(true);
+			editorProvider.setTerminalProvider(terminal.provider);
+
+			await editorProvider.sendSessionPrompt('md');
+			await editorProvider.sendSessionPrompt('memory');
+
+			assert.strictEqual(terminal.sent.length, 0);
+		});
+
+		test('Should not throw when no TerminalProvider is set', async () => {
+			await editorProvider.showFile(testFilePath);
+			await editorProvider.sendSessionPrompt('md');
+		});
+	});
+
 	suite('Integration with TemplateService', () => {
 		test('Should use TemplateService for file operations', () => {
 			// TemplateServiceが注入されていることを確認

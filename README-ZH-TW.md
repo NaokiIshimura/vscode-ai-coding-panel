@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.14-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.15-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | 繁體中文 | [Português](README-PT-BR.md)
 
@@ -64,11 +64,12 @@
 | **Resume 指令** | 每次 Spec / Plan / Run 都會以產生的工作階段 ID 啟動 Claude Code，並在時間戳記旁記錄對應的指令（例如 `- run : 2026/09/06 21:27:29 \| claude --resume 0f1d2c3b-...`），方便日後重新開啟該工作階段。可透過 `editor.recordResumeCommand` 關閉 |
 | **自動終端機整合** | 指令會傳送到 Terminal 檢視，並自動將檔案與分頁建立關聯，讓工作流程更順暢 |
 | 自動顯示 | 選取以時間戳記命名的 Markdown 檔案（格式：`YYYY_MMDD_HHMM_SS_PROMPT.md`、`..._TASK.md`、`..._SPEC.md` 或 `..._QUICK_START.md`）時會自動開啟。其他 Markdown 檔案則以標準編輯器開啟 |
-| **兩列版面配置** | 檢視分為兩列工具列：上方工具列左側為 Prompts / Edit / Save，右側為 Spec / Plan / Run；下方工具列右側為 Next 按鈕 |
+| **兩列版面配置** | 檢視分為兩列工具列：上方工具列左側為 Prompts / Edit / Save，右側為 Spec / Plan / Run；下方工具列左側為 output md / output memory，右側為 Next 按鈕 |
 | Save 按鈕 | 顯示於上方工具列，有未儲存的變更時會改變顏色。若未開啟任何檔案，則會建立新檔案（儲存到目前的 Plans 目錄） |
 | **Next 按鈕** | 位於檢視底部專用工具列的紅色 **Next** 按鈕。會建立新的帶時間戳記 `PROMPT.md` 並開啟，同時將游標放在文字區域中，讓你可以立即開始輸入。也可以使用 `Cmd+M` / `Ctrl+M` |
+| **output md / output memory 按鈕** | 位於下方工具列左側的按鈕，會向作用中 Terminal 分頁裡正在執行的 Claude Code 工作階段傳送指示（在以 Run / Plan / Spec 啟動工作階段後使用）。**output md** 要求將任務狀態（已完成、剩餘事項及原因）寫入 `YYYY_MMDD_HHMM_SS_status.md`，**output memory** 要求將本次工作階段中可重複使用的知識（偏好、專案慣例、踩過的坑）寫入 `YYYY_MMDD_HHMM_SS_memory.md`，兩者都輸出到目前開啟檔案所在的目錄。Claude Code 未執行或未開啟檔案時不會傳送，並顯示警告。指示文字可透過 `editor.outputMdPrompt` / `editor.outputMemoryPrompt` 自訂 |
 | **Prompts 按鈕** | 位於上方工具列左端（Edit 左側）的 **Prompts** 按鈕。點擊後會在按鈕正下方開啟範本選單，選取的範本會插入到游標位置（再次按下按鈕、點擊其他位置或按下 `Escape` 即可關閉選單）。選單底部的 **Add template** 項目可建立新範本：選擇建立位置（Workspace 或 Global）並輸入名稱後，檔案會建立在該目錄下並於 VS Code 編輯器中開啟。範本存放於工作區的 `.vscode/ai-coding-panel/prompts/*.md`，以及適用於所有工作區的 `<globalTemplatesPath>/prompts/*.md`（每個範本一個檔案）。兩者會一起列出，全域範本會標示 `(global)`；兩處都存在的同名檔案會採用工作區的版本。兩處都沒有 Markdown 檔案時，會使用擴充功能內建的範本。可以透過 `editor.disableWorkspacePromptTemplates` 或 `editor.disableGlobalPromptTemplates` 將任一來源排除在清單之外。檔案內容會原封不動地插入，因此開頭的 `# heading` 也會一併插入——標題僅作為選單中的名稱使用。`{{filename}}`、`{{filepath}}`、`{{dirpath}}`、`{{datetime}}` 與 `{{timestamp}}` 會替換為開啟中檔案的值。同樣的操作也可以從命令選擇區以 **Insert Prompt Template** 執行，此時會改為顯示快速選取清單。從 Menu 檢視的 Workspace 區段執行 **Customize Prompt Templates** 可將內建範本複製到工作區，執行 Global 區段中的同名項目則會複製到全域目錄 |
-| 按鈕圖示 | 每個按鈕都使用 VS Code codicon（Spec：書本、Plan：檢查清單、Run：播放、Next：新增檔案、Edit：鉛筆、Save：磁碟片、Prompts：程式碼片段），與 Plans View 的 Quick Start 按鈕一致 |
+| 按鈕圖示 | 每個按鈕都使用 VS Code codicon（Spec：書本、Plan：檢查清單、Run：播放、Next：新增檔案、Edit：鉛筆、Save：磁碟片、Prompts：程式碼片段、output md：Markdown、output memory：資料庫），與 Plans View 的 Quick Start 按鈕一致 |
 | 可自訂的指令 | 可在設定中調整 Run、Plan 與 Spec 指令，以符合你的工作流程 |
 | **可點擊的 URL** | 文字中的 URL 會加上底線，點擊即可在預設瀏覽器中開啟。在 URL 上按右鍵可選擇 **Open in Default Browser** 或 **Open in Integrated Browser**（VS Code 的 Simple Browser）。在其他位置按右鍵則會顯示 VS Code 標準選單 |
 | 唯讀模式 | 當檔案在 VSCode 編輯器中處於作用中狀態時，會自動切換為唯讀模式 |
@@ -297,6 +298,8 @@ datetime: {{datetime}}
 | `editor.runSpecCommand` | 點擊 Spec 按鈕時執行的指令範本 | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | 使用 `${filePath}` 作為檔案路徑的預留位置。請以雙引號括住預留位置，讓值以單一引數傳遞。 |
 | `editor.recordSendTimestamp` | 按下 Spec / Plan / Run 時，將傳送的日期與時間附加到開啟中的檔案 | boolean | `true` | 歷程記錄會加入到檔案結尾的 `## sent history` 區段 |
 | `editor.recordResumeCommand` | 以產生的工作階段 ID 啟動 Spec / Plan / Run，並記錄對應的 `claude --resume <session-id>` 指令 | boolean | `true` | 需要啟用 `editor.recordSendTimestamp`。當 Claude Code 已在執行中，或 `editor.commandPrefix` 不是 `claude` 或已指定工作階段時，會略過此功能 |
+| `editor.outputMdPrompt` | output md 按鈕傳送給正在執行的 Claude Code 工作階段的指示 | string | `"Record the current status of this task as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_status.md) in ${dirPath}. ..."` | `${filePath}`（開啟的檔案）與 `${dirPath}`（其目錄）為相對於工作區根目錄的路徑。以輸入文字傳送，不加 shell 引號。請寫成一行 |
+| `editor.outputMemoryPrompt` | output memory 按鈕傳送給正在執行的 Claude Code 工作階段的指示 | string | `"Record the reusable knowledge from this session as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_memory.md) in ${dirPath}. ..."` | 預留位置與規則與 `editor.outputMdPrompt` 相同 |
 | `editor.promptTemplatesPath` | 存放從 Editor 檢視插入之提示詞範本的目錄（相對於工作區根目錄） | string | `".vscode/ai-coding-panel/prompts"` | 其正下方的每個 `.md` 檔案都會成為一個範本。目錄中沒有 Markdown 檔案時，會使用擴充功能內建的範本 |
 | `editor.disableWorkspaceEditorTemplates` | 不載入工作區中的檔案範本 | boolean | `false` | 改用全域範本，接著是內建範本 |
 | `editor.disableGlobalEditorTemplates` | 不載入全域目錄中的檔案範本 | boolean | `false` | 內建範本一律保留作為最後的備援，因此檔案建立永遠不會失敗 |
@@ -389,14 +392,14 @@ npm run watch
 1. 從 [GitHub Releases 頁面](https://github.com/NaokiIshimura/vscode-panel/releases) 下載最新的 VSIX 檔案。
 2. 透過命令列安裝：
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.14.vsix
+   code --install-extension ai-coding-sidebar-1.2.15.vsix
    ```
 3. 重新啟動 VS Code。
 
 #### 使用本機建置
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.14.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.15.vsix
 ```
 
 #### 自行建置套件
@@ -410,7 +413,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.14.vsix
    ```
 3. 安裝產生的 VSIX 檔案：
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.14.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.15.vsix
    ```
 4. 重新啟動 VS Code。
 

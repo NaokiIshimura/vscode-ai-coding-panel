@@ -5,6 +5,15 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.15] - 2026-10-12
+
+### Added
+- **output md / output memoryボタン**: Editor View最下段の左側に、アクティブなTerminalタブで起動中のClaude Codeへ指示を送る2つのボタンを追加しました
+  - **output md** は、タスクの状況を開いているファイルと同じディレクトリの `YYYY_MMDD_HHMM_SS_status.md` へ出力させます
+  - **output memory** は、セッションで得た再利用できる知見を同じディレクトリの `YYYY_MMDD_HHMM_SS_memory.md` へ出力させます
+  - Claude Codeが起動していない場合とファイル未オープン時は送信せず、警告を表示します
+  - 指示文は新しい設定 `editor.outputMdPrompt` / `editor.outputMemoryPrompt` で変更できます
+
 ## [1.2.14] - 2026-10-11
 
 ### Changed
@@ -2205,6 +2214,7 @@ v0.8.33以前からアップグレードする場合:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.14...v1.2.15
 [1.2.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.13...v1.2.14
 [1.2.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.12...v1.2.13
 [1.2.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.11...v1.2.12

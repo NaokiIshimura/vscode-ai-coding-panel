@@ -37,6 +37,26 @@ const RESUME_CONFLICTING_OPTIONS = /(^|\s)(--session-id|--resume|-r|--continue|-
  */
 const CLAUDE_EXECUTABLE_PATTERN = /^(\S*[/\\])?claude(\s|$)/;
 
+/**
+ * 起動中のClaude Codeへ送る出力指示の種類（output md / output memory ボタン）
+ */
+export type SessionPromptType = 'md' | 'memory';
+
+/**
+ * 出力指示ごとの設定キーと既定値
+ * Claude Codeの入力欄へテキストとして送るため、改行を含めない
+ */
+const SESSION_PROMPTS: Record<SessionPromptType, { settingKey: string; defaultPrompt: string }> = {
+    md: {
+        settingKey: 'editor.outputMdPrompt',
+        defaultPrompt: 'Record the current status of this task as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_status.md) in ${dirPath}. State what is done, what is left, and why each decision was made.'
+    },
+    memory: {
+        settingKey: 'editor.outputMemoryPrompt',
+        defaultPrompt: 'Record the reusable knowledge from this session as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_memory.md) in ${dirPath}. Include user preferences, project conventions, and pitfalls you hit with the reason for each. Do not repeat what is already recorded in the repository.'
+    }
+};
+
 export class EditorProvider implements vscode.WebviewViewProvider, vscode.Disposable {
     public static readonly viewType = 'markdownEditor';
     private _view?: vscode.WebviewView;
@@ -478,6 +498,12 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         }
                     }
                     break;
+                case 'outputMd':
+                    await this.sendSessionPrompt('md');
+                    break;
+                case 'outputMemory':
+                    await this.sendSessionPrompt('memory');
+                    break;
                 case 'runTask':
                     // Run button clicked - save file if needed, then send command to terminal
                     await this._runTask(data.content, data.editorContent);
@@ -765,6 +791,45 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to read file: ${error}`);
         }
+    }
+
+    /**
+     * 起動中のClaude Codeへ出力指示（output md / output memory）を送る
+     * 新しいセッションは起動せず、Run / Plan / Spec で開始したセッションへの追加指示として送る
+     */
+    public async sendSessionPrompt(type: SessionPromptType): Promise<void> {
+        // 未起動のシェルへ送ると指示文がコマンドとして実行されるため送らない
+        // isClaudeCodeRunningが未実装のプロバイダーも「起動していない」とみなす（Run系とは逆の判定）
+        if (!this._terminalProvider?.isClaudeCodeRunning?.()) {
+            vscode.window.showWarningMessage('Claude Code is not running in the Terminal view. Start a session with Run / Plan / Spec first.');
+            return;
+        }
+
+        // 出力先は開いているファイルのディレクトリのため、ファイル未オープン時は送らない
+        if (!this._currentFilePath) {
+            vscode.window.showWarningMessage('No file is open. Open a prompt file to decide where to output.');
+            return;
+        }
+
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        const relativeFilePath = workspaceRoot
+            ? path.relative(workspaceRoot, this._currentFilePath)
+            : this._currentFilePath;
+        const relativeDirPath = path.dirname(relativeFilePath);
+
+        const { settingKey, defaultPrompt } = SESSION_PROMPTS[type];
+        const config = vscode.workspace.getConfiguration('aiCodingSidebar');
+        const template = config.get<string>(settingKey, defaultPrompt);
+
+        // シェルを経由せず入力欄へ書き込むため、_escapeShellArgument() は使わない
+        // （クォートで囲むとクォートがそのままプロンプトに残る）
+        const prompt = template
+            .replace(/\$\{filePath\}/g, relativeFilePath)
+            .replace(/\$\{dirPath\}/g, relativeDirPath);
+
+        // filePath / commandType は渡さない（タブとファイルの関連付けやアイコンを上書きしないため）
+        this._terminalProvider.focus();
+        await this._terminalProvider.sendCommand(prompt, true);
     }
 
     public getCurrentFilePath(): string | undefined {

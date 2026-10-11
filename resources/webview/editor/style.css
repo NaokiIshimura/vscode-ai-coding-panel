@@ -47,7 +47,7 @@ body.focused {
     color: var(--vscode-foreground);
     display: flex;
     align-items: center;
-    /* 左グループは空だが、Nextを右端に置くために残している */
+    /* 左: output md / output memory、右: Next */
     justify-content: space-between;
     gap: 8px;
     flex-shrink: 0;
@@ -67,7 +67,9 @@ body.focused {
 .next-button,
 .edit-button,
 .save-button,
-.template-button {
+.template-button,
+.output-md-button,
+.output-memory-button {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -202,6 +204,25 @@ body.focused {
 .template-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* output md / output memoryボタン（最下段の左側）。Nextと競合しないようセカンダリ配色にする */
+.output-md-button,
+.output-memory-button {
+    padding: 2px 8px;
+    font-size: 11px;
+    line-height: 16px;
+    background-color: transparent;
+    color: var(--vscode-foreground);
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 2px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.output-md-button:hover,
+.output-memory-button:hover {
+    background-color: var(--vscode-toolbar-hoverBackground);
 }
 
 .plan-button {

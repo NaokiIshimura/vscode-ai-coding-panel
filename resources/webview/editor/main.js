@@ -117,6 +117,15 @@ const hideContextMenu = () => {
 };
 
 /**
+ * メニューの区切り線を生成する
+ */
+const createMenuSeparator = () => {
+    const separator = document.createElement('div');
+    separator.className = 'context-menu-separator';
+    return separator;
+};
+
+/**
  * URLのコンテキストメニューを表示する
  */
 const showUrlContextMenu = (event, url) => {
@@ -132,9 +141,7 @@ const showUrlContextMenu = (event, url) => {
     header.title = url;
     contextMenuElement.appendChild(header);
 
-    const separator = document.createElement('div');
-    separator.className = 'context-menu-separator';
-    contextMenuElement.appendChild(separator);
+    contextMenuElement.appendChild(createMenuSeparator());
 
     for (const entry of URL_CONTEXT_MENU) {
         const menuItem = document.createElement('div');
@@ -185,34 +192,6 @@ const showPromptTemplateMenu = (templates) => {
     contextMenuElement.textContent = '';
     contextMenuElement.classList.add('prompt-menu');
 
-    // ヘッダー行: 見出しと、テンプレートを追加する[+]ボタン
-    const header = document.createElement('div');
-    header.className = 'context-menu-header prompt-menu-header';
-
-    const headerLabel = document.createElement('span');
-    headerLabel.textContent = 'Prompt templates';
-    header.appendChild(headerLabel);
-
-    const addButton = document.createElement('button');
-    addButton.className = 'context-menu-action';
-    addButton.title = 'Add template';
-    addButton.setAttribute('aria-label', 'Add template');
-    const addIcon = document.createElement('span');
-    addIcon.className = 'codicon codicon-add';
-    addButton.appendChild(addIcon);
-    addButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        hideContextMenu();
-        vscode.postMessage({ type: 'createPromptTemplate' });
-    });
-    header.appendChild(addButton);
-
-    contextMenuElement.appendChild(header);
-
-    const separator = document.createElement('div');
-    separator.className = 'context-menu-separator';
-    contextMenuElement.appendChild(separator);
-
     for (const template of templates) {
         const menuItem = document.createElement('div');
         menuItem.className = 'context-menu-item';
@@ -228,6 +207,27 @@ const showPromptTemplateMenu = (templates) => {
         });
         contextMenuElement.appendChild(menuItem);
     }
+
+    // 最下部: テンプレートを新規作成する項目
+    // テンプレートが0件の場合は区切り線を出さない（メニューの先頭が区切り線になるため）
+    if (templates.length > 0) {
+        contextMenuElement.appendChild(createMenuSeparator());
+    }
+
+    const addItem = document.createElement('div');
+    addItem.className = 'context-menu-item prompt-menu-add-item';
+    const addIcon = document.createElement('span');
+    addIcon.className = 'codicon codicon-add';
+    const addLabel = document.createElement('span');
+    addLabel.textContent = 'Add template';
+    addItem.appendChild(addIcon);
+    addItem.appendChild(addLabel);
+    addItem.addEventListener('click', (event) => {
+        event.stopPropagation();
+        hideContextMenu();
+        vscode.postMessage({ type: 'createPromptTemplate' });
+    });
+    contextMenuElement.appendChild(addItem);
 
     // 位置計算には描画後のサイズが必要なため、先に表示する
     contextMenuElement.classList.remove('hidden');

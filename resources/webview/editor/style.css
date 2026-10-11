@@ -47,7 +47,7 @@ body.focused {
     color: var(--vscode-foreground);
     display: flex;
     align-items: center;
-    /* 左端にInsert Template、右端にNextを配置する */
+    /* 左グループは空だが、Nextを右端に置くために残している */
     justify-content: space-between;
     gap: 8px;
     flex-shrink: 0;
@@ -183,7 +183,7 @@ body.focused {
     background-color: var(--vscode-button-hoverBackground);
 }
 
-/* Insert Templateボタン（フッター左端）。Nextの赤と競合しないようセカンダリ配色にする */
+/* Insert Templateボタン（サブヘッダー左端、Editの左）。Spec / Plan / Runと競合しないようセカンダリ配色にする */
 .template-button {
     padding: 2px 8px;
     font-size: 11px;
@@ -360,41 +360,17 @@ body.focused {
     color: var(--vscode-menu-selectionForeground, var(--vscode-list-activeSelectionForeground));
 }
 
-/* テンプレート選択メニューのヘッダー行（見出し＋追加ボタン） */
-.prompt-menu-header {
+/* テンプレート選択メニュー最下部の「Add template」項目（アイコン＋ラベル） */
+.context-menu.prompt-menu .prompt-menu-add-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding-right: 4px;
+    gap: 6px;
 }
 
-.prompt-menu-header > span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* ヘッダー内のアイコンボタン（テンプレート追加） */
-.context-menu-action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 4px;
-    background-color: transparent;
-    color: var(--vscode-foreground);
-    border: none;
-    border-radius: 2px;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-.context-menu-action:hover {
-    background-color: var(--vscode-toolbar-hoverBackground);
-}
-
-.context-menu-action .codicon {
+.prompt-menu-add-item .codicon {
     font-size: 14px;
     line-height: 16px;
+    flex-shrink: 0;
 }
 
 /* テンプレート選択メニューは狭いサイドバー幅・高さに収める */

@@ -386,6 +386,39 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.14変更: Editor ViewのPromptsボタンの移動とメニューの整理
+
+v1.1.19で最下段（`#footer`）の左端に置いた `prompts` ボタンを上段（`#sub-header`）へ移し、ラベルとテンプレートメニューの構成を変更した：
+
+| 項目 | 変更前 | 変更後 |
+|---|---|---|
+| ボタンの位置 | `#footer` の左グループ | `#sub-header` の左グループ先頭（Editの左） |
+| ラベル | `prompts` | `Prompts` |
+| メニュー先頭 | 見出し `Prompt templates` ＋ [+]ボタン、区切り線 | なし（テンプレート一覧から始まる） |
+| テンプレートの作成 | ヘッダーの[+]ボタン | メニュー最下部の `Add template` 項目（区切り線の下） |
+
+**`#footer` の左グループは空のまま残している**
+- `#footer` は `justify-content: space-between` の2グループ構成。左の `<div class="footer-actions">` を消すとNextが左端へ移動する
+
+**メニューはボタンの下に開く（JSは変更していない）**
+- `placeMenuNearElement()` は基準要素の上側を優先し、収まらない場合に下側へ反転する。上段バーの上には余白が無いため、常に下側へ反転する
+
+**`Add template` 上の区切り線はテンプレートが0件なら出さない**
+- 見出しを削除したため、0件のときに区切り線を出すとメニューが区切り線から始まる。`disableWorkspacePromptTemplates` / `disableGlobalPromptTemplates` の組み合わせ次第で0件になり得る
+- `Add template` 項目のクリックハンドラでは従来の[+]ボタンと同じく `event.stopPropagation()` を呼び、`createPromptTemplate` を送る。拡張側（`EditorProvider`）の処理は変更していない
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `resources/webview/editor/index.html` | `#template-button` を `#sub-header` へ移動し、ラベルを `Prompts` に変更 |
+| `resources/webview/editor/main.js` | `showPromptTemplateMenu()` から見出しを削除し、最下部に `Add template` 項目を追加。区切り線の生成を `createMenuSeparator()` に切り出し、URLのコンテキストメニューと共用 |
+| `resources/webview/editor/style.css` | `.prompt-menu-header` / `.context-menu-action` を削除し、`.prompt-menu-add-item` を追加 |
+| `src/providers/EditorProvider.ts` | コメントのみ（[+]ボタン → Add template） |
+| README 6ファイル / `docs/quick-start.md` | レイアウト・ボタン名・メニューの説明 |
+
+- `.context-menu-header` はURLのコンテキストメニュー（v1.1.13）で引き続き使用しているため残している
+
 ### v1.2.13変更: Plans Viewのファイル名の短縮表示
 
 タイムスタンプ形式のプロンプトファイル（`YYYY_MMDD_HHMM_SS_<PROMPT|TASK|SPEC|QUICK_START>.md`）を、タイムスタンプを日付/時間プレフィックスへ置き換えて表示するようにした。**実ファイル名は変えていない**：

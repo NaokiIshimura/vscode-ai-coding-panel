@@ -368,7 +368,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                     await this._insertPromptTemplateById(data.templateId);
                     break;
                 case 'createPromptTemplate':
-                    // メニューヘッダーの[+]ボタン - テンプレートを新規作成して開く
+                    // メニュー最下部の「Add template」 - テンプレートを新規作成して開く
                     await this._createPromptTemplate();
                     break;
                 case 'showWarning':
@@ -923,7 +923,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     /**
      * プロンプトテンプレートを新規作成してVS Codeのエディタで開く
      *
-     * メニューヘッダーの[+]ボタンから呼ばれる
+     * メニュー最下部の「Add template」から呼ばれる
      */
     private async _createPromptTemplate(): Promise<void> {
         if (!this.promptTemplateService) {

@@ -5,6 +5,15 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.14] - 2026-10-11
+
+### Changed
+- **Promptsボタンを上段バーへ移動**: Editor Viewのプロンプトテンプレートボタンを、上段バーの左端（Editの左）へ移動しました
+  - テンプレートのメニューはボタンの下に開きます
+  - 最下段はNextボタンのみになりました
+- **Promptsボタンのラベル**: ラベルを `prompts` から `Prompts` に変更しました
+- **プロンプトテンプレートメニューの構成**: メニューのヘッダーにあった **+** ボタンを、メニュー最下部の **Add template** 項目に置き換え、見出し `Prompt templates` を削除しました
+
 ## [1.2.13] - 2026-10-11
 
 ### Changed
@@ -2196,6 +2205,7 @@ v0.8.33以前からアップグレードする場合:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.13...v1.2.14
 [1.2.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.12...v1.2.13
 [1.2.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.11...v1.2.12
 [1.2.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.10...v1.2.11

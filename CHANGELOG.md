@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.14] - 2026-10-11
+
+### Changed
+- **Prompts button moved to the top bar**: The prompt template button in the Editor view now sits at the left end of the top bar, to the left of Edit
+  - The template menu opens below the button
+  - The bottom bar now holds only the Next button
+- **Prompts button label**: The label is now `Prompts` instead of `prompts`
+- **Prompt template menu layout**: The **+** button in the menu header is replaced by an **Add template** item at the bottom of the menu, and the `Prompt templates` heading is removed
+
 ## [1.2.13] - 2026-10-11
 
 ### Changed
@@ -2725,6 +2734,7 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.13...v1.2.14
 [1.2.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.12...v1.2.13
 [1.2.12]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.11...v1.2.12
 [1.2.11]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.10...v1.2.11

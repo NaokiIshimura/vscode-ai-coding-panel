@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.13-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.14-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | 繁體中文 | [Português](README-PT-BR.md)
 
@@ -64,11 +64,11 @@
 | **Resume 指令** | 每次 Spec / Plan / Run 都會以產生的工作階段 ID 啟動 Claude Code，並在時間戳記旁記錄對應的指令（例如 `- run : 2026/09/06 21:27:29 \| claude --resume 0f1d2c3b-...`），方便日後重新開啟該工作階段。可透過 `editor.recordResumeCommand` 關閉 |
 | **自動終端機整合** | 指令會傳送到 Terminal 檢視，並自動將檔案與分頁建立關聯，讓工作流程更順暢 |
 | 自動顯示 | 選取以時間戳記命名的 Markdown 檔案（格式：`YYYY_MMDD_HHMM_SS_PROMPT.md`、`..._TASK.md`、`..._SPEC.md` 或 `..._QUICK_START.md`）時會自動開啟。其他 Markdown 檔案則以標準編輯器開啟 |
-| **兩列版面配置** | 檢視分為兩列工具列：上方工具列左側為 Edit / Save，右側為 Spec / Plan / Run；下方工具列左側為 prompts 按鈕，右側為 Next 按鈕 |
+| **兩列版面配置** | 檢視分為兩列工具列：上方工具列左側為 Prompts / Edit / Save，右側為 Spec / Plan / Run；下方工具列右側為 Next 按鈕 |
 | Save 按鈕 | 顯示於上方工具列，有未儲存的變更時會改變顏色。若未開啟任何檔案，則會建立新檔案（儲存到目前的 Plans 目錄） |
 | **Next 按鈕** | 位於檢視底部專用工具列的紅色 **Next** 按鈕。會建立新的帶時間戳記 `PROMPT.md` 並開啟，同時將游標放在文字區域中，讓你可以立即開始輸入。也可以使用 `Cmd+M` / `Ctrl+M` |
-| **prompts 按鈕** | 位於下方工具列左端的 **prompts** 按鈕。點擊後會在按鈕正上方開啟範本選單，選取的範本會插入到游標位置（再次按下按鈕、點擊其他位置或按下 `Escape` 即可關閉選單）。選單標題列中的 **+** 按鈕可建立新範本：選擇建立位置（Workspace 或 Global）並輸入名稱後，檔案會建立在該目錄下並於 VS Code 編輯器中開啟。範本存放於工作區的 `.vscode/ai-coding-panel/prompts/*.md`，以及適用於所有工作區的 `<globalTemplatesPath>/prompts/*.md`（每個範本一個檔案）。兩者會一起列出，全域範本會標示 `(global)`；兩處都存在的同名檔案會採用工作區的版本。兩處都沒有 Markdown 檔案時，會使用擴充功能內建的範本。可以透過 `editor.disableWorkspacePromptTemplates` 或 `editor.disableGlobalPromptTemplates` 將任一來源排除在清單之外。檔案內容會原封不動地插入，因此開頭的 `# heading` 也會一併插入——標題僅作為選單中的名稱使用。`{{filename}}`、`{{filepath}}`、`{{dirpath}}`、`{{datetime}}` 與 `{{timestamp}}` 會替換為開啟中檔案的值。同樣的操作也可以從命令選擇區以 **Insert Prompt Template** 執行，此時會改為顯示快速選取清單。從 Menu 檢視的 Workspace 區段執行 **Customize Prompt Templates** 可將內建範本複製到工作區，執行 Global 區段中的同名項目則會複製到全域目錄 |
-| 按鈕圖示 | 每個按鈕都使用 VS Code codicon（Spec：書本、Plan：檢查清單、Run：播放、Next：新增檔案、Edit：鉛筆、Save：磁碟片、prompts：程式碼片段），與 Plans View 的 Quick Start 按鈕一致 |
+| **Prompts 按鈕** | 位於上方工具列左端（Edit 左側）的 **Prompts** 按鈕。點擊後會在按鈕正下方開啟範本選單，選取的範本會插入到游標位置（再次按下按鈕、點擊其他位置或按下 `Escape` 即可關閉選單）。選單底部的 **Add template** 項目可建立新範本：選擇建立位置（Workspace 或 Global）並輸入名稱後，檔案會建立在該目錄下並於 VS Code 編輯器中開啟。範本存放於工作區的 `.vscode/ai-coding-panel/prompts/*.md`，以及適用於所有工作區的 `<globalTemplatesPath>/prompts/*.md`（每個範本一個檔案）。兩者會一起列出，全域範本會標示 `(global)`；兩處都存在的同名檔案會採用工作區的版本。兩處都沒有 Markdown 檔案時，會使用擴充功能內建的範本。可以透過 `editor.disableWorkspacePromptTemplates` 或 `editor.disableGlobalPromptTemplates` 將任一來源排除在清單之外。檔案內容會原封不動地插入，因此開頭的 `# heading` 也會一併插入——標題僅作為選單中的名稱使用。`{{filename}}`、`{{filepath}}`、`{{dirpath}}`、`{{datetime}}` 與 `{{timestamp}}` 會替換為開啟中檔案的值。同樣的操作也可以從命令選擇區以 **Insert Prompt Template** 執行，此時會改為顯示快速選取清單。從 Menu 檢視的 Workspace 區段執行 **Customize Prompt Templates** 可將內建範本複製到工作區，執行 Global 區段中的同名項目則會複製到全域目錄 |
+| 按鈕圖示 | 每個按鈕都使用 VS Code codicon（Spec：書本、Plan：檢查清單、Run：播放、Next：新增檔案、Edit：鉛筆、Save：磁碟片、Prompts：程式碼片段），與 Plans View 的 Quick Start 按鈕一致 |
 | 可自訂的指令 | 可在設定中調整 Run、Plan 與 Spec 指令，以符合你的工作流程 |
 | **可點擊的 URL** | 文字中的 URL 會加上底線，點擊即可在預設瀏覽器中開啟。在 URL 上按右鍵可選擇 **Open in Default Browser** 或 **Open in Integrated Browser**（VS Code 的 Simple Browser）。在其他位置按右鍵則會顯示 VS Code 標準選單 |
 | 唯讀模式 | 當檔案在 VSCode 編輯器中處於作用中狀態時，會自動切換為唯讀模式 |
@@ -208,7 +208,7 @@ datetime: {{datetime}}
 ```
 
 ### 內建的提示詞範本
-本擴充功能為 Editor 檢視的 **prompts** 按鈕內建了下列程式碼片段：
+本擴充功能為 Editor 檢視的 **Prompts** 按鈕內建了下列程式碼片段：
 
 | 檔案 | 要求的內容 |
 |---|---|
@@ -224,7 +224,7 @@ datetime: {{datetime}}
 2. `<globalTemplatesPath>/templates/` 中的全域範本（若存在）
 3. 擴充功能內建範本
 
-第 1 與第 2 步可以分別透過 `editor.disableWorkspaceEditorTemplates` 與 `editor.disableGlobalEditorTemplates` 關閉，關閉後會由下一步接手。第 3 步一律保留，因此檔案建立永遠不會失敗。提示詞範本也同樣適用，可透過 `editor.disableWorkspacePromptTemplates` 與 `editor.disableGlobalPromptTemplates` 設定；兩者都關閉時，會列出內建的程式碼片段。這些設定只影響讀取的內容——**Customize Editor Templates**、**Customize Prompt Templates** 與 **+** 按鈕仍會在你選擇的目錄中建立檔案。
+第 1 與第 2 步可以分別透過 `editor.disableWorkspaceEditorTemplates` 與 `editor.disableGlobalEditorTemplates` 關閉，關閉後會由下一步接手。第 3 步一律保留，因此檔案建立永遠不會失敗。提示詞範本也同樣適用，可透過 `editor.disableWorkspacePromptTemplates` 與 `editor.disableGlobalPromptTemplates` 設定；兩者都關閉時，會列出內建的程式碼片段。這些設定只影響讀取的內容——**Customize Editor Templates**、**Customize Prompt Templates** 與 **Add template** 項目仍會在你選擇的目錄中建立檔案。
 
 ### 範本範例
 - 在 `overview` 區段中記錄給 AI 助理的提示詞。
@@ -389,14 +389,14 @@ npm run watch
 1. 從 [GitHub Releases 頁面](https://github.com/NaokiIshimura/vscode-panel/releases) 下載最新的 VSIX 檔案。
 2. 透過命令列安裝：
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.13.vsix
+   code --install-extension ai-coding-sidebar-1.2.14.vsix
    ```
 3. 重新啟動 VS Code。
 
 #### 使用本機建置
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.13.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.14.vsix
 ```
 
 #### 自行建置套件
@@ -410,7 +410,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.13.vsix
    ```
 3. 安裝產生的 VSIX 檔案：
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.13.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.14.vsix
    ```
 4. 重新啟動 VS Code。
 

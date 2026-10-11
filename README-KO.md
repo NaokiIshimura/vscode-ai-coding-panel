@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.13-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.14-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | 한국어 | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português](README-PT-BR.md)
 
@@ -64,11 +64,11 @@ Claude Code의 생산성을 극대화하도록 설계된 강력한 VS Code 패�
 | **Resume 명령** | Spec / Plan / Run을 실행할 때마다 생성된 세션 ID로 Claude Code를 시작하고, 해당 명령을 타임스탬프 옆에 기록합니다(예: `- run : 2026/09/06 21:27:29 \| claude --resume 0f1d2c3b-...`). 나중에 세션을 다시 열 수 있습니다. `editor.recordResumeCommand`로 끌 수 있습니다 |
 | **터미널 자동 연동** | 명령은 Terminal 뷰로 전송되며, 파일과 탭이 자동으로 연결되어 매끄러운 워크플로를 제공합니다 |
 | 자동 표시 | 타임스탬프 이름의 Markdown 파일(형식: `YYYY_MMDD_HHMM_SS_PROMPT.md`, `..._TASK.md`, `..._SPEC.md`, `..._QUICK_START.md`)을 선택하면 자동으로 열립니다. 그 외 Markdown 파일은 표준 에디터에서 열립니다 |
-| **2단 레이아웃** | 뷰는 두 개의 바로 나뉩니다. 상단 바에는 왼쪽에 Edit / Save, 오른쪽에 Spec / Plan / Run이 있고, 하단 바에는 왼쪽에 prompts 버튼, 오른쪽에 Next 버튼이 있습니다 |
+| **2단 레이아웃** | 뷰는 두 개의 바로 나뉩니다. 상단 바에는 왼쪽에 Prompts / Edit / Save, 오른쪽에 Spec / Plan / Run이 있고, 하단 바에는 오른쪽에 Next 버튼이 있습니다 |
 | Save 버튼 | 상단 바에 표시되며, 저장되지 않은 변경 사항이 있으면 색이 바뀝니다. 열린 파일이 없으면 새 파일을 생성합니다(현재 Plans 디렉터리에 저장) |
 | **Next 버튼** | 뷰 하단의 전용 바에 있는 빨간색 **Next** 버튼입니다. 타임스탬프가 붙은 새 `PROMPT.md`를 생성해 열고, 텍스트 영역에 캐럿을 두어 바로 입력을 시작할 수 있게 합니다. `Cmd+M` / `Ctrl+M`으로도 사용할 수 있습니다 |
-| **prompts 버튼** | 하단 바 왼쪽 끝에 있는 **prompts** 버튼입니다. 클릭하면 버튼 바로 위에 템플릿 메뉴가 열리고, 선택한 템플릿이 캐럿 위치에 삽입됩니다(버튼을 다시 누르거나, 다른 곳을 클릭하거나, `Escape`를 누르면 메뉴가 닫힙니다). 메뉴 헤더의 **+** 버튼으로 새 템플릿을 만들 수 있습니다. 생성 위치(Workspace 또는 Global)를 선택하고 이름을 입력하면 해당 디렉터리에 파일이 생성되어 VS Code 에디터에서 열립니다. 템플릿은 워크스페이스용은 `.vscode/ai-coding-panel/prompts/*.md`에, 모든 워크스페이스 공통용은 `<globalTemplatesPath>/prompts/*.md`에 둡니다(템플릿당 파일 하나). 두 곳의 템플릿이 함께 나열되며 글로벌 템플릿에는 `(global)` 표시가 붙습니다. 양쪽에 같은 파일 이름이 있으면 워크스페이스 쪽이 사용됩니다. 어느 쪽에도 Markdown 파일이 없으면 확장 프로그램에 번들된 템플릿이 사용됩니다. `editor.disableWorkspacePromptTemplates` 또는 `editor.disableGlobalPromptTemplates`로 각 소스를 목록에서 제외할 수 있습니다. 파일 내용은 그대로 삽입되므로 맨 앞의 `# heading`도 함께 삽입됩니다. 제목은 메뉴에 표시되는 이름으로만 사용됩니다. `{{filename}}`, `{{filepath}}`, `{{dirpath}}`, `{{datetime}}`, `{{timestamp}}`는 열려 있는 파일의 값으로 치환됩니다. 명령 팔레트의 **Insert Prompt Template**에서도 같은 동작을 사용할 수 있으며, 이 경우 퀵 픽이 대신 표시됩니다. Menu 뷰의 Workspace 섹션에서 **Customize Prompt Templates**를 실행하면 번들 템플릿이 워크스페이스로 복사되고, Global 섹션의 같은 이름 항목을 실행하면 글로벌 디렉터리로 복사됩니다 |
-| 버튼 아이콘 | 모든 버튼은 VS Code codicon을 사용하며(Spec: 책, Plan: 체크리스트, Run: 재생, Next: 새 파일, Edit: 연필, Save: 플로피 디스크, prompts: 스니펫), Plans View의 Quick Start 버튼과 디자인이 통일되어 있습니다 |
+| **Prompts 버튼** | 상단 바 왼쪽 끝(Edit 왼쪽)에 있는 **Prompts** 버튼입니다. 클릭하면 버튼 바로 아래에 템플릿 메뉴가 열리고, 선택한 템플릿이 캐럿 위치에 삽입됩니다(버튼을 다시 누르거나, 다른 곳을 클릭하거나, `Escape`를 누르면 메뉴가 닫힙니다). 메뉴 맨 아래의 **Add template** 항목으로 새 템플릿을 만들 수 있습니다. 생성 위치(Workspace 또는 Global)를 선택하고 이름을 입력하면 해당 디렉터리에 파일이 생성되어 VS Code 에디터에서 열립니다. 템플릿은 워크스페이스용은 `.vscode/ai-coding-panel/prompts/*.md`에, 모든 워크스페이스 공통용은 `<globalTemplatesPath>/prompts/*.md`에 둡니다(템플릿당 파일 하나). 두 곳의 템플릿이 함께 나열되며 글로벌 템플릿에는 `(global)` 표시가 붙습니다. 양쪽에 같은 파일 이름이 있으면 워크스페이스 쪽이 사용됩니다. 어느 쪽에도 Markdown 파일이 없으면 확장 프로그램에 번들된 템플릿이 사용됩니다. `editor.disableWorkspacePromptTemplates` 또는 `editor.disableGlobalPromptTemplates`로 각 소스를 목록에서 제외할 수 있습니다. 파일 내용은 그대로 삽입되므로 맨 앞의 `# heading`도 함께 삽입됩니다. 제목은 메뉴에 표시되는 이름으로만 사용됩니다. `{{filename}}`, `{{filepath}}`, `{{dirpath}}`, `{{datetime}}`, `{{timestamp}}`는 열려 있는 파일의 값으로 치환됩니다. 명령 팔레트의 **Insert Prompt Template**에서도 같은 동작을 사용할 수 있으며, 이 경우 퀵 픽이 대신 표시됩니다. Menu 뷰의 Workspace 섹션에서 **Customize Prompt Templates**를 실행하면 번들 템플릿이 워크스페이스로 복사되고, Global 섹션의 같은 이름 항목을 실행하면 글로벌 디렉터리로 복사됩니다 |
+| 버튼 아이콘 | 모든 버튼은 VS Code codicon을 사용하며(Spec: 책, Plan: 체크리스트, Run: 재생, Next: 새 파일, Edit: 연필, Save: 플로피 디스크, Prompts: 스니펫), Plans View의 Quick Start 버튼과 디자인이 통일되어 있습니다 |
 | 명령 커스터마이즈 | 설정에서 Run, Plan, Spec 명령을 워크플로에 맞게 구성할 수 있습니다 |
 | **클릭 가능한 URL** | 텍스트 안의 URL에는 밑줄이 표시되며, 클릭하면 기본 브라우저에서 열립니다. URL을 마우스 오른쪽 버튼으로 클릭하면 **Open in Default Browser** 또는 **Open in Integrated Browser**(VS Code의 Simple Browser)를 선택할 수 있습니다. 그 외 위치를 마우스 오른쪽 버튼으로 클릭하면 VS Code 표준 메뉴가 표시됩니다 |
 | 읽기 전용 모드 | 파일이 VSCode 에디터에서 활성화되어 있으면 자동으로 읽기 전용 모드로 전환됩니다 |
@@ -208,7 +208,7 @@ datetime: {{datetime}}
 ```
 
 ### 번들 프롬프트 템플릿
-이 확장 프로그램은 Editor 뷰의 **prompts** 버튼용으로 다음 스니펫을 번들로 제공합니다:
+이 확장 프로그램은 Editor 뷰의 **Prompts** 버튼용으로 다음 스니펫을 번들로 제공합니다:
 
 | 파일 | 요청 내용 |
 |---|---|
@@ -224,7 +224,7 @@ datetime: {{datetime}}
 2. `<globalTemplatesPath>/templates/`의 글로벌 템플릿(있는 경우)
 3. 확장 프로그램 내장 템플릿
 
-1단계와 2단계는 `editor.disableWorkspaceEditorTemplates`와 `editor.disableGlobalEditorTemplates`로 각각 끌 수 있으며, 그러면 다음 단계가 대신 사용됩니다. 3단계는 항상 유지되므로 파일 생성이 실패하지 않습니다. 프롬프트 템플릿도 `editor.disableWorkspacePromptTemplates`와 `editor.disableGlobalPromptTemplates`로 동일하게 동작하며, 둘 다 끄면 번들 스니펫이 나열됩니다. 이 설정은 읽기 동작에만 영향을 줍니다. **Customize Editor Templates**, **Customize Prompt Templates**, **+** 버튼은 여전히 선택한 디렉터리에 파일을 생성합니다.
+1단계와 2단계는 `editor.disableWorkspaceEditorTemplates`와 `editor.disableGlobalEditorTemplates`로 각각 끌 수 있으며, 그러면 다음 단계가 대신 사용됩니다. 3단계는 항상 유지되므로 파일 생성이 실패하지 않습니다. 프롬프트 템플릿도 `editor.disableWorkspacePromptTemplates`와 `editor.disableGlobalPromptTemplates`로 동일하게 동작하며, 둘 다 끄면 번들 스니펫이 나열됩니다. 이 설정은 읽기 동작에만 영향을 줍니다. **Customize Editor Templates**, **Customize Prompt Templates**, **Add template** 항목은 여전히 선택한 디렉터리에 파일을 생성합니다.
 
 ### 템플릿 활용 예
 - `overview` 섹션에 AI 어시스턴트용 프롬프트를 기록합니다.
@@ -389,14 +389,14 @@ npm run watch
 1. [GitHub Releases 페이지](https://github.com/NaokiIshimura/vscode-panel/releases)에서 최신 VSIX 파일을 다운로드합니다.
 2. 명령줄로 설치합니다:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.13.vsix
+   code --install-extension ai-coding-sidebar-1.2.14.vsix
    ```
 3. VS Code를 재시작합니다.
 
 #### 로컬 빌드 사용
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.13.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.14.vsix
 ```
 
 #### 직접 패키지 빌드
@@ -410,7 +410,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.13.vsix
    ```
 3. 생성된 VSIX 파일을 설치합니다:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.13.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.14.vsix
    ```
 4. VS Code를 재시작합니다.
 

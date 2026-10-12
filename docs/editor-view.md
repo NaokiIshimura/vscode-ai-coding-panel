@@ -76,6 +76,21 @@ These buttons sit on the left of the bottom bar. Use them after starting a sessi
 | `${filePath}` | Path to the current file, relative to the workspace root |
 | `${dirPath}` | Directory of the current file, relative to the workspace root |
 
+### Quick Run
+
+By default, Run appends the output md instruction to the editor content it sends, so Claude Code writes the task status after finishing the task without pressing output md. Turn on `aiCodingSidebar.editor.quickRun` to skip it and send the editor content as is.
+
+```json
+{
+  "aiCodingSidebar.editor.quickRun": true
+}
+```
+
+- The instruction is `editor.outputMdPrompt`, the same text as the output md button, added after a blank line under a `# output md` heading
+- Only the sent command changes. The open file is not modified
+- The instruction is appended only when a file is open and `editor.runCommand` uses `${editorContent}`. With a template that passes only `${filePath}`, there is nothing to append to
+- Nothing is appended when `editor.outputMdPrompt` is empty
+
 ## Templates
 
 Customize file creation templates:

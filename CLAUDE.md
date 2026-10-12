@@ -386,6 +386,59 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.17新機能: Runへのoutput md指示の自動付与と Quick Run 設定
+
+Runで送るエディタの内容の末尾に、output mdボタン（v1.2.15）と同じ指示文を空行区切りで**既定で**連結する。設定 `aiCodingSidebar.editor.quickRun`（既定 `false`。設定画面の表示名は `Quick Run`）を有効にすると連結せず、エディタの内容をそのまま送る：
+
+```
+claude --session-id <uuid> ""'<エディタの内容>
+
+# output md
+Record the current status of this task as a Markdown file. ... in .claude/plans/<dir>. ...'""
+```
+
+- 指示文の前には見出し `# output md`（`OUTPUT_MD_HEADING`）を置く。エディタの内容（タスクの指示）と、後から付けた出力指示をClaude Codeが区別できるようにするため
+- 見出しはRunへの連結時のみ。output mdボタン（`sendSessionPrompt()`）は入力欄へ1行で送る前提で、途中の改行が送信扱いになり得るため付けない
+
+**Quick Run は「付与しない」側のスイッチ（最も誤解しやすい箇所）**
+- 当初は「ONで付与する」実装だったが、要求者の指示で反転した。**OFF（既定）で付与、ONで付与しない**。「状況の出力を省いて素早く実行する」の意味で Quick Run と呼んでいる
+- そのため既定値のままの既存ユーザーにも、本バージョンからRunに指示文が付く（挙動の変更）
+- 判定は `config.get('editor.quickRun', false) ? latestContent : appendOutputMdPrompt(...)`。三項演算子の向きを逆にしないこと
+
+**後から別送せず、初回プロンプトに連結する（設計の要点）**
+- Runの直後に `sendSessionPrompt('md')` を呼ぶ案は、Claude Codeの起動・処理中に入力欄へ書き込むことになりタイミングが不安定。1つのプロンプトに含めれば「タスク実行 → 状況の出力」の順で処理される
+- 連結した指示文は `${editorContent}` の値の一部として `_escapeShellArgument()` を通るため、v1.2.5と同じく `!` / `$` / バッククォートは展開されない（対話zshで1引数になることを確認済み）
+- `sendSessionPrompt()` と違いClaude Codeの起動判定は不要。新しいセッションの初回プロンプトとして送るため
+
+**指示文は `editor.outputMdPrompt` を共用する**
+- `sendSessionPrompt()` から設定取得とプレースホルダー展開を `_buildSessionPrompt(type, relativeFilePath)` へ切り出し、Run側からも使う。ボタンとQuick Runの文言が常に一致する
+- 連結は純粋関数 `appendOutputMdPrompt(content, prompt)`（export）。指示文が空なら本文をそのまま返す（末尾に見出しだけが付くのを避ける）
+
+**適用範囲**
+
+| 条件 | 付与 |
+|---|---|
+| ファイルあり・`runCommand` が `${editorContent}` を使う | する |
+| ファイル未オープン（`runCommandWithoutFile`） | しない。出力先の `${dirPath}` が決まらないため |
+| `runCommand` が `${filePath}` のみを使う（v1.2.4以前の既定値等） | **効かない**。付与先が無く、テンプレート全体へ追記するとクォート構造が壊れるため対応しない。設定の `description` に明記 |
+| Terminal Viewの `Cmd+R`（v1.1.14） | する。`runTask()` → `_runTask()` を通るため |
+
+- 連結は送信するコマンドの生成時のみ。エディタ・ファイル本文は変えず、送信履歴（`## sent history`）も従来どおり1行だけ追記される
+- Quick Run無効（既定）のままoutput mdボタンも押すと `status.md` が2つできる。ボタンは任意のタイミングで追加出力するものとして許容している
+
+**実装内容**
+
+| ファイル | 変更 |
+|---|---|
+| `src/providers/EditorProvider.ts` | `appendOutputMdPrompt()`（export）・`_buildSessionPrompt()` を追加。`_runTask()` のファイルあり分岐で `editor.quickRun` を参照 |
+| `package.json` | 設定 `aiCodingSidebar.editor.quickRun` |
+| `src/test/suite/providers/EditorProvider.test.ts` | `appendOutputMdPrompt`（4ケース）・`runTask`（既定（Quick Run無効）で付与され、ファイルには書き込まれない1ケース） |
+| README 6ファイル / `docs/editor-view.md` | 機能表・設定表・Quick Runの節 |
+
+**ローカルでのテスト実行について**
+- `vscode` をスタブ化したNode上でmocha（`--ui tdd`）を実行して確認している（`EditorProvider.test.ts` 35 passing）
+- Quick Run有効の経路は既存テストの方針（`config.update()` を使わない）に合わせてテストへは入れず、スタブで設定値を差し替えて `runTask()` が送るコマンドを確認している（OFFで付与 / ONで付与しない / 指示文が空 / `${filePath}` のみのテンプレートの各組み合わせ。いずれもファイルに指示文は書き込まれない）
+
 ### v1.2.16変更: Editor ViewのEdit / Saveボタンにラベルを追加
 
 v1.1.1でcodicon化して以来アイコンのみだったEdit（`#edit-button`）とSave（`#save-button`）に、他のボタンと同じ形式でラベル `Edit` / `Save` を追加した：
@@ -2484,6 +2537,7 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 - `aiCodingSidebar.editor.runPlanCommand`: Planボタン実行コマンド（旧 `aiCodingSidebar.editor.planCommand`）
 - `aiCodingSidebar.editor.runSpecCommand`: Specボタン実行コマンド（旧 `aiCodingSidebar.editor.specCommand`）
 - `aiCodingSidebar.editor.recordResumeCommand`: Spec / Plan / Run の実行時にセッションIDを指定し、resumeコマンドを送信履歴へ記録するか（デフォルト: `true`）
+- `aiCodingSidebar.editor.quickRun`: Runが既定で連結するoutput mdの指示文を省き、エディタの内容をそのまま送るか（デフォルト: `false`）
 - `aiCodingSidebar.editor.outputMdPrompt`: output mdボタンで起動中のClaude Codeへ送る指示文（`${filePath}` / `${dirPath}`）
 - `aiCodingSidebar.editor.outputMemoryPrompt`: output memoryボタンで起動中のClaude Codeへ送る指示文（`${filePath}` / `${dirPath}`）
 - `aiCodingSidebar.editor.disableWorkspaceEditorTemplates`: ワークスペースのファイル雛形を読み込まないか（デフォルト: `false`）

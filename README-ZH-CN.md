@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.16-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.17-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | 简体中文 | [繁體中文](README-ZH-TW.md) | [Português](README-PT-BR.md)
 
@@ -68,6 +68,7 @@
 | Save 按钮 | 显示在上栏，存在未保存更改时会改变颜色。未打开文件时会创建新文件（保存到当前 Plans 目录） |
 | **Next 按钮** | 位于视图底部专用栏中的红色 **Next** 按钮。创建一个带时间戳的新 `PROMPT.md` 并打开，同时将光标置于文本区域，方便立即开始输入。也可使用 `Cmd+M` / `Ctrl+M` |
 | **output md / output memory 按钮** | 位于下栏左侧的按钮，向活动 Terminal 标签页中正在运行的 Claude Code 会话发送指令（在通过 Run / Plan / Spec 启动会话后使用）。**output md** 要求将任务状态（已完成、剩余事项及其原因）写入 `YYYY_MMDD_HHMM_SS_status.md`，**output memory** 要求将本次会话中可复用的知识（偏好、项目约定、踩过的坑）写入 `YYYY_MMDD_HHMM_SS_memory.md`，两者都输出到当前打开文件所在的目录。Claude Code 未运行或未打开文件时不会发送，并显示警告。指令文本可通过 `editor.outputMdPrompt` / `editor.outputMemoryPrompt` 自定义 |
+| **Quick Run** | 默认情况下，Run 会在发送的编辑器内容末尾追加标题 `# output md` 和 output md 的指令（`editor.outputMdPrompt`），让 Claude Code 在完成任务后将任务状态写入当前打开文件所在目录下的 `YYYY_MMDD_HHMM_SS_status.md`。启用 `editor.quickRun` 后不再追加，直接发送编辑器内容。只改变发送的命令，不会修改打开的文件 |
 | **Prompts 按钮** | 位于上栏左端（Edit 左侧）的 **Prompts** 按钮。点击后会在按钮正下方打开模板菜单，所选模板会插入到光标位置（再次按下按钮、点击其他位置或按 `Escape` 可关闭菜单）。菜单底部的 **Add template** 项用于新建模板：选择创建位置（Workspace 或 Global），输入名称后，文件会在该目录下创建并在 VS Code 编辑器中打开。工作区模板位于 `.vscode/ai-coding-panel/prompts/*.md`，适用于所有工作区的模板位于 `<globalTemplatesPath>/prompts/*.md`（每个模板一个文件）。两者会一起列出，全局模板标记为 `(global)`；两处都存在的同名文件以工作区为准。两处都没有 Markdown 文件时，使用扩展自带的模板。可以通过 `editor.disableWorkspacePromptTemplates` 或 `editor.disableGlobalPromptTemplates` 将任一来源从列表中排除。文件内容按原样插入，因此开头的 `# heading` 也会被插入——该标题仅用作菜单中的名称。`{{filename}}`、`{{filepath}}`、`{{dirpath}}`、`{{datetime}}` 和 `{{timestamp}}` 会被替换为所打开文件的对应值。同样的操作也可以从命令面板中以 **Insert Prompt Template** 执行，此时显示的是快速选择列表。在 Menu 视图的 Workspace 部分运行 **Customize Prompt Templates** 可将自带模板复制到工作区，运行 Global 部分中的同名项目则会将其复制到全局目录 |
 | 按钮图标 | 所有按钮都使用 VS Code codicon（Spec：书本、Plan：清单、Run：播放、Next：新建文件、Edit：铅笔、Save：软盘、Prompts：代码片段、output md：Markdown、output memory：数据库）并在图标旁显示文字标签，与 Plans View 中的 Quick Start 按钮保持一致 |
 | 可自定义命令 | 可在设置中配置 Run、Plan 和 Spec 命令，以适配你的工作流 |
@@ -298,6 +299,7 @@ datetime: {{datetime}}
 | `editor.runSpecCommand` | 点击 Spec 按钮时执行的命令模板 | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | 使用 `${filePath}` 作为文件路径的占位符。请用双引号包裹占位符，使其值作为单个参数传递。 |
 | `editor.recordSendTimestamp` | 按下 Spec / Plan / Run 时，将发送日期和时间追加到所打开的文件中 | boolean | `true` | 历史记录会添加到文件末尾的 `## sent history` 部分 |
 | `editor.recordResumeCommand` | 使用生成的会话 ID 启动 Spec / Plan / Run，并记录对应的 `claude --resume <session-id>` 命令 | boolean | `true` | 需要启用 `editor.recordSendTimestamp`。Claude Code 已在运行时，或 `editor.commandPrefix` 不是 `claude`、已指定会话时，会跳过 |
+| `editor.quickRun` | 不追加 Run 默认添加的 output md 指令，直接发送编辑器内容 | boolean | `false` | 仅在打开了文件且 `editor.runCommand` 使用 `${editorContent}` 时才会追加指令。不会修改打开的文件 |
 | `editor.outputMdPrompt` | output md 按钮发送给正在运行的 Claude Code 会话的指令 | string | `"Record the current status of this task as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_status.md) in ${dirPath}. ..."` | `${filePath}`（打开的文件）和 `${dirPath}`（其目录）为相对于工作区根目录的路径。以输入文本发送，不加 shell 引号。请写成一行 |
 | `editor.outputMemoryPrompt` | output memory 按钮发送给正在运行的 Claude Code 会话的指令 | string | `"Record the reusable knowledge from this session as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_memory.md) in ${dirPath}. ..."` | 占位符和规则与 `editor.outputMdPrompt` 相同 |
 | `editor.promptTemplatesPath` | 存放从 Editor 视图插入的提示词模板的目录（相对于工作区根目录） | string | `".vscode/ai-coding-panel/prompts"` | 其下直接存放的每个 `.md` 文件对应一个模板。其中没有 Markdown 文件时，使用扩展自带的模板 |
@@ -392,14 +394,14 @@ npm run watch
 1. 从 [GitHub Releases 页面](https://github.com/NaokiIshimura/vscode-panel/releases)下载最新的 VSIX 文件。
 2. 通过命令行安装：
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.16.vsix
+   code --install-extension ai-coding-sidebar-1.2.17.vsix
    ```
 3. 重启 VS Code。
 
 #### 使用本地构建
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
 ```
 
 #### 自行构建包
@@ -413,7 +415,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
    ```
 3. 安装生成的 VSIX 文件：
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
    ```
 4. 重启 VS Code。
 

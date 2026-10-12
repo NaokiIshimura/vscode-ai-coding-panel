@@ -5,6 +5,18 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.17] - 2026-10-12
+
+### Added
+- **Run時の状況記録**: Runで送るエディタの内容の末尾に、見出し `# output md` とoutput mdの指示文（`editor.outputMdPrompt`）を追加するようにしました。Claude Codeはタスクの完了後、開いているファイルと同じディレクトリに `YYYY_MMDD_HHMM_SS_status.md` を出力します
+  - 変わるのは送信するコマンドのみで、開いているファイルは変更しません
+  - ファイルを開いていて、`editor.runCommand` が `${editorContent}` を使う場合のみ適用されます
+  - `editor.outputMdPrompt` が空の場合は追加しません
+- **Quick Run設定**: 新しい設定 `editor.quickRun`（既定: 無効）を有効にすると、上記の指示文を追加せず、エディタの内容をそのまま送ります
+
+### Changed
+- **Runのプロンプトの既定**: `editor.quickRun` は既定で無効のため、既存ユーザーのRunにもoutput mdの指示文が追加されます。従来の挙動に戻すにはQuick Runを有効にしてください
+
 ## [1.2.16] - 2026-10-12
 
 ### Changed
@@ -2219,6 +2231,7 @@ v0.8.33以前からアップグレードする場合:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.16...v1.2.17
 [1.2.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.15...v1.2.16
 [1.2.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.14...v1.2.15
 [1.2.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.13...v1.2.14

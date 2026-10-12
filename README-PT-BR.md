@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.16-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.17-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | Português
 
@@ -68,6 +68,7 @@ Edite arquivos de prompt em Markdown e execute comandos do Claude Code diretamen
 | Botão Save | Exibido na barra superior, com mudança de cor indicando alterações não salvas. Cria um novo arquivo se nenhum estiver aberto (salva no diretório atual do Plans) |
 | **Botão Next** | Botão vermelho **Next** em uma barra dedicada na parte inferior da view. Cria um novo `PROMPT.md` com timestamp, abre-o e posiciona o cursor na área de texto para que você comece a digitar imediatamente. Também disponível com `Cmd+M` / `Ctrl+M` |
 | **Botões output md / output memory** | Botões à esquerda da barra inferior que enviam uma instrução à sessão do Claude Code em execução na aba ativa do Terminal - para usar depois de iniciar uma sessão com Run / Plan / Spec. **output md** pede que o status da tarefa (o que foi feito, o que falta e por quê) seja escrito em `YYYY_MMDD_HHMM_SS_status.md`, e **output memory** pede que o conhecimento reutilizável da sessão (preferências, convenções do projeto, armadilhas) seja escrito em `YYYY_MMDD_HHMM_SS_memory.md`, ambos no diretório do arquivo aberto. Nada é enviado, e um aviso é exibido, enquanto o Claude Code não estiver em execução ou nenhum arquivo estiver aberto. O texto pode ser personalizado com `editor.outputMdPrompt` / `editor.outputMemoryPrompt` |
+| **Quick Run** | Por padrão, o Run acrescenta a instrução do output md (`editor.outputMdPrompt`), sob o título `# output md`, ao conteúdo do editor enviado, para que o Claude Code escreva o status da tarefa em `YYYY_MMDD_HHMM_SS_status.md`, no diretório do arquivo aberto, depois de concluir a tarefa. Ative `editor.quickRun` para não acrescentá-la e enviar o conteúdo do editor como está. Só o comando enviado muda - o arquivo aberto não é modificado |
 | **Botão Prompts** | Botão **Prompts** na extremidade esquerda da barra superior, à esquerda de Edit. Clicar nele abre um menu de templates logo abaixo do botão, e o template escolhido é inserido na posição do cursor (pressionar o botão novamente, clicar em outro lugar ou pressionar `Escape` fecha o menu). O item **Add template** no final do menu cria um novo template: escolha onde criá-lo (Workspace ou Global), digite um nome, e o arquivo é criado nesse diretório e aberto no editor do VS Code. Os templates ficam em `.vscode/ai-coding-panel/prompts/*.md` para o workspace e em `<globalTemplatesPath>/prompts/*.md` para todos os workspaces (um arquivo por template). Ambos são listados juntos, com os globais marcados como `(global)`; um nome de arquivo presente nos dois é obtido do workspace. Quando nenhum deles contém um arquivo Markdown, são usados os templates incluídos na extensão. Qualquer uma das origens pode ser omitida da lista com `editor.disableWorkspacePromptTemplates` ou `editor.disableGlobalPromptTemplates`. O conteúdo do arquivo é inserido como está, portanto um `# heading` inicial também é inserido - o título é usado apenas como nome no menu. `{{filename}}`, `{{filepath}}`, `{{dirpath}}`, `{{datetime}}` e `{{timestamp}}` são substituídos pelos valores do arquivo aberto. A mesma ação está disponível na paleta de comandos como **Insert Prompt Template**, que mostra um quick pick em vez do menu. Execute **Customize Prompt Templates** na seção Workspace da Menu view para copiar os templates incluídos para o workspace, ou o item de mesmo nome na seção Global para copiá-los para o diretório global |
 | Ícones dos botões | Todos os botões usam um codicon do VS Code (Spec: livro, Plan: checklist, Run: play, Next: novo arquivo, Edit: lápis, Save: disquete, Prompts: snippet, output md: Markdown, output memory: banco de dados) com um rótulo de texto ao lado, combinando com o botão Quick Start da Plans View |
 | Comandos personalizáveis | Configure os comandos Run, Plan e Spec nas configurações para adequá-los ao seu fluxo de trabalho |
@@ -298,6 +299,7 @@ Se o caminho relativo padrão não existir, o Plans exibe um botão "Create dire
 | `editor.runSpecCommand` | Template do comando executado ao clicar no botão Spec | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | Use `${filePath}` como placeholder para o caminho do arquivo. Coloque o placeholder entre aspas duplas para que o valor seja passado como um único argumento. |
 | `editor.recordSendTimestamp` | Adiciona a data e a hora do envio ao arquivo aberto quando Spec / Plan / Run é pressionado | boolean | `true` | O histórico é adicionado a uma seção `## sent history` no final do arquivo |
 | `editor.recordResumeCommand` | Inicia Spec / Plan / Run com um ID de sessão gerado e registra o comando `claude --resume <session-id>` correspondente | boolean | `true` | Requer `editor.recordSendTimestamp`. É ignorado enquanto o Claude Code já estiver em execução e quando `editor.commandPrefix` não for `claude` ou já especificar uma sessão |
+| `editor.quickRun` | Envia o conteúdo do editor como está, sem a instrução do output md que o Run acrescenta por padrão | boolean | `false` | A instrução só é acrescentada quando há um arquivo aberto e `editor.runCommand` usa `${editorContent}`. O arquivo aberto não é modificado |
 | `editor.outputMdPrompt` | Instrução enviada à sessão do Claude Code em execução pelo botão output md | string | `"Record the current status of this task as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_status.md) in ${dirPath}. ..."` | `${filePath}` (arquivo aberto) e `${dirPath}` (seu diretório), relativos à raiz do workspace. Enviada como texto digitado, sem aspas de shell. Mantenha em uma única linha |
 | `editor.outputMemoryPrompt` | Instrução enviada à sessão do Claude Code em execução pelo botão output memory | string | `"Record the reusable knowledge from this session as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_memory.md) in ${dirPath}. ..."` | Mesmos placeholders e regras de `editor.outputMdPrompt` |
 | `editor.promptTemplatesPath` | Diretório que contém os templates de prompt inseridos a partir da Editor view (relativo à raiz do workspace) | string | `".vscode/ai-coding-panel/prompts"` | Cada arquivo `.md` diretamente dentro dele se torna um template. Quando não contém nenhum arquivo Markdown, são usados os templates incluídos na extensão |
@@ -392,14 +394,14 @@ npm run watch
 1. Baixe o arquivo VSIX mais recente na [página de GitHub Releases](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Instale pela linha de comando:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.16.vsix
+   code --install-extension ai-coding-sidebar-1.2.17.vsix
    ```
 3. Reinicie o VS Code.
 
 #### Use um build local
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
 ```
 
 #### Gere o pacote você mesmo
@@ -413,7 +415,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
    ```
 3. Instale o arquivo VSIX gerado:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
    ```
 4. Reinicie o VS Code.
 

@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.16-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.17-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | 한국어 | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português](README-PT-BR.md)
 
@@ -68,6 +68,7 @@ Claude Code의 생산성을 극대화하도록 설계된 강력한 VS Code 패�
 | Save 버튼 | 상단 바에 표시되며, 저장되지 않은 변경 사항이 있으면 색이 바뀝니다. 열린 파일이 없으면 새 파일을 생성합니다(현재 Plans 디렉터리에 저장) |
 | **Next 버튼** | 뷰 하단의 전용 바에 있는 빨간색 **Next** 버튼입니다. 타임스탬프가 붙은 새 `PROMPT.md`를 생성해 열고, 텍스트 영역에 캐럿을 두어 바로 입력을 시작할 수 있게 합니다. `Cmd+M` / `Ctrl+M`으로도 사용할 수 있습니다 |
 | **output md / output memory 버튼** | 하단 바 왼쪽에 있는 버튼으로, 활성 Terminal 탭에서 실행 중인 Claude Code 세션에 지시를 보냅니다(Run / Plan / Spec으로 세션을 시작한 뒤 사용). **output md**는 작업 상태(완료한 일, 남은 일, 그 이유)를 `YYYY_MMDD_HHMM_SS_status.md`에, **output memory**는 세션에서 얻은 재사용 가능한 지식(선호, 프로젝트 관례, 함정)을 `YYYY_MMDD_HHMM_SS_memory.md`에, 모두 열려 있는 파일과 같은 디렉터리에 작성하도록 요청합니다. Claude Code가 실행 중이 아니거나 파일이 열려 있지 않으면 아무것도 보내지 않고 경고를 표시합니다. 지시문은 `editor.outputMdPrompt` / `editor.outputMemoryPrompt`로 변경할 수 있습니다 |
+| **Quick Run** | 기본적으로 Run은 보내는 에디터 내용 끝에 `# output md` 제목과 output md 지시문(`editor.outputMdPrompt`)을 덧붙여, Claude Code가 작업을 마친 뒤 열려 있는 파일과 같은 디렉터리에 `YYYY_MMDD_HHMM_SS_status.md`를 작성하도록 합니다. `editor.quickRun`을 켜면 덧붙이지 않고 에디터 내용을 그대로 보냅니다. 보내는 명령만 바뀌며 열려 있는 파일은 수정되지 않습니다 |
 | **Prompts 버튼** | 상단 바 왼쪽 끝(Edit 왼쪽)에 있는 **Prompts** 버튼입니다. 클릭하면 버튼 바로 아래에 템플릿 메뉴가 열리고, 선택한 템플릿이 캐럿 위치에 삽입됩니다(버튼을 다시 누르거나, 다른 곳을 클릭하거나, `Escape`를 누르면 메뉴가 닫힙니다). 메뉴 맨 아래의 **Add template** 항목으로 새 템플릿을 만들 수 있습니다. 생성 위치(Workspace 또는 Global)를 선택하고 이름을 입력하면 해당 디렉터리에 파일이 생성되어 VS Code 에디터에서 열립니다. 템플릿은 워크스페이스용은 `.vscode/ai-coding-panel/prompts/*.md`에, 모든 워크스페이스 공통용은 `<globalTemplatesPath>/prompts/*.md`에 둡니다(템플릿당 파일 하나). 두 곳의 템플릿이 함께 나열되며 글로벌 템플릿에는 `(global)` 표시가 붙습니다. 양쪽에 같은 파일 이름이 있으면 워크스페이스 쪽이 사용됩니다. 어느 쪽에도 Markdown 파일이 없으면 확장 프로그램에 번들된 템플릿이 사용됩니다. `editor.disableWorkspacePromptTemplates` 또는 `editor.disableGlobalPromptTemplates`로 각 소스를 목록에서 제외할 수 있습니다. 파일 내용은 그대로 삽입되므로 맨 앞의 `# heading`도 함께 삽입됩니다. 제목은 메뉴에 표시되는 이름으로만 사용됩니다. `{{filename}}`, `{{filepath}}`, `{{dirpath}}`, `{{datetime}}`, `{{timestamp}}`는 열려 있는 파일의 값으로 치환됩니다. 명령 팔레트의 **Insert Prompt Template**에서도 같은 동작을 사용할 수 있으며, 이 경우 퀵 픽이 대신 표시됩니다. Menu 뷰의 Workspace 섹션에서 **Customize Prompt Templates**를 실행하면 번들 템플릿이 워크스페이스로 복사되고, Global 섹션의 같은 이름 항목을 실행하면 글로벌 디렉터리로 복사됩니다 |
 | 버튼 아이콘 | 모든 버튼은 VS Code codicon을 사용하며(Spec: 책, Plan: 체크리스트, Run: 재생, Next: 새 파일, Edit: 연필, Save: 플로피 디스크, Prompts: 스니펫, output md: Markdown, output memory: 데이터베이스) 아이콘 옆에 텍스트 라벨을 표시하며, Plans View의 Quick Start 버튼과 디자인이 통일되어 있습니다 |
 | 명령 커스터마이즈 | 설정에서 Run, Plan, Spec 명령을 워크플로에 맞게 구성할 수 있습니다 |
@@ -298,6 +299,7 @@ datetime: {{datetime}}
 | `editor.runSpecCommand` | Spec 버튼을 클릭했을 때 실행할 명령 템플릿 | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | 파일 경로의 플레이스홀더로 `${filePath}`를 사용합니다. 값이 하나의 인수로 전달되도록 플레이스홀더를 큰따옴표로 감싸세요. |
 | `editor.recordSendTimestamp` | Spec / Plan / Run을 누르면 열려 있는 파일에 전송 일시를 추가 | boolean | `true` | 기록은 파일 끝의 `## sent history` 섹션에 추가됩니다 |
 | `editor.recordResumeCommand` | 생성된 세션 ID로 Spec / Plan / Run을 시작하고, 해당 `claude --resume <session-id>` 명령을 기록 | boolean | `true` | `editor.recordSendTimestamp`가 필요합니다. Claude Code가 이미 실행 중일 때, 그리고 `editor.commandPrefix`가 `claude`가 아니거나 이미 세션을 지정하고 있을 때는 건너뜁니다 |
+| `editor.quickRun` | Run이 기본으로 덧붙이는 output md 지시문 없이 에디터 내용을 그대로 보냄 | boolean | `false` | 지시문은 파일이 열려 있고 `editor.runCommand`가 `${editorContent}`를 사용할 때만 덧붙습니다. 열려 있는 파일은 수정되지 않습니다 |
 | `editor.outputMdPrompt` | output md 버튼이 실행 중인 Claude Code 세션에 보내는 지시문 | string | `"Record the current status of this task as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_status.md) in ${dirPath}. ..."` | `${filePath}`(열린 파일)와 `${dirPath}`(그 디렉터리)는 워크스페이스 루트 기준 상대 경로입니다. 셸 따옴표 없이 입력 텍스트로 전송됩니다. 한 줄로 작성하세요 |
 | `editor.outputMemoryPrompt` | output memory 버튼이 실행 중인 Claude Code 세션에 보내는 지시문 | string | `"Record the reusable knowledge from this session as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_memory.md) in ${dirPath}. ..."` | 플레이스홀더와 규칙은 `editor.outputMdPrompt`와 같습니다 |
 | `editor.promptTemplatesPath` | Editor 뷰에서 삽입하는 프롬프트 템플릿을 보관하는 디렉터리(워크스페이스 루트 기준) | string | `".vscode/ai-coding-panel/prompts"` | 바로 아래의 각 `.md` 파일이 하나의 템플릿이 됩니다. Markdown 파일이 없으면 확장 프로그램에 번들된 템플릿이 사용됩니다 |
@@ -392,14 +394,14 @@ npm run watch
 1. [GitHub Releases 페이지](https://github.com/NaokiIshimura/vscode-panel/releases)에서 최신 VSIX 파일을 다운로드합니다.
 2. 명령줄로 설치합니다:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.16.vsix
+   code --install-extension ai-coding-sidebar-1.2.17.vsix
    ```
 3. VS Code를 재시작합니다.
 
 #### 로컬 빌드 사용
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
 ```
 
 #### 직접 패키지 빌드
@@ -413,7 +415,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
    ```
 3. 생성된 VSIX 파일을 설치합니다:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
    ```
 4. VS Code를 재시작합니다.
 

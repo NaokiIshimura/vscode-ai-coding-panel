@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.2.16",
+  "version": "1.2.17",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -463,6 +463,11 @@
           "type": "boolean",
           "default": true,
           "description": "Start the Spec, Plan, and Run commands with a generated session ID and record the matching 'claude --resume <session-id>' command in the sent history. Requires aiCodingSidebar.editor.recordSendTimestamp."
+        },
+        "aiCodingSidebar.editor.quickRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run without asking for a status record. By default, the Run button appends the 'output md' prompt (editor.outputMdPrompt) to the editor content it sends, so that Claude Code records the task status in the directory of the open file after finishing the task. Turn this on to send the editor content as is. The prompt is appended only when a file is open and the Run command template uses ${editorContent}. The open file itself is not changed."
         },
         "aiCodingSidebar.editor.outputMdPrompt": {
           "type": "string",

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.17] - 2026-10-12
+
+### Added
+- **Status record on Run**: Run now appends the output md instruction (`editor.outputMdPrompt`) under a `# output md` heading to the editor content it sends, so Claude Code writes the task status to `YYYY_MMDD_HHMM_SS_status.md` in the directory of the open file after finishing the task
+  - Only the sent command changes. The open file is not modified
+  - Applies only when a file is open and `editor.runCommand` uses `${editorContent}`
+  - Nothing is appended when `editor.outputMdPrompt` is empty
+- **Quick Run setting**: The new `editor.quickRun` setting (default: off) skips the instruction above and sends the editor content as is
+
+### Changed
+- **Default Run prompt**: Because `editor.quickRun` is off by default, Run includes the output md instruction for existing users too. Turn on Quick Run to keep the previous behavior
+
 ## [1.2.16] - 2026-10-12
 
 ### Changed
@@ -2748,6 +2760,7 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.16...v1.2.17
 [1.2.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.15...v1.2.16
 [1.2.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.14...v1.2.15
 [1.2.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.13...v1.2.14

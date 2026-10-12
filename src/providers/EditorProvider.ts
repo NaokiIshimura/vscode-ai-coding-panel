@@ -57,6 +57,26 @@ const SESSION_PROMPTS: Record<SessionPromptType, { settingKey: string; defaultPr
     }
 };
 
+/**
+ * Runで送る本文に連結する output md の指示文の見出し
+ * 本文の指示と区別できるよう、Markdownの見出しとして指示文の前に置く
+ */
+export const OUTPUT_MD_HEADING = '# output md';
+
+/**
+ * Runで送る本文の末尾へ、見出し付きの output md の指示文を空行区切りで連結する（Quick Run が無効のとき）
+ * 指示文が空の場合は本文をそのまま返す（末尾に見出しだけが付くのを避けるため）
+ */
+export function appendOutputMdPrompt(content: string, prompt: string): string {
+    const trimmedPrompt = prompt.trim();
+    if (!trimmedPrompt) {
+        return content;
+    }
+    const section = `${OUTPUT_MD_HEADING}\n${trimmedPrompt}`;
+    const trimmedContent = content.trim();
+    return trimmedContent ? `${trimmedContent}\n\n${section}` : section;
+}
+
 export class EditorProvider implements vscode.WebviewViewProvider, vscode.Disposable {
     public static readonly viewType = 'markdownEditor';
     private _view?: vscode.WebviewView;
@@ -684,10 +704,17 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             // 送信履歴を追記する前の内容（エディタに表示されている内容）を${editorContent}に使う
             const latestContent = this._pendingContent ?? this._currentContent ?? '';
 
+            // タスクの完了後に状況を出力させるため、output md の指示文を本文の末尾へ連結する
+            // Quick Run が有効な場合は状況の出力を省いて素早く実行するため、連結しない
+            // 送信するコマンドにのみ含め、ファイルやエディタの内容には書き込まない
+            const runContent = config.get<boolean>('editor.quickRun', false)
+                ? latestContent
+                : appendOutputMdPrompt(latestContent, this._buildSessionPrompt('md', relativeFilePath.trim()));
+
             // Replace placeholders with safely escaped values
             // ${editorContent}は最後に置換する（内容に含まれる${...}を展開しないため）
             const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
-            const escapedContent = this._escapeShellArgument(latestContent.trim());
+            const escapedContent = this._escapeShellArgument(runContent.trim());
             let command = commandTemplate.replace(/\$\{commandPrefix\}/g, resumeSession.commandPrefix);
             command = command.replace(/\$\{filePath\}/g, escapedPath);
             command = command.replace(/\$\{editorContent\}/g, escapedContent);
@@ -815,21 +842,28 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         const relativeFilePath = workspaceRoot
             ? path.relative(workspaceRoot, this._currentFilePath)
             : this._currentFilePath;
-        const relativeDirPath = path.dirname(relativeFilePath);
-
-        const { settingKey, defaultPrompt } = SESSION_PROMPTS[type];
-        const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-        const template = config.get<string>(settingKey, defaultPrompt);
 
         // シェルを経由せず入力欄へ書き込むため、_escapeShellArgument() は使わない
         // （クォートで囲むとクォートがそのままプロンプトに残る）
-        const prompt = template
-            .replace(/\$\{filePath\}/g, relativeFilePath)
-            .replace(/\$\{dirPath\}/g, relativeDirPath);
+        const prompt = this._buildSessionPrompt(type, relativeFilePath);
 
         // filePath / commandType は渡さない（タブとファイルの関連付けやアイコンを上書きしないため）
         this._terminalProvider.focus();
         await this._terminalProvider.sendCommand(prompt, true);
+    }
+
+    /**
+     * 出力指示（output md / output memory）の文言を設定から取得し、プレースホルダーを展開する
+     * @param relativeFilePath 開いているファイルのワークスペースルートからの相対パス
+     */
+    private _buildSessionPrompt(type: SessionPromptType, relativeFilePath: string): string {
+        const { settingKey, defaultPrompt } = SESSION_PROMPTS[type];
+        const config = vscode.workspace.getConfiguration('aiCodingSidebar');
+        const template = config.get<string>(settingKey, defaultPrompt);
+
+        return template
+            .replace(/\$\{filePath\}/g, relativeFilePath)
+            .replace(/\$\{dirPath\}/g, path.dirname(relativeFilePath));
     }
 
     public getCurrentFilePath(): string | undefined {

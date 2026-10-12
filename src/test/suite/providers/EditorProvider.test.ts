@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { EditorProvider } from '../../../providers/EditorProvider';
+import { EditorProvider, appendOutputMdPrompt } from '../../../providers/EditorProvider';
 import { PlansProvider } from '../../../providers/PlansProvider';
 import { TemplateService } from '../../../services/TemplateService';
 import { PromptTemplateService } from '../../../services/PromptTemplateService';
@@ -325,6 +325,61 @@ suite('EditorProvider Integration Test Suite', () => {
 		test('Should not throw when no TerminalProvider is set', async () => {
 			await editorProvider.showFile(testFilePath);
 			await editorProvider.sendSessionPrompt('md');
+		});
+	});
+
+	suite('appendOutputMdPrompt', () => {
+		test('Should append the prompt under the output md heading after a blank line', () => {
+			assert.strictEqual(
+				appendOutputMdPrompt('# task\ndo something', 'Record the status.'),
+				'# task\ndo something\n\n# output md\nRecord the status.'
+			);
+		});
+
+		test('Should trim surrounding whitespace of the content and the prompt', () => {
+			assert.strictEqual(
+				appendOutputMdPrompt('\n# task\n\n\n', '  Record the status.\n'),
+				'# task\n\n# output md\nRecord the status.'
+			);
+		});
+
+		test('Should return the content unchanged when the prompt is empty', () => {
+			assert.strictEqual(appendOutputMdPrompt('# task\n', ''), '# task\n');
+			assert.strictEqual(appendOutputMdPrompt('# task\n', '   '), '# task\n');
+		});
+
+		test('Should return only the heading and the prompt when the content is empty', () => {
+			assert.strictEqual(appendOutputMdPrompt('  \n', 'Record the status.'), '# output md\nRecord the status.');
+		});
+	});
+
+	suite('runTask', () => {
+		const createTerminalProvider = () => {
+			const sent: string[] = [];
+			const provider = {
+				focus: () => { /* noop */ },
+				sendCommand: async (command: string) => { sent.push(command); }
+			};
+			return { provider, sent };
+		};
+
+		test('Should append the output md prompt by default (Quick Run is off)', async function () {
+			// 設定が既定と異なる環境では検証できないためスキップする
+			const quickRun = vscode.workspace.getConfiguration('aiCodingSidebar').get<boolean>('editor.quickRun', false);
+			if (quickRun) {
+				this.skip();
+			}
+			const terminal = createTerminalProvider();
+			editorProvider.setTerminalProvider(terminal.provider);
+			await editorProvider.showFile(testFilePath);
+
+			await editorProvider.runTask();
+
+			assert.strictEqual(terminal.sent.length, 1);
+			assert.ok(terminal.sent[0].includes('# Test Content\n\n# output md\nRecord the current status'));
+			assert.ok(terminal.sent[0].includes('_status.md'));
+			// 指示文は送信するコマンドにのみ含め、ファイルには書き込まない
+			assert.ok(!fs.readFileSync(testFilePath, 'utf8').includes('_status.md'));
 		});
 	});
 

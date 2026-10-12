@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.15-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.16-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | 繁體中文 | [Português](README-PT-BR.md)
 
@@ -69,7 +69,7 @@
 | **Next 按鈕** | 位於檢視底部專用工具列的紅色 **Next** 按鈕。會建立新的帶時間戳記 `PROMPT.md` 並開啟，同時將游標放在文字區域中，讓你可以立即開始輸入。也可以使用 `Cmd+M` / `Ctrl+M` |
 | **output md / output memory 按鈕** | 位於下方工具列左側的按鈕，會向作用中 Terminal 分頁裡正在執行的 Claude Code 工作階段傳送指示（在以 Run / Plan / Spec 啟動工作階段後使用）。**output md** 要求將任務狀態（已完成、剩餘事項及原因）寫入 `YYYY_MMDD_HHMM_SS_status.md`，**output memory** 要求將本次工作階段中可重複使用的知識（偏好、專案慣例、踩過的坑）寫入 `YYYY_MMDD_HHMM_SS_memory.md`，兩者都輸出到目前開啟檔案所在的目錄。Claude Code 未執行或未開啟檔案時不會傳送，並顯示警告。指示文字可透過 `editor.outputMdPrompt` / `editor.outputMemoryPrompt` 自訂 |
 | **Prompts 按鈕** | 位於上方工具列左端（Edit 左側）的 **Prompts** 按鈕。點擊後會在按鈕正下方開啟範本選單，選取的範本會插入到游標位置（再次按下按鈕、點擊其他位置或按下 `Escape` 即可關閉選單）。選單底部的 **Add template** 項目可建立新範本：選擇建立位置（Workspace 或 Global）並輸入名稱後，檔案會建立在該目錄下並於 VS Code 編輯器中開啟。範本存放於工作區的 `.vscode/ai-coding-panel/prompts/*.md`，以及適用於所有工作區的 `<globalTemplatesPath>/prompts/*.md`（每個範本一個檔案）。兩者會一起列出，全域範本會標示 `(global)`；兩處都存在的同名檔案會採用工作區的版本。兩處都沒有 Markdown 檔案時，會使用擴充功能內建的範本。可以透過 `editor.disableWorkspacePromptTemplates` 或 `editor.disableGlobalPromptTemplates` 將任一來源排除在清單之外。檔案內容會原封不動地插入，因此開頭的 `# heading` 也會一併插入——標題僅作為選單中的名稱使用。`{{filename}}`、`{{filepath}}`、`{{dirpath}}`、`{{datetime}}` 與 `{{timestamp}}` 會替換為開啟中檔案的值。同樣的操作也可以從命令選擇區以 **Insert Prompt Template** 執行，此時會改為顯示快速選取清單。從 Menu 檢視的 Workspace 區段執行 **Customize Prompt Templates** 可將內建範本複製到工作區，執行 Global 區段中的同名項目則會複製到全域目錄 |
-| 按鈕圖示 | 每個按鈕都使用 VS Code codicon（Spec：書本、Plan：檢查清單、Run：播放、Next：新增檔案、Edit：鉛筆、Save：磁碟片、Prompts：程式碼片段、output md：Markdown、output memory：資料庫），與 Plans View 的 Quick Start 按鈕一致 |
+| 按鈕圖示 | 每個按鈕都使用 VS Code codicon（Spec：書本、Plan：檢查清單、Run：播放、Next：新增檔案、Edit：鉛筆、Save：磁碟片、Prompts：程式碼片段、output md：Markdown、output memory：資料庫）並在圖示旁顯示文字標籤，與 Plans View 的 Quick Start 按鈕一致 |
 | 可自訂的指令 | 可在設定中調整 Run、Plan 與 Spec 指令，以符合你的工作流程 |
 | **可點擊的 URL** | 文字中的 URL 會加上底線，點擊即可在預設瀏覽器中開啟。在 URL 上按右鍵可選擇 **Open in Default Browser** 或 **Open in Integrated Browser**（VS Code 的 Simple Browser）。在其他位置按右鍵則會顯示 VS Code 標準選單 |
 | 唯讀模式 | 當檔案在 VSCode 編輯器中處於作用中狀態時，會自動切換為唯讀模式 |
@@ -392,14 +392,14 @@ npm run watch
 1. 從 [GitHub Releases 頁面](https://github.com/NaokiIshimura/vscode-panel/releases) 下載最新的 VSIX 檔案。
 2. 透過命令列安裝：
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.15.vsix
+   code --install-extension ai-coding-sidebar-1.2.16.vsix
    ```
 3. 重新啟動 VS Code。
 
 #### 使用本機建置
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.15.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
 ```
 
 #### 自行建置套件
@@ -413,7 +413,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.15.vsix
    ```
 3. 安裝產生的 VSIX 檔案：
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.15.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
    ```
 4. 重新啟動 VS Code。
 

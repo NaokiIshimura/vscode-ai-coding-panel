@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.16] - 2026-10-12
+
+### Changed
+- **Edit / Save button labels**: The Edit in VS Code and Save file buttons in the Editor view top bar now show the labels `Edit` and `Save` next to their icons, matching the other buttons
+
 ## [1.2.15] - 2026-10-12
 
 ### Added
@@ -2743,6 +2748,7 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.15...v1.2.16
 [1.2.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.14...v1.2.15
 [1.2.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.13...v1.2.14
 [1.2.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.12...v1.2.13

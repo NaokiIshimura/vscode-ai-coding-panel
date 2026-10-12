@@ -386,6 +386,19 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.16変更: Editor ViewのEdit / Saveボタンにラベルを追加
+
+v1.1.1でcodicon化して以来アイコンのみだったEdit（`#edit-button`）とSave（`#save-button`）に、他のボタンと同じ形式でラベル `Edit` / `Save` を追加した：
+
+| ファイル | 変更 |
+|---|---|
+| `resources/webview/editor/index.html` | 両ボタンのcodiconの後ろに `<span>Edit</span>` / `<span>Save</span>` を追加 |
+| README 6ファイル | Button icons の行にラベル表示を追記 |
+
+- CSSの変更は不要。アイコン＋ラベルの横並び（`display: inline-flex` / `gap: 4px`）は、Edit / Saveも含めた共通ルールで既に指定されていた
+- `main.js` はボタンの状態（`dirty` / `active`）を `classList` で切り替えるだけで `innerHTML` / `textContent` を書き換えないため、ラベルは保持される
+- `title`（ツールチップの `Edit in VS Code` / `Save file`）は変更していない
+
 ### v1.2.15新機能: Editor Viewの `output md` / `output memory` ボタン
 
 v1.2.14で空になった最下段（`#footer`）の左グループに、起動中のClaude Codeへ出力指示を送る2つのボタンを追加した：

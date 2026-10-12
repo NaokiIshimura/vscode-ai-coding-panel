@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.15-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.16-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 English | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português](README-PT-BR.md)
 
@@ -69,7 +69,7 @@ Edit Markdown prompt files and execute Claude Code commands directly from the pa
 | **Next button** | Red **Next** button in a dedicated bar at the bottom of the view. Creates a new timestamped `PROMPT.md`, opens it, and puts the caret in the text area so you can start typing right away. Also available with `Cmd+M` / `Ctrl+M` |
 | **output md / output memory buttons** | Buttons on the left of the bottom bar that send an instruction to the Claude Code session running in the active Terminal tab - for use after starting a session with Run / Plan / Spec. **output md** asks it to write the task status (what is done, what is left, and why) to `YYYY_MMDD_HHMM_SS_status.md`, and **output memory** asks it to write reusable knowledge from the session (preferences, project conventions, pitfalls) to `YYYY_MMDD_HHMM_SS_memory.md`, both in the directory of the open file. Nothing is sent, and a warning is shown, while Claude Code is not running or no file is open. The text is customizable with `editor.outputMdPrompt` / `editor.outputMemoryPrompt` |
 | **Prompts button** | **Prompts** button at the left end of the top bar, to the left of Edit. Clicking it opens a template menu just below the button, and the template you pick is inserted at the caret (pressing the button again, clicking elsewhere, or pressing `Escape` closes the menu). The **Add template** item at the bottom of the menu creates a new template: choose where to create it (Workspace or Global), enter a name, and the file is created under that directory and opened in the VS Code editor. Templates live in `.vscode/ai-coding-panel/prompts/*.md` for the workspace and in `<globalTemplatesPath>/prompts/*.md` for every workspace (one file per template). Both are listed together, with the global ones marked `(global)`; a file name present in both is taken from the workspace. When neither holds a Markdown file, the templates bundled with the extension are used. Either source can be left out of the list with `editor.disableWorkspacePromptTemplates` or `editor.disableGlobalPromptTemplates`. The file content is inserted as it is, so a leading `# heading` is inserted too - the heading is only used as the name in the menu. `{{filename}}`, `{{filepath}}`, `{{dirpath}}`, `{{datetime}}`, and `{{timestamp}}` are replaced with the values of the open file. The same action is available from the command palette as **Insert Prompt Template**, which shows a quick pick instead. Run **Customize Prompt Templates** from the Workspace section of the Menu view to copy the bundled templates into the workspace, or the item with the same name in the Global section to copy them into the global directory |
-| Button icons | Every button uses a VS Code codicon (Spec: book, Plan: checklist, Run: play, Next: new file, Edit: pencil, Save: floppy disk, Prompts: snippet, output md: Markdown, output memory: database), matching the Quick Start button in Plans View |
+| Button icons | Every button uses a VS Code codicon (Spec: book, Plan: checklist, Run: play, Next: new file, Edit: pencil, Save: floppy disk, Prompts: snippet, output md: Markdown, output memory: database) with a text label next to it, matching the Quick Start button in Plans View |
 | Customizable commands | Configure Run, Plan, and Spec commands in settings to match your workflow |
 | **Clickable URLs** | URLs in the text are underlined and open in the default browser on click. Right-click a URL to choose **Open in Default Browser** or **Open in Integrated Browser** (VS Code's Simple Browser). Right-clicking anywhere else shows the standard VS Code menu |
 | Read-only mode | Automatically switches to read-only mode when the file is active in VSCode editor |
@@ -392,14 +392,14 @@ npm run watch
 1. Download the latest VSIX file from the [GitHub Releases page](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Install via command line:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.15.vsix
+   code --install-extension ai-coding-sidebar-1.2.16.vsix
    ```
 3. Restart VS Code.
 
 #### Use a local build
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.15.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
 ```
 
 #### Build the package yourself
@@ -413,7 +413,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.15.vsix
    ```
 3. Install the generated VSIX file:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.15.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.16.vsix
    ```
 4. Restart VS Code.
 

@@ -5,6 +5,11 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.16] - 2026-10-12
+
+### Changed
+- **Edit / Saveボタンのラベル**: Editor View上段バーのEdit in VS CodeボタンとSave fileボタンに、他のボタンと同じくアイコンの横へ `Edit` / `Save` のラベルを表示するようにしました
+
 ## [1.2.15] - 2026-10-12
 
 ### Added
@@ -2214,6 +2219,7 @@ v0.8.33以前からアップグレードする場合:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.15...v1.2.16
 [1.2.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.14...v1.2.15
 [1.2.14]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.13...v1.2.14
 [1.2.13]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.12...v1.2.13

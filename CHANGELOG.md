@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.19] - 2026-10-17
+
+### Changed
+- **Error messages**: File operation errors are now shown in English (e.g. `File or folder not found: <path>`, `Permission denied: <path>`)
+
+### Technical
+- **English source code**: All Japanese comments in `src/` and `resources/webview/` were translated into English, along with test names, assert messages, and test data
+  - Only comments changed in the code. A build with comments removed is identical to the previous version except for the error messages and the test strings
+  - Test data that checked multi-byte handling now uses language-neutral characters (`é`), keeping the original conditions
+  - `CLAUDE.md` and `AGENTS.md` now state that code and tests are written in English
+
 ## [1.2.18] - 2026-10-17
 
 ### Added
@@ -2775,6 +2786,7 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.19]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.18...v1.2.19
 [1.2.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.17...v1.2.18
 [1.2.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.16...v1.2.17
 [1.2.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.15...v1.2.16

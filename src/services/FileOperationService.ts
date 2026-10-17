@@ -12,33 +12,33 @@ import {
 import { FileInfo } from '../utils/fileUtils';
 
 /**
- * ファイル操作サービスの実装
+ * File operation service implementation
  */
 export class FileOperationService implements IFileOperationService {
     public onProgress?: (progress: OperationProgress) => void;
 
     /**
-     * ファイルを作成
+     * Create a file
      */
     async createFile(filePath: string, content: string = ''): Promise<FileOperationResult> {
         try {
-            // パスの検証
+            // Validate the path
             if (!this.validatePath(filePath)) {
                 throw FileOperationError.invalidPath(filePath);
             }
 
-            // 既に存在するかチェック
+            // Check whether it already exists
             if (await this.exists(filePath)) {
                 throw FileOperationError.alreadyExists(filePath);
             }
 
-            // ディレクトリを作成（存在しない場合）
+            // Create the directory (if it does not exist)
             const dir = path.dirname(filePath);
             if (!(await this.exists(dir))) {
                 await fsp.mkdir(dir, { recursive: true });
             }
 
-            // ファイルを作成
+            // Create the file
             await fsp.writeFile(filePath, content, 'utf8');
 
             return {
@@ -55,21 +55,21 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ディレクトリを作成
+     * Create a directory
      */
     async createDirectory(dirPath: string): Promise<FileOperationResult> {
         try {
-            // パスの検証
+            // Validate the path
             if (!this.validatePath(dirPath)) {
                 throw FileOperationError.invalidPath(dirPath);
             }
 
-            // 既に存在するかチェック
+            // Check whether it already exists
             if (await this.exists(dirPath)) {
                 throw FileOperationError.alreadyExists(dirPath);
             }
 
-            // ディレクトリを作成
+            // Create the directory
             await fsp.mkdir(dirPath, { recursive: true });
 
             return {
@@ -86,7 +86,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ファイルを読み込み
+     * Read a file
      */
     async readFile(filePath: string): Promise<string> {
         try {
@@ -100,7 +100,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ファイルに書き込み
+     * Write to a file
      */
     async writeFile(filePath: string, content: string): Promise<FileOperationResult> {
         try {
@@ -124,7 +124,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ファイルを削除
+     * Delete a file
      */
     async deleteFile(filePath: string): Promise<FileOperationResult> {
         try {
@@ -148,7 +148,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ディレクトリを削除
+     * Delete a directory
      */
     async deleteDirectory(dirPath: string, recursive: boolean = true): Promise<FileOperationResult> {
         try {
@@ -172,7 +172,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ファイル/フォルダをリネーム
+     * Rename a file/folder
      */
     async renameFile(oldPath: string, newPath: string): Promise<FileOperationResult> {
         try {
@@ -200,7 +200,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ファイルをコピー
+     * Copy a file
      */
     async copyFile(sourcePath: string, destPath: string): Promise<FileOperationResult> {
         try {
@@ -213,7 +213,7 @@ export class FileOperationService implements IFileOperationService {
             if (stats.isDirectory) {
                 return await this.copyDirectory(sourcePath, destPath);
             } else {
-                // ディレクトリを作成（存在しない場合）
+                // Create the directory (if it does not exist)
                 const dir = path.dirname(destPath);
                 if (!(await this.exists(dir))) {
                     await fsp.mkdir(dir, { recursive: true });
@@ -236,11 +236,11 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ディレクトリを再帰的にコピー
+     * Copy a directory recursively
      */
     private async copyDirectory(sourcePath: string, destPath: string): Promise<FileOperationResult> {
         try {
-            // コピー先ディレクトリを作成
+            // Create the destination directory
             await fsp.mkdir(destPath, { recursive: true });
 
             const entries = await fsp.readdir(sourcePath, { withFileTypes: true });
@@ -270,7 +270,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ファイルを移動
+     * Move a file
      */
     async moveFile(sourcePath: string, destPath: string): Promise<FileOperationResult> {
         try {
@@ -278,7 +278,7 @@ export class FileOperationService implements IFileOperationService {
                 throw FileOperationError.notFound(sourcePath);
             }
 
-            // ディレクトリを作成（存在しない場合）
+            // Create the directory (if it does not exist)
             const dir = path.dirname(destPath);
             if (!(await this.exists(dir))) {
                 await fsp.mkdir(dir, { recursive: true });
@@ -300,7 +300,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * 複数ファイルを削除
+     * Delete multiple files
      */
     async deleteFiles(paths: string[]): Promise<FileOperationResult[]> {
         const results: FileOperationResult[] = [];
@@ -341,7 +341,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * 複数ファイルをコピー
+     * Copy multiple files
      */
     async copyFiles(sources: string[], destDir: string): Promise<FileOperationResult[]> {
         const results: FileOperationResult[] = [];
@@ -377,7 +377,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * 複数ファイルを移動
+     * Move multiple files
      */
     async moveFiles(sources: string[], destDir: string): Promise<FileOperationResult[]> {
         const results: FileOperationResult[] = [];
@@ -413,7 +413,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ファイル統計情報を取得
+     * Get file statistics
      */
     async getStats(filePath: string): Promise<FileStats> {
         try {
@@ -435,7 +435,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ファイル権限を取得
+     * Get file permissions
      */
     private async getPermissions(filePath: string): Promise<FilePermissions> {
         try {
@@ -461,7 +461,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ファイル/フォルダが存在するかチェック
+     * Check whether a file/folder exists
      */
     async exists(filePath: string): Promise<boolean> {
         try {
@@ -473,16 +473,16 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * パスを検証
+     * Validate a path
      */
     validatePath(filePath: string): boolean {
         try {
-            // 絶対パスかチェック
+            // Check that it is an absolute path
             if (!path.isAbsolute(filePath)) {
                 return false;
             }
 
-            // 不正な文字をチェック
+            // Check for invalid characters
             const baseName = path.basename(filePath);
             return this.validateFileName(baseName);
         } catch {
@@ -491,21 +491,21 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ファイル名を検証
+     * Validate a file name
      */
     validateFileName(name: string): boolean {
-        // 空文字チェック
+        // Check for an empty string
         if (!name || name.trim() === '') {
             return false;
         }
 
-        // 不正な文字をチェック（Windows/Mac/Linux共通）
+        // Check for invalid characters (common to Windows/Mac/Linux)
         const invalidChars = /[<>:"|?*\\/]/;
         if (invalidChars.test(name)) {
             return false;
         }
 
-        // 予約語チェック（Windows）
+        // Check for reserved names (Windows)
         const reservedNames = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'];
         const upperName = name.toUpperCase();
         if (reservedNames.includes(upperName)) {
@@ -516,7 +516,7 @@ export class FileOperationService implements IFileOperationService {
     }
 
     /**
-     * ファイル一覧を取得
+     * Get the file list
      */
     async getFileList(dirPath: string): Promise<FileInfo[]> {
         const files: FileInfo[] = [];
@@ -538,7 +538,7 @@ export class FileOperationService implements IFileOperationService {
                 });
             }
 
-            // ディレクトリを先に、その後ファイルを名前順でソート
+            // Sort directories first, then files, by name
             files.sort((a, b) => {
                 if (a.isDirectory && !b.isDirectory) { return -1; }
                 if (!a.isDirectory && b.isDirectory) { return 1; }

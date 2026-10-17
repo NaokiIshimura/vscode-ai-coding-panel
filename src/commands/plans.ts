@@ -9,7 +9,7 @@ import { FileOperationService } from '../services/FileOperationService';
 import { TemplateService } from '../services/TemplateService';
 
 /**
- * Plans関連のコマンドを登録
+ * Register Plans-related commands
  */
 export function registerPlansCommands(
     context: vscode.ExtensionContext,
@@ -18,14 +18,14 @@ export function registerPlansCommands(
     const { plansProvider, editorProvider, fileOperationService } = deps;
     const configProvider = new ConfigurationProvider();
 
-    // 1. refresh - ビューの更新
+    // 1. refresh - refresh the view
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.refresh', () => {
             plansProvider.refresh();
         })
     );
 
-    // 2. showInPanel - 下ペイン表示（互換性のために残す）
+    // 2. showInPanel - show in the lower pane (kept for compatibility)
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.showInPanel', async (item: FileItem) => {
             if (item && item.isDirectory) {
@@ -34,21 +34,21 @@ export function registerPlansCommands(
         })
     );
 
-    // 3. openFolder - フォルダを開く（互換性のために残す）
+    // 3. openFolder - open a folder (kept for compatibility)
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openFolder', async (folderPath: string) => {
             plansProvider.setActiveFolder(folderPath);
         })
     );
 
-    // 4. goToParent - 親フォルダへ移動
+    // 4. goToParent - move to the parent folder
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.goToParent', async () => {
             const currentPath = plansProvider.getRootPath();
             if (currentPath) {
                 const parentPath = path.dirname(currentPath);
 
-                // プロジェクトルートより上には移動しない
+                // Do not move above the project root
                 const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
                 if (workspaceRoot && parentPath.startsWith(workspaceRoot) && parentPath !== currentPath) {
                     await plansProvider.setRootPath(parentPath);
@@ -59,7 +59,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 5. setRelativePath - 相対パスの設定
+    // 5. setRelativePath - set the relative path
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.setRelativePath', async () => {
             if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -70,7 +70,7 @@ export function registerPlansCommands(
             const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
             const currentPath = plansProvider.getRootPath() || workspaceRoot;
 
-            // 現在のパスから相対パスを計算
+            // Compute the relative path from the current path
             const currentRelativePath = path.relative(workspaceRoot, currentPath);
             const displayPath = currentRelativePath === '' ? '.' : currentRelativePath;
 
@@ -85,14 +85,14 @@ export function registerPlansCommands(
                 let targetPath: string;
 
                 if (trimmedPath === '' || trimmedPath === '.') {
-                    // 空文字または'.'の場合はワークスペースルート
+                    // An empty string or '.' means the workspace root
                     targetPath = workspaceRoot;
                 } else {
-                    // 相対パスを絶対パスに変換
+                    // Convert the relative path to an absolute path
                     targetPath = path.resolve(workspaceRoot, trimmedPath);
                 }
 
-                // パスの存在確認（エラーでも続行）
+                // Check that the path exists (continue even on error)
                 let pathExists = false;
                 let isDirectory = false;
 
@@ -101,7 +101,7 @@ export function registerPlansCommands(
                     pathExists = true;
                     isDirectory = stat.isDirectory();
                 } catch (error) {
-                    // パスが存在しない場合でも続行
+                    // Continue even if the path does not exist
                     pathExists = false;
                 }
 
@@ -122,10 +122,10 @@ export function registerPlansCommands(
                     }
                 }
 
-                // パスを設定（存在しなくても設定）
+                // Set the path (even if it does not exist)
                 await plansProvider.setRootPath(targetPath);
 
-                // 設定に保存するかユーザーに確認
+                // Ask the user whether to save it to settings
                 const relativePathToSave = trimmedPath === '' || trimmedPath === '.' ? '' : trimmedPath;
                 const saveChoice = await vscode.window.showInformationMessage(
                     `Save relative path "${relativePathToSave || '.'}" to settings?`,
@@ -139,7 +139,7 @@ export function registerPlansCommands(
                     vscode.window.showInformationMessage('Saved to settings');
                 }
 
-                // 設定したフォルダを選択状態にする（存在する場合のみ）
+                // Select the configured folder (only if it exists)
                 if (pathExists) {
                     await plansProvider.revealDirectory(targetPath);
                 }
@@ -147,12 +147,12 @@ export function registerPlansCommands(
         })
     );
 
-    // 6. createFolder - フォルダ作成
+    // 6. createFolder - create a folder
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.createFolder', async (item?: FileItem) => {
             let targetPath: string;
 
-            // 優先順位に従って作成先を決定
+            // Decide where to create it by priority
             if (item) {
                 if (item.isDirectory) {
                     targetPath = item.filePath;
@@ -168,7 +168,7 @@ export function registerPlansCommands(
                 targetPath = currentPath;
             }
 
-            // フォルダ名をユーザーに入力してもらう
+            // Ask the user for the folder name
             const folderName = await vscode.window.showInputBox({
                 prompt: 'Enter new folder name',
                 placeHolder: 'Folder name',
@@ -211,7 +211,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 7. addDirectory - ディレクトリ追加（右クリックメニュー用）
+    // 7. addDirectory - add a directory (for the context menu)
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.addDirectory', async (item?: FileItem) => {
             let targetItem = item;
@@ -271,7 +271,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 8. newDirectory - 新規ディレクトリ＋TASKファイル作成
+    // 8. newDirectory - create a new directory and TASK file
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.newDirectory', async (_item?: FileItem) => {
             const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -328,7 +328,7 @@ export function registerPlansCommands(
 
                 plansProvider.navigateToDirectory(folderPath);
 
-                // TASKファイルを作成
+                // Create the TASK file
                 const now = new Date();
                 const year = String(now.getFullYear());
                 const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -369,7 +369,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 9. renameDirectory - ディレクトリ名変更
+    // 9. renameDirectory - rename a directory
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.renameDirectory', async (item?: FileItem) => {
             if (!item || !item.isDirectory) {
@@ -380,7 +380,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 10. deleteDirectory - ディレクトリ削除
+    // 10. deleteDirectory - delete a directory
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.deleteDirectory', async (item?: FileItem) => {
             if (!item || !item.isDirectory) {
@@ -391,7 +391,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 11. archiveDirectory - ディレクトリアーカイブ
+    // 11. archiveDirectory - archive a directory
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.archiveDirectory', async (item?: FileItem) => {
             let targetPath: string;
@@ -452,7 +452,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 12. archiveFile - ファイルアーカイブ
+    // 12. archiveFile - archive a file
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.archiveFile', async (item?: FileItem) => {
             if (!item || item.isDirectory) {
@@ -476,7 +476,7 @@ export function registerPlansCommands(
                     throw result.error || new Error('Failed to move file');
                 }
 
-                // Editor Viewで開いているファイルをアーカイブした場合は表示をクリアする
+                // Clear the display if the file open in the Editor View was archived
                 if (editorProvider.getCurrentFilePath() === targetPath) {
                     await editorProvider.clearFile();
                 }
@@ -498,7 +498,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 13. createDefaultPath - デフォルトパスの作成＋初期プロンプトファイル作成
+    // 13. createDefaultPath - create the default path and the initial prompt file
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.createDefaultPath', async (targetPath: string, relativePath?: string) => {
             if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -509,7 +509,7 @@ export function registerPlansCommands(
             const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
             try {
-                // ディレクトリ作成
+                // Create the directory
                 await fsPromises.mkdir(targetPath, { recursive: true });
 
                 const displayPath = relativePath || path.relative(workspaceRoot, targetPath);
@@ -517,37 +517,37 @@ export function registerPlansCommands(
 
                 await plansProvider.setRootPath(targetPath, relativePath);
 
-                // 初期プロンプトファイルを作成
+                // Create the initial prompt file
                 const templateService = new TemplateService(context);
                 const fileName = templateService.generatePromptFileName();
                 const filePath = path.join(targetPath, fileName);
 
                 try {
-                    // テンプレートファイルを読み込み
+                    // Load the template file
                     const templatePath = path.join(context.extensionPath, 'resources', 'templates', 'initial_prompt.md');
                     let content: string;
 
                     try {
                         content = await fsPromises.readFile(templatePath, 'utf8');
                     } catch (templateError) {
-                        // テンプレートファイルが見つからない場合はデフォルトテキストを使用
+                        // Use the default text if the template file is not found
                         content = 'Write your prompt in this editor.\n\nClick one of the buttons below to send your prompt to the terminal:\n- **Run**: Execute the prompt immediately\n- **Plan**: Create an implementation plan\n- **Spec**: Generate a specification document\n';
                     }
 
-                    // ファイル作成
+                    // Create the file
                     const result = await fileOperationService.createFile(filePath, content);
 
                     if (result.success) {
-                        // PlansProviderを更新
+                        // Update the PlansProvider
                         plansProvider.refresh();
 
-                        // 少し待ってからファイルを開く・選択する
+                        // Wait briefly, then open and select the file
                         await new Promise(resolve => setTimeout(resolve, 300));
 
-                        // EditorProviderでファイルを開く
+                        // Open the file in the EditorProvider
                         await editorProvider.showFile(filePath);
 
-                        // PlansProviderでファイルを選択状態にする
+                        // Select the file in the PlansProvider
                         await plansProvider.revealFile(filePath);
 
                         vscode.window.showInformationMessage(`Created initial prompt file: ${fileName}`);
@@ -565,7 +565,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 14. quickStart - タスク名を指定せずにディレクトリ＋QUICK_START.mdを作成
+    // 14. quickStart - create a directory and QUICK_START.md without specifying a task name
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.quickStart', async () => {
             const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -576,8 +576,8 @@ export function registerPlansCommands(
 
             const workspaceRoot = workspaceFolders[0].uri.fsPath;
 
-            // rootディレクトリが未作成（「Create directory」を表示中）の場合は、
-            // 先に「Create directory」と同じ処理を実行してからQuick Startを続行する
+            // If the root directory has not been created ("Create directory" is shown),
+            // first run the same process as "Create directory", then continue with Quick Start
             if (plansProvider.isRootPathNotFound()) {
                 await vscode.commands.executeCommand(
                     'aiCodingSidebar.createDefaultPath',
@@ -643,7 +643,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 15. navigateToDirectory - ディレクトリ移動
+    // 15. navigateToDirectory - navigate to a directory
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.navigateToDirectory', (targetPath: string) => {
             if (targetPath) {
@@ -652,7 +652,7 @@ export function registerPlansCommands(
         })
     );
 
-    // 16. resumeSession - 表示中ディレクトリのmetadata.mdに記録された最新のセッションを再開
+    // 16. resumeSession - resume the latest session recorded in metadata.md of the displayed directory
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.resumeSession', async () => {
             const session = await plansProvider.findLatestResumeSession();
@@ -661,7 +661,7 @@ export function registerPlansCommands(
                 return;
             }
 
-            // セッションを開始したファイルが残っていれば開き、タブと関連付ける（消えていても再開はする）
+            // If the file that started the session still exists, open it and associate it with the tab (resume even if it is gone)
             const sessionFilePath = path.join(session.dirPath, path.basename(session.fileName));
             let filePath: string | undefined;
             try {
@@ -682,8 +682,8 @@ export function registerPlansCommands(
 }
 
 /**
- * アーカイブ先ディレクトリ（<plans>/archived）を取得する
- * 存在しない場合は作成し、失敗時はエラーメッセージを表示してundefinedを返す
+ * Get the archive directory (<plans>/archived)
+ * Create it if it does not exist; on failure show an error message and return undefined
  */
 async function ensureArchivedDirectory(
     configProvider: ConfigurationProvider,
@@ -721,9 +721,9 @@ async function ensureArchivedDirectory(
 }
 
 /**
- * アーカイブ先のパスを決定する
- * 同名が既に存在する場合はタイムスタンプを付与して衝突を回避する
- * （ディレクトリは末尾に、ファイルは拡張子の前に付与する）
+ * Decide the archive destination path
+ * If the same name already exists, append a timestamp to avoid the collision
+ * (appended at the end for directories, before the extension for files)
  */
 async function resolveArchiveDestination(
     archivedDirPath: string,
@@ -757,7 +757,7 @@ async function resolveArchiveDestination(
 }
 
 /**
- * アーカイブの衝突回避に使うタイムスタンプ（YYYYMMDD_HHmmss）を生成する
+ * Generate the timestamp (YYYYMMDD_HHmmss) used to avoid archive name collisions
  */
 function formatArchiveTimestamp(now: Date): string {
     const year = now.getFullYear();

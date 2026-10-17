@@ -5,6 +5,17 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.19] - 2026-10-17
+
+### 変更
+- **エラーメッセージ**: ファイル操作のエラーを英語で表示するようにした（例: `File or folder not found: <path>`、`Permission denied: <path>`）
+
+### 技術的変更
+- **ソースコードの英語化**: `src/` と `resources/webview/` の日本語コメントをすべて英語にした。テスト名・assertメッセージ・テストデータも英語にした
+  - コードの変更はコメントのみ。コメントを除いたビルド結果は、エラーメッセージとテストの文字列を除いて変更前と同一
+  - マルチバイト文字の扱いを検証するテストデータは、言語に依存しない文字（`é`）に置き換え、元の条件を保った
+  - `CLAUDE.md` と `AGENTS.md` に、コードとテストは英語で書く方針を追記した
+
 ## [1.2.18] - 2026-10-17
 
 ### 追加
@@ -2246,6 +2257,7 @@ v0.8.33以前からアップグレードする場合:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.19]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.18...v1.2.19
 [1.2.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.17...v1.2.18
 [1.2.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.16...v1.2.17
 [1.2.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.15...v1.2.16

@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
 
 /**
- * 統合ブラウザ（Simple Browser）を開く際のデフォルトURL
- * about:blank を指定すると空のタブが開く
+ * Default URL used when opening the integrated browser (Simple Browser)
+ * about:blank opens an empty tab
  */
 export const DEFAULT_BROWSER_URL = 'about:blank';
 
 /**
- * スキームが省略されたURLにhttp://を補完する
- * about:blank のようなスキーム付きURLはそのまま返す
+ * Prepend http:// to a URL that omits the scheme
+ * URLs that already have a scheme, such as about:blank, are returned as is
  */
 export function normalizeUrl(url: string): string {
     if (!url) {
@@ -18,8 +18,8 @@ export function normalizeUrl(url: string): string {
 }
 
 /**
- * VSCode組み込みのSimple BrowserでURLを開く
- * URLを渡さないとSimple Browser側で入力を求められるため、必ず渡す
+ * Open a URL in VS Code's built-in Simple Browser
+ * Always pass a URL; without one, Simple Browser prompts the user for it
  */
 export async function openInIntegratedBrowser(url: string): Promise<void> {
     try {

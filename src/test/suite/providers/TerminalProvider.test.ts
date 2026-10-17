@@ -20,8 +20,8 @@ interface IPlansProvider {
 }
 
 /**
- * テスト用MockTerminalService
- * write()呼び出しを記録し、ブラケットペーストモードの検証に使用
+ * MockTerminalService for tests
+ * Records write() calls; used to verify the bracketed paste mode
  */
 class MockTerminalService implements ITerminalService {
     public writeCalls: { sessionId: string; data: string }[] = [];
@@ -70,13 +70,13 @@ suite('TerminalProvider Integration Test Suite', () => {
 	let terminalProvider: TerminalProvider;
 
 	setup(() => {
-		// TerminalProviderを初期化（WebView初期化なし）
+		// Initialize TerminalProvider (without initializing the WebView)
 		const extensionUri = vscode.Uri.file(__dirname);
 		terminalProvider = new TerminalProvider(extensionUri);
 	});
 
 	teardown(() => {
-		// クリーンアップ
+		// Clean up
 		terminalProvider.dispose();
 	});
 
@@ -91,7 +91,7 @@ suite('TerminalProvider Integration Test Suite', () => {
 
 			terminalProvider.setEditorProvider(mockEditorProvider);
 
-			// EditorProviderが設定されたことを確認
+			// Check that EditorProvider is set
 			assert.ok(true);
 		});
 	});
@@ -104,14 +104,14 @@ suite('TerminalProvider Integration Test Suite', () => {
 
 			terminalProvider.setPlansProvider(mockPlansProvider);
 
-			// PlansProviderが設定されたことを確認
+			// Check that PlansProvider is set
 			assert.ok(true);
 		});
 	});
 
 	suite('clearTerminal', () => {
 		test('Should not throw error when clearing terminal without WebView', () => {
-			// WebViewが初期化されていない状態でも、エラーは発生しない
+			// No error occurs even when the WebView is not initialized
 			assert.doesNotThrow(() => {
 				terminalProvider.clearTerminal();
 			});
@@ -120,7 +120,7 @@ suite('TerminalProvider Integration Test Suite', () => {
 
 	suite('killTerminal', () => {
 		test('Should not throw error when killing terminal without WebView', () => {
-			// WebViewが初期化されていない状態でも、エラーは発生しない
+			// No error occurs even when the WebView is not initialized
 			assert.doesNotThrow(() => {
 				terminalProvider.killTerminal();
 			});
@@ -129,12 +129,12 @@ suite('TerminalProvider Integration Test Suite', () => {
 
 	suite('newTerminal', () => {
 		test('Should not throw error when creating new terminal without WebView', async function() {
-			// Windows環境ではシェルが見つからないためスキップ
+			// Skipped on Windows because the shell is not found
 			if (process.platform === 'win32') {
 				this.skip();
 			}
 
-			// WebViewが初期化されていない状態でも、エラーは発生しない
+			// No error occurs even when the WebView is not initialized
 			await assert.doesNotReject(async () => {
 				await terminalProvider.newTerminal();
 			});
@@ -143,19 +143,19 @@ suite('TerminalProvider Integration Test Suite', () => {
 
 	suite('sendCommand', () => {
 		test('Should not throw error when sending command without WebView', async function() {
-			// Windows環境ではシェルが見つからないためスキップ
+			// Skipped on Windows because the shell is not found
 			if (process.platform === 'win32') {
 				this.skip();
 			}
 
-			// WebViewが初期化されていない状態でも、エラーは発生しない
+			// No error occurs even when the WebView is not initialized
 			await assert.doesNotReject(async () => {
 				await terminalProvider.sendCommand('echo "test"');
 			});
 		});
 
 		test('Should accept optional parameters', async function() {
-			// Windows環境ではシェルが見つからないためスキップ
+			// Skipped on Windows because the shell is not found
 			if (process.platform === 'win32') {
 				this.skip();
 			}
@@ -173,14 +173,14 @@ suite('TerminalProvider Integration Test Suite', () => {
 
 	suite('insertPaths', () => {
 		test('Should not throw error when inserting paths without WebView', async function() {
-			// Windows環境ではシェルが見つからないためスキップ
+			// Skipped on Windows because the shell is not found
 			if (process.platform === 'win32') {
 				this.skip();
 			}
 
 			const paths = ['/path/to/file1.md', '/path/to/file2.md'];
 
-			// WebViewが初期化されていない状態でも、エラーは発生しない
+			// No error occurs even when the WebView is not initialized
 			await assert.doesNotReject(async () => {
 				await terminalProvider.insertPaths(paths);
 			});
@@ -189,7 +189,7 @@ suite('TerminalProvider Integration Test Suite', () => {
 
 	suite('focus', () => {
 		test('Should not throw error when focusing without WebView', () => {
-			// WebViewが初期化されていない状態でも、エラーは発生しない
+			// No error occurs even when the WebView is not initialized
 			assert.doesNotThrow(() => {
 				terminalProvider.focus();
 			});
@@ -198,7 +198,7 @@ suite('TerminalProvider Integration Test Suite', () => {
 
 	suite('dispose', () => {
 		test('Should dispose resources', () => {
-			// disposeを呼んでもエラーが発生しないことを確認
+			// Verify that calling dispose does not throw
 			assert.doesNotThrow(() => {
 				terminalProvider.dispose();
 			});
@@ -207,8 +207,8 @@ suite('TerminalProvider Integration Test Suite', () => {
 
 	suite('Integration with TerminalService', () => {
 		test('Should initialize TerminalService internally', () => {
-			// TerminalProviderがTerminalServiceを内部で初期化していることを確認
-			// エラーが発生しないことを確認
+			// Check that TerminalProvider initializes TerminalService internally
+			// Verify that no error occurs
 			assert.ok(true);
 		});
 	});
@@ -222,7 +222,7 @@ suite('TerminalProvider Bracket Paste Mode Test Suite', () => {
 		mockService = new MockTerminalService();
 		const extensionUri = vscode.Uri.file(__dirname);
 		terminalProvider = new TerminalProvider(extensionUri, mockService);
-		// タブを作成（MockTerminalServiceのcreateSessionが使われる）
+		// Create a tab (MockTerminalService's createSession is used)
 		await terminalProvider.newTerminal();
 	});
 
@@ -231,122 +231,122 @@ suite('TerminalProvider Bracket Paste Mode Test Suite', () => {
 	});
 
 	suite('sendCommand - Bracket Paste Mode', () => {
-		test('Claude Code起動中、ブラケットペーストモードでコマンドを送信すること', async () => {
-			// タブのisClaudeCodeRunningをtrueに設定
+		test('Should send the command in bracketed paste mode while Claude Code is running', async () => {
+			// Set the tab's isClaudeCodeRunning to true
 			const provider = terminalProvider as any;
 			provider._tabs[0].isClaudeCodeRunning = true;
 
 			await terminalProvider.sendCommand('/compact');
 
-			// ブラケットペーストシーケンスでラップされたコマンドが送信されること
+			// The command wrapped in the bracketed paste sequence must be sent
 			const pasteWrite = mockService.writeCalls.find(c => c.data.includes('\x1b[200~'));
-			assert.ok(pasteWrite, 'ブラケットペースト開始シーケンスが含まれること');
-			assert.ok(pasteWrite!.data.includes('\x1b[201~'), 'ブラケットペースト終了シーケンスが含まれること');
+			assert.ok(pasteWrite, 'Should include the bracketed paste start sequence');
+			assert.ok(pasteWrite!.data.includes('\x1b[201~'), 'Should include the bracketed paste end sequence');
 			assert.strictEqual(pasteWrite!.data, '\x1b[200~/compact\x1b[201~');
 		});
 
-		test('Claude Code起動中、20ms後にEnter（\\r）が送信されること', async () => {
+		test('Should send Enter (\\r) after 20ms while Claude Code is running', async () => {
 			const provider = terminalProvider as any;
 			provider._tabs[0].isClaudeCodeRunning = true;
 
 			await terminalProvider.sendCommand('/compact');
 
-			// 即座にはEnterが送信されていないことを確認
+			// Verify that Enter is not sent immediately
 			const immediateEnter = mockService.writeCalls.filter(c => c.data === '\r');
-			assert.strictEqual(immediateEnter.length, 0, '即座にはEnterが送信されないこと');
+			assert.strictEqual(immediateEnter.length, 0, 'Should not send Enter immediately');
 
-			// 50ms待機してEnterが送信されたことを確認
+			// Wait 50ms and verify that Enter was sent
 			await new Promise(resolve => setTimeout(resolve, 50));
 			const delayedEnter = mockService.writeCalls.filter(c => c.data === '\r');
-			assert.strictEqual(delayedEnter.length, 1, '遅延後にEnterが送信されること');
+			assert.strictEqual(delayedEnter.length, 1, 'Should send Enter after the delay');
 		});
 
-		test('Claude Code未起動時、通常の改行でコマンドを送信すること', async () => {
-			// isClaudeCodeRunningはデフォルトでfalse
+		test('Should send the command with a normal newline when Claude Code is not running', async () => {
+			// isClaudeCodeRunning is false by default
 			await terminalProvider.sendCommand('echo "test"');
 
-			// 通常の改行付きコマンドが送信されること
+			// The command with a normal newline must be sent
 			const normalWrite = mockService.writeCalls.find(c => c.data === 'echo "test"\n');
-			assert.ok(normalWrite, 'コマンド + 改行が送信されること');
+			assert.ok(normalWrite, 'Should send the command + newline');
 		});
 
-		test('Claude Code未起動時、ブラケットペーストシーケンスが含まれないこと', async () => {
+		test('Should not include the bracketed paste sequence when Claude Code is not running', async () => {
 			await terminalProvider.sendCommand('echo "test"');
 
 			const hasBracketPaste = mockService.writeCalls.some(c => c.data.includes('\x1b[200~'));
-			assert.strictEqual(hasBracketPaste, false, 'ブラケットペーストシーケンスが含まれないこと');
+			assert.strictEqual(hasBracketPaste, false, 'Should not include the bracketed paste sequence');
 		});
 
-		test('claudeコマンド送信時、isClaudeCodeRunningがtrueに更新されること', async () => {
+		test('Should update isClaudeCodeRunning to true when sending the claude command', async () => {
 			await terminalProvider.sendCommand('claude --model opus');
 
 			const provider = terminalProvider as any;
-			assert.strictEqual(provider._tabs[0].isClaudeCodeRunning, true, 'Claude Code起動状態に更新されること');
-			assert.strictEqual(provider._tabs[0].isProcessing, true, '処理中状態に更新されること');
+			assert.strictEqual(provider._tabs[0].isClaudeCodeRunning, true, 'Should update to the Claude Code running state');
+			assert.strictEqual(provider._tabs[0].isProcessing, true, 'Should update to the processing state');
 		});
 	});
 
 	suite('handleShortcut - Bracket Paste Mode', () => {
-		test('Claude Code起動中、ブラケットペーストモードでショートカットコマンドを送信すること', () => {
+		test('Should send the shortcut command in bracketed paste mode while Claude Code is running', () => {
 			const provider = terminalProvider as any;
 			provider._tabs[0].isClaudeCodeRunning = true;
 
 			terminalProvider.handleShortcut('/clear', false);
 
 			const pasteWrite = mockService.writeCalls.find(c => c.data.includes('\x1b[200~'));
-			assert.ok(pasteWrite, 'ブラケットペースト開始シーケンスが含まれること');
+			assert.ok(pasteWrite, 'Should include the bracketed paste start sequence');
 			assert.strictEqual(pasteWrite!.data, '\x1b[200~/clear\x1b[201~');
 		});
 
-		test('Claude Code起動中、20ms後にEnter（\\r）が送信されること', async () => {
+		test('Should send Enter (\\r) after 20ms while Claude Code is running', async () => {
 			const provider = terminalProvider as any;
 			provider._tabs[0].isClaudeCodeRunning = true;
 
 			terminalProvider.handleShortcut('/model sonnet', false);
 
-			// 即座にはEnterが送信されていないことを確認
+			// Verify that Enter is not sent immediately
 			const immediateEnter = mockService.writeCalls.filter(c => c.data === '\r');
-			assert.strictEqual(immediateEnter.length, 0, '即座にはEnterが送信されないこと');
+			assert.strictEqual(immediateEnter.length, 0, 'Should not send Enter immediately');
 
-			// 50ms待機してEnterが送信されたことを確認
+			// Wait 50ms and verify that Enter was sent
 			await new Promise(resolve => setTimeout(resolve, 50));
 			const delayedEnter = mockService.writeCalls.filter(c => c.data === '\r');
-			assert.strictEqual(delayedEnter.length, 1, '遅延後にEnterが送信されること');
+			assert.strictEqual(delayedEnter.length, 1, 'Should send Enter after the delay');
 		});
 
-		test('Claude Code未起動時、通常の改行でショートカットコマンドを送信すること', () => {
+		test('Should send the shortcut command with a normal newline when Claude Code is not running', () => {
 			terminalProvider.handleShortcut('claude', false);
 
 			const normalWrite = mockService.writeCalls.find(c => c.data === 'claude\n');
-			assert.ok(normalWrite, 'コマンド + 改行が送信されること');
+			assert.ok(normalWrite, 'Should send the command + newline');
 		});
 
-		test('startsClaudeCode=trueの場合、isClaudeCodeRunningがtrueに更新されること', () => {
+		test('Should update isClaudeCodeRunning to true when startsClaudeCode=true', () => {
 			terminalProvider.handleShortcut('claude', true);
 
 			const provider = terminalProvider as any;
-			assert.strictEqual(provider._tabs[0].isClaudeCodeRunning, true, 'Claude Code起動状態に更新されること');
-			assert.strictEqual(provider._tabs[0].isProcessing, true, '処理中状態に更新されること');
+			assert.strictEqual(provider._tabs[0].isClaudeCodeRunning, true, 'Should update to the Claude Code running state');
+			assert.strictEqual(provider._tabs[0].isProcessing, true, 'Should update to the processing state');
 		});
 
-		test('コマンドが空の場合、write()が呼ばれないこと', () => {
+		test('Should not call write() when the command is empty', () => {
 			terminalProvider.handleShortcut('', false);
 
-			assert.strictEqual(mockService.writeCalls.length, 0, 'write()が呼ばれないこと');
+			assert.strictEqual(mockService.writeCalls.length, 0, 'Should not call write()');
 		});
 
-		test('execute=falseの場合、改行を付けずにコマンドが挿入されること', () => {
+		test('Should insert the command without a newline when execute=false', () => {
 			terminalProvider.handleShortcut('claude --from-pr ', false, false);
 
-			assert.strictEqual(mockService.writeCalls.length, 1, 'write()が1回だけ呼ばれること');
+			assert.strictEqual(mockService.writeCalls.length, 1, 'Should call write() only once');
 			assert.strictEqual(
 				mockService.writeCalls[0].data,
 				'claude --from-pr ',
-				'改行を付けずにコマンドが送信されること'
+				'Should send the command without a newline'
 			);
 		});
 
-		test('execute=falseの場合、Claude Code起動中でもEnterが送信されないこと', async () => {
+		test('Should not send Enter when execute=false even while Claude Code is running', async () => {
 			const provider = terminalProvider as any;
 			provider._tabs[0].isClaudeCodeRunning = true;
 
@@ -354,17 +354,17 @@ suite('TerminalProvider Bracket Paste Mode Test Suite', () => {
 
 			await new Promise(resolve => setTimeout(resolve, 150));
 			const enterWrites = mockService.writeCalls.filter(c => c.data === '\r');
-			assert.strictEqual(enterWrites.length, 0, 'Enterが送信されないこと');
+			assert.strictEqual(enterWrites.length, 0, 'Should not send Enter');
 		});
 
-		test('execute=falseの場合、Claude Codeの起動状態が変更されないこと', () => {
+		test('Should not change the Claude Code running state when execute=false', () => {
 			terminalProvider.handleShortcut('claude --from-pr ', true, false);
 
 			const provider = terminalProvider as any;
 			assert.strictEqual(
 				provider._tabs[0].isClaudeCodeRunning,
 				false,
-				'Claude Code起動状態が変更されないこと'
+				'Should not change the Claude Code running state'
 			);
 		});
 	});
@@ -381,46 +381,46 @@ suite('TerminalProvider Bracket Paste Mode Test Suite', () => {
 			realTerminalProvider.dispose();
 		});
 
-		test('実際のPTYセッションでブラケットペーストシーケンスが送信されること', async function() {
-			// Windows環境ではシェルが見つからないためスキップ
+		test('Should send the bracketed paste sequence in a real PTY session', async function() {
+			// Skipped on Windows because the shell is not found
 			if (process.platform === 'win32') {
 				this.skip();
 			}
 
-			// 実際のタブを作成
+			// Create a real tab
 			await realTerminalProvider.newTerminal();
 
 			const provider = realTerminalProvider as any;
 			const tab = provider._tabs[0];
-			assert.ok(tab, 'タブが作成されていること');
-			assert.ok(tab.sessionId, 'セッションIDが存在すること');
+			assert.ok(tab, 'Should have created the tab');
+			assert.ok(tab.sessionId, 'Should have a session ID');
 
-			// PTY出力をキャプチャ
+			// Capture the PTY output
 			const outputs: string[] = [];
 			const disposable = provider._terminalService.onOutput(tab.sessionId, (data: string) => {
 				outputs.push(data);
 			});
 
-			// Claude Code起動中の状態に設定
+			// Set the state to Claude Code running
 			tab.isClaudeCodeRunning = true;
 
-			// sendCommandでブラケットペーストモードのコマンドを送信
+			// Send the command in bracketed paste mode with sendCommand
 			await realTerminalProvider.sendCommand('/compact');
 
-			// PTYへの書き込みが完了するまで待機
+			// Wait until the write to the PTY completes
 			await new Promise(resolve => setTimeout(resolve, 100));
 
-			// PTY出力にブラケットペーストシーケンスが含まれることを確認
+			// Verify that the PTY output contains the bracketed paste sequence
 			const allOutput = outputs.join('');
 			assert.ok(
 				allOutput.includes('/compact'),
-				'PTY出力にコマンドが含まれること'
+				'PTY output should contain the command'
 			);
 
 			disposable.dispose();
 		});
 
-		test('実際のPTYセッションで通常のコマンド送信が行われること', async function() {
+		test('Should send a normal command in a real PTY session', async function() {
 			if (process.platform === 'win32') {
 				this.skip();
 			}
@@ -435,7 +435,7 @@ suite('TerminalProvider Bracket Paste Mode Test Suite', () => {
 				outputs.push(data);
 			});
 
-			// Claude Code未起動状態（デフォルト）でコマンドを送信
+			// Send the command while Claude Code is not running (default)
 			await realTerminalProvider.sendCommand('echo bracket_paste_test');
 
 			await new Promise(resolve => setTimeout(resolve, 100));
@@ -443,7 +443,7 @@ suite('TerminalProvider Bracket Paste Mode Test Suite', () => {
 			const allOutput = outputs.join('');
 			assert.ok(
 				allOutput.includes('echo bracket_paste_test') || allOutput.includes('bracket_paste_test'),
-				'PTY出力にコマンドまたはその結果が含まれること'
+				'PTY output should contain the command or its result'
 			);
 
 			disposable.dispose();
@@ -452,10 +452,10 @@ suite('TerminalProvider Bracket Paste Mode Test Suite', () => {
 });
 
 /**
- * テスト用MockWebviewView
+ * MockWebviewView for tests
  *
- * resolveWebviewView()が登録するメッセージハンドラを捕捉し、
- * Webview（タブのクリック等）からのメッセージ送信を再現する
+ * Captures the message handler registered by resolveWebviewView()
+ * and reproduces messages sent from the Webview (tab clicks, etc.)
  */
 class MockWebviewView {
 	public readonly postedMessages: any[] = [];
@@ -482,7 +482,7 @@ class MockWebviewView {
 	public show = () => {};
 
 	/**
-	 * Webviewからのメッセージ送信を再現する
+	 * Reproduces a message sent from the Webview
 	 */
 	public async receiveMessage(data: any): Promise<void> {
 		await this._messageHandler?.(data);
@@ -490,11 +490,11 @@ class MockWebviewView {
 }
 
 /**
- * タブとファイルの関連付け（v0.9.3のTerminal Viewタブ連携）を検証する
+ * Verifies the tab-file association (Terminal View tab linking from v0.9.3)
  *
- * Run / Plan / Specの送信時にタブとファイルが関連付けられ、
- * タブを切り替えるとそのファイルがEditor Viewで開かれ、
- * Plans Viewが親ディレクトリへ移動する
+ * A tab and a file are associated when Run / Plan / Spec is sent,
+ * switching to the tab opens that file in the Editor View,
+ * and the Plans View moves to its parent directory
  */
 suite('TerminalProvider Tab-File Association Test Suite', () => {
 	let terminalProvider: TerminalProvider;
@@ -503,20 +503,20 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 	let showFileCalls: string[];
 	let setActiveFolderCalls: { folderPath: string | undefined; force?: boolean }[];
 
-	// 実ファイルを作成する（リネーム追従の検証にファイルシステムが必要なため）
+	// Create real files (the file system is needed to verify following renames)
 	let tmpRoot: string | undefined;
 	let plansRoot: string;
 	let dirA: string;
 	let fileA: string;
 	let fileB: string;
 
-	// 拡張機能のルート（out/test/suite/providers からの相対）
-	// _getHtmlForWebview()がresources/webview/terminal/index.htmlを読むため実パスが必要
+	// Extension root (relative to out/test/suite/providers)
+	// A real path is needed because _getHtmlForWebview() reads resources/webview/terminal/index.html
 	const extensionRoot = path.resolve(__dirname, '..', '..', '..', '..');
 
 	/**
-	 * 新しいタブを作成し、そのタブへコマンドを送信してタブIDを返す
-	 * @param filePath 関連付けるファイルパス（未指定の場合は関連付けを行わない）
+	 * Creates a new tab, sends a command to it, and returns the tab ID
+	 * @param filePath File path to associate (no association when omitted)
 	 */
 	async function sendToNewTab(filePath?: string): Promise<string> {
 		await terminalProvider.newTerminal();
@@ -532,33 +532,33 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 	}
 
 	/**
-	 * 条件が満たされるまで待機する
-	 * （_closeTab()はタブのアクティブ化を待たないため、結果の確認に使う）
+	 * Waits until the condition is met
+	 * (used to check results, because _closeTab() does not wait for the tab activation)
 	 */
 	async function waitFor(condition: () => boolean, timeoutMs = 2000): Promise<void> {
 		const start = Date.now();
 		while (!condition()) {
 			if (Date.now() - start > timeoutMs) {
-				throw new Error('条件が満たされませんでした');
+				throw new Error('The condition was not met');
 			}
 			await new Promise(resolve => setTimeout(resolve, 5));
 		}
 	}
 
 	/**
-	 * タブに関連付けられているファイルパスを取得する
+	 * Gets the file path associated with the tab
 	 */
 	function getAssociatedFilePath(tabId: string): string | undefined {
 		return ((terminalProvider as any)._tabFileMap as Map<string, string>).get(tabId);
 	}
 
 	setup(async function() {
-		// Windows環境ではシェルが見つからないためスキップ
+		// Skipped on Windows because the shell is not found
 		if (process.platform === 'win32') {
 			this.skip();
 		}
 
-		// タスクディレクトリを模した構成を作成する
+		// Create a structure that mimics task directories
 		tmpRoot = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'terminal-provider-test-'));
 		plansRoot = path.join(tmpRoot, '.claude', 'plans');
 		dirA = path.join(plansRoot, '2026_0101_0000_00');
@@ -589,7 +589,7 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 			}
 		} as IPlansProvider);
 
-		// Webviewを解決してメッセージハンドラを登録させる
+		// Resolve the Webview so that it registers the message handler
 		mockView = new MockWebviewView();
 		await terminalProvider.resolveWebviewView(mockView as any, {} as any, {} as any);
 	});
@@ -602,20 +602,20 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 		}
 	});
 
-	test('タブを切り替えると、そのタブへ送信したファイルがEditor Viewで開かれること', async () => {
+	test('Should open the file sent to the tab in the Editor View when switching tabs', async () => {
 		const tabA = await sendToNewTab(fileA);
 		const tabB = await sendToNewTab(fileB);
 
 		showFileCalls = [];
 
 		await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
-		assert.deepStrictEqual(showFileCalls, [fileA], 'タブAのファイルが開かれること');
+		assert.deepStrictEqual(showFileCalls, [fileA], 'Should open the file of tab A');
 
 		await mockView.receiveMessage({ type: 'activateTab', tabId: tabB });
-		assert.deepStrictEqual(showFileCalls, [fileA, fileB], 'タブBのファイルが開かれること');
+		assert.deepStrictEqual(showFileCalls, [fileA, fileB], 'Should open the file of tab B');
 	});
 
-	test('タブを切り替えると、Plans Viewが関連ファイルの親ディレクトリへ移動すること', async () => {
+	test('Should move the Plans View to the parent directory of the associated file when switching tabs', async () => {
 		const tabA = await sendToNewTab(fileA);
 		await sendToNewTab(fileB);
 
@@ -626,12 +626,12 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 		assert.deepStrictEqual(
 			setActiveFolderCalls,
 			[{ folderPath: path.dirname(fileA), force: false }],
-			'親ディレクトリへforce=falseで移動すること'
+			'Should move to the parent directory with force=false'
 		);
 	});
 
-	test('ファイルパスを渡さない送信ではタブに関連付けされないこと', async () => {
-		// ファイル未オープン時のRun（runCommandWithoutFile）はfilePathを渡さない
+	test('Should not associate the tab when sending without a file path', async () => {
+		// Run without an open file (runCommandWithoutFile) does not pass filePath
 		const tabWithoutFile = await sendToNewTab(undefined);
 		await sendToNewTab(fileA);
 
@@ -640,63 +640,63 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 
 		await mockView.receiveMessage({ type: 'activateTab', tabId: tabWithoutFile });
 
-		assert.deepStrictEqual(showFileCalls, [], 'Editor Viewが更新されないこと');
-		assert.deepStrictEqual(setActiveFolderCalls, [], 'Plans Viewが移動しないこと');
+		assert.deepStrictEqual(showFileCalls, [], 'Should not update the Editor View');
+		assert.deepStrictEqual(setActiveFolderCalls, [], 'Should not move the Plans View');
 	});
 
-	test('同じタブへ続けて送信すると、関連付けが最後のファイルで上書きされること', async () => {
+	test('Should overwrite the association with the last file when sending to the same tab repeatedly', async () => {
 		const tabA = await sendToNewTab(fileA);
-		// 同じタブでPlanを実行する
+		// Run Plan in the same tab
 		await terminalProvider.sendCommand('echo test', true, fileB, 'plan');
 
-		// 別のタブへ移動してから戻る
+		// Move to another tab and come back
 		await sendToNewTab(undefined);
 		showFileCalls = [];
 
 		await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
 
-		assert.deepStrictEqual(showFileCalls, [fileB], '最後に送信したファイルが開かれること');
+		assert.deepStrictEqual(showFileCalls, [fileB], 'Should open the last sent file');
 	});
 
-	test('存在しないタブIDを指定してもEditor Viewが更新されないこと', async () => {
+	test('Should not update the Editor View when a nonexistent tab ID is given', async () => {
 		await sendToNewTab(fileA);
 		showFileCalls = [];
 
 		await mockView.receiveMessage({ type: 'activateTab', tabId: 'tab-does-not-exist' });
 
-		assert.deepStrictEqual(showFileCalls, [], 'Editor Viewが更新されないこと');
+		assert.deepStrictEqual(showFileCalls, [], 'Should not update the Editor View');
 	});
 
-	test('アクティブタブを閉じると、次にアクティブ化されるタブの関連ファイルが開かれること', async () => {
+	test('Should open the associated file of the next activated tab when the active tab is closed', async () => {
 		await sendToNewTab(fileA);
-		await sendToNewTab(fileB); // タブBがアクティブ
+		await sendToNewTab(fileB); // Tab B is active
 
 		showFileCalls = [];
 
-		// killTerminal()はアクティブタブ（タブB）を閉じ、タブAをアクティブ化する
+		// killTerminal() closes the active tab (tab B) and activates tab A
 		terminalProvider.killTerminal();
 		await waitFor(() => showFileCalls.length > 0);
 
-		assert.deepStrictEqual(showFileCalls, [fileA], 'タブAのファイルが開かれること');
+		assert.deepStrictEqual(showFileCalls, [fileA], 'Should open the file of tab A');
 	});
 
-	test('タブを閉じると、そのタブの関連付けが削除されること', async () => {
+	test('Should remove the association of the tab when it is closed', async () => {
 		const tabA = await sendToNewTab(fileA);
 		await sendToNewTab(fileB);
 
-		// タブAをアクティブにしてから閉じる
+		// Activate tab A and then close it
 		await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
 		terminalProvider.killTerminal();
 
-		assert.strictEqual(getAssociatedFilePath(tabA), undefined, '閉じたタブの関連付けが残らないこと');
+		assert.strictEqual(getAssociatedFilePath(tabA), undefined, 'Should not keep the association of the closed tab');
 	});
 
-	suite('ディレクトリのリネームへの追従', () => {
-		// Quick Startのテンプレートは、タスク内容に応じたディレクトリ名へのリネームをAIエージェントへ指示する（v1.0.20）
+	suite('Following directory renames', () => {
+		// The Quick Start template instructs the AI agent to rename the directory to match the task (v1.0.20)
 		const RENAMED_DIR_NAME = 'weather-osaka';
 
 		/**
-		 * ファイルが格納されているディレクトリをリネームし、リネーム後のファイルパスを返す
+		 * Renames the directory containing the file and returns the file path after the rename
 		 */
 		async function renameDirectory(): Promise<string> {
 			const renamedDir = path.join(plansRoot, RENAMED_DIR_NAME);
@@ -704,7 +704,7 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 			return path.join(renamedDir, path.basename(fileA));
 		}
 
-		test('ディレクトリ名が変更されていても、リネーム後のファイルが開かれること', async () => {
+		test('Should open the renamed file even when the directory name has changed', async () => {
 			const tabA = await sendToNewTab(fileA);
 			await sendToNewTab(fileB);
 
@@ -716,11 +716,11 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 			assert.deepStrictEqual(
 				showFileCalls,
 				[renamedFilePath],
-				'リネーム後のパスでファイルが開かれること'
+				'Should open the file at the renamed path'
 			);
 		});
 
-		test('ディレクトリ名が変更されていても、Plans Viewがリネーム後のディレクトリへ移動すること', async () => {
+		test('Should move the Plans View to the renamed directory even when the directory name has changed', async () => {
 			const tabA = await sendToNewTab(fileA);
 			await sendToNewTab(fileB);
 
@@ -732,11 +732,11 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 			assert.deepStrictEqual(
 				setActiveFolderCalls,
 				[{ folderPath: path.dirname(renamedFilePath), force: false }],
-				'リネーム後のディレクトリへ移動すること'
+				'Should move to the renamed directory'
 			);
 		});
 
-		test('リネームを検出したら、タブの関連付けが新しいパスへ更新されること', async () => {
+		test('Should update the tab association to the new path when a rename is detected', async () => {
 			const tabA = await sendToNewTab(fileA);
 			await sendToNewTab(fileB);
 
@@ -746,11 +746,11 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 			assert.strictEqual(
 				getAssociatedFilePath(tabA),
 				renamedFilePath,
-				'関連付けがリネーム後のパスへ更新されること'
+				'Should update the association to the renamed path'
 			);
 		});
 
-		test('ディレクトリごと削除された場合は、Editor Viewを更新せず関連付けを破棄すること', async () => {
+		test('Should discard the association without updating the Editor View when the whole directory is deleted', async () => {
 			const tabA = await sendToNewTab(fileA);
 			await sendToNewTab(fileB);
 
@@ -760,16 +760,16 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 
 			await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
 
-			assert.deepStrictEqual(showFileCalls, [], 'Editor Viewが更新されないこと');
-			assert.deepStrictEqual(setActiveFolderCalls, [], 'Plans Viewが移動しないこと');
-			assert.strictEqual(getAssociatedFilePath(tabA), undefined, '関連付けが破棄されること');
+			assert.deepStrictEqual(showFileCalls, [], 'Should not update the Editor View');
+			assert.deepStrictEqual(setActiveFolderCalls, [], 'Should not move the Plans View');
+			assert.strictEqual(getAssociatedFilePath(tabA), undefined, 'Should discard the association');
 		});
 
-		test('同名ファイルを持つディレクトリが無い場合は、関連付けを破棄すること', async () => {
+		test('Should discard the association when no directory has a file with the same name', async () => {
 			const tabA = await sendToNewTab(fileA);
 			await sendToNewTab(fileB);
 
-			// ファイル名も変わってしまった場合は追跡できない
+			// Cannot be tracked when the file name has also changed
 			const renamedDir = path.join(plansRoot, RENAMED_DIR_NAME);
 			await fsPromises.rename(dirA, renamedDir);
 			await fsPromises.rename(
@@ -780,8 +780,8 @@ suite('TerminalProvider Tab-File Association Test Suite', () => {
 
 			await mockView.receiveMessage({ type: 'activateTab', tabId: tabA });
 
-			assert.deepStrictEqual(showFileCalls, [], 'Editor Viewが更新されないこと');
-			assert.strictEqual(getAssociatedFilePath(tabA), undefined, '関連付けが破棄されること');
+			assert.deepStrictEqual(showFileCalls, [], 'Should not update the Editor View');
+			assert.strictEqual(getAssociatedFilePath(tabA), undefined, 'Should discard the association');
 		});
 	});
 });

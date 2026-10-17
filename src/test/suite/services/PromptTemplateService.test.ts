@@ -14,7 +14,7 @@ suite('PromptTemplateService Test Suite', () => {
 	let globalRoot: string;
 	let globalPromptsDir: string;
 
-	// 設定でグローバル配置先が差し替えられている環境ではglobalStorageUriが使われない
+	// globalStorageUri is not used when the global location is overridden by the settings
 	const isGlobalPathConfigured = (): boolean => {
 		const configured = vscode.workspace
 			.getConfiguration('aiCodingSidebar')
@@ -22,7 +22,7 @@ suite('PromptTemplateService Test Suite', () => {
 		return !!(configured && configured.trim());
 	};
 
-	// 読み込み元の設定。既定は現行どおり全て読み込む
+	// Source settings. By default, all sources are loaded as before
 	const settingsWith = (overrides: Partial<TemplateSourceSettings> = {}): TemplateSourceSettings => ({
 		workspaceTemplates: true,
 		globalTemplates: true,
@@ -31,8 +31,8 @@ suite('PromptTemplateService Test Suite', () => {
 		...overrides
 	});
 
-	// 拡張機能の同梱テンプレートとグローバル配置先を差し替えるため、一時ディレクトリを使う
-	// 設定は実際の設定値ではなく引数で差し替える（テストが環境設定に依存しないようにするため）
+	// Use a temporary directory to replace the extension's bundled templates and the global location
+	// Settings are replaced via arguments instead of actual values (so the tests do not depend on the environment)
 	const createService = (
 		overrides: Partial<TemplateSourceSettings> = {}
 	): PromptTemplateService => {
@@ -140,7 +140,7 @@ suite('PromptTemplateService Test Suite', () => {
 
 			const templates = await promptTemplateService.listTemplates();
 
-			// 表示名にH1を使った場合でも本文は加工しない
+			// The body is not modified even when the H1 is used as the display name
 			assert.strictEqual(templates[0].body, content);
 		});
 	});
@@ -235,7 +235,7 @@ suite('PromptTemplateService Test Suite', () => {
 	suite('createWorkspaceTemplate', () => {
 		test('Should throw an error when no workspace is open', async function () {
 			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-				// ワークスペースが開かれている環境では作成先が決まるため対象外
+				// Skipped when a workspace is open, because the destination is determined
 				this.skip();
 				return;
 			}
@@ -247,7 +247,7 @@ suite('PromptTemplateService Test Suite', () => {
 	suite('setupWorkspaceTemplates', () => {
 		test('Should return undefined when no workspace is open', async function () {
 			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-				// ワークスペースが開かれている環境ではコピー先が決まるため対象外
+				// Skipped when a workspace is open, because the copy destination is determined
 				this.skip();
 				return;
 			}
@@ -282,7 +282,7 @@ suite('PromptTemplateService Test Suite', () => {
 
 			const templates = await promptTemplateService.listTemplates();
 
-			// ユーザー定義が1件でもあれば同梱分は混ぜない
+			// If there is even one user-defined template, the bundled ones are not mixed in
 			assert.deepStrictEqual(templates.map(template => template.id), ['shared']);
 			assert.strictEqual(templates[0].origin, 'global');
 		});
@@ -304,7 +304,7 @@ suite('PromptTemplateService Test Suite', () => {
 		test('Should prefer the workspace template when the same file name exists in both', async function () {
 			const workspaceDir = promptTemplateService.getWorkspaceTemplatesDir();
 			if (isGlobalPathConfigured() || !workspaceDir || fs.existsSync(workspaceDir)) {
-				// 既存のワークスペーステンプレートを壊さないため、未作成の場合のみ実行する
+				// Run only when not created yet, so as not to break existing workspace templates
 				this.skip();
 				return;
 			}
@@ -320,7 +320,7 @@ suite('PromptTemplateService Test Suite', () => {
 
 				const templates = await promptTemplateService.listTemplates();
 
-				// ワークスペース分→グローバル分の順。同名はワークスペースを残す
+				// Workspace ones first, then global ones. For the same name, the workspace one is kept
 				assert.deepStrictEqual(
 					templates.map(template => template.id),
 					['only_workspace', 'shared', 'only_global']
@@ -387,7 +387,7 @@ suite('PromptTemplateService Test Suite', () => {
 		test('Should copy the bundled templates when there is no user template yet', async function () {
 			const workspaceDir = promptTemplateService.getWorkspaceTemplatesDir();
 			if (isGlobalPathConfigured() || (workspaceDir && fs.existsSync(workspaceDir))) {
-				// ワークスペース側にテンプレートがある環境では同梱分をコピーしない仕様のため対象外
+				// Skipped when the workspace has templates, because the bundled ones are not copied in that case by design
 				this.skip();
 				return;
 			}
@@ -396,7 +396,7 @@ suite('PromptTemplateService Test Suite', () => {
 
 			await promptTemplateService.createGlobalTemplate('my snippet');
 
-			// 1件作った瞬間に同梱分が一覧から消えないようコピーされる
+			// Copied so that the bundled ones do not disappear from the list as soon as one is created
 			assert.ok(fs.existsSync(path.join(globalPromptsDir, 'refactor.md')));
 		});
 
@@ -436,7 +436,7 @@ suite('PromptTemplateService Test Suite', () => {
 				fs.mkdirSync(workspaceDir, { recursive: true });
 				fs.writeFileSync(path.join(workspaceDir, 'shared.md'), '# Shared', 'utf8');
 
-				// ワークスペースには存在するがグローバルには無いため作成できる
+				// Can be created because it exists in the workspace but not in the global location
 				assert.strictEqual(
 					await promptTemplateService.validateTemplateName('shared', 'global'),
 					undefined
@@ -462,7 +462,7 @@ suite('PromptTemplateService Test Suite', () => {
 			const service = createService({ globalPromptTemplates: false });
 			const templates = await service.listTemplates();
 
-			// 有効な読み込み元が空になるため同梱分へフォールバックする
+			// Falls back to the bundled ones because the enabled sources are empty
 			assert.deepStrictEqual(templates.map(template => template.id), ['bundled']);
 			assert.strictEqual(templates[0].origin, 'bundled');
 		});
@@ -489,7 +489,7 @@ suite('PromptTemplateService Test Suite', () => {
 		test('Should show the global template that the workspace one hides when the workspace is disabled', async function () {
 			const workspaceDir = promptTemplateService.getWorkspaceTemplatesDir();
 			if (isGlobalPathConfigured() || !workspaceDir || fs.existsSync(workspaceDir)) {
-				// 既存のワークスペーステンプレートを壊さないため、未作成の場合のみ実行する
+				// Run only when not created yet, so as not to break existing workspace templates
 				this.skip();
 				return;
 			}
@@ -504,7 +504,7 @@ suite('PromptTemplateService Test Suite', () => {
 				const service = createService({ workspacePromptTemplates: false });
 				const templates = await service.listTemplates();
 
-				// 同名で隠れていたグローバル分が表示される
+				// The global one that was hidden by the same name is shown
 				assert.deepStrictEqual(templates.map(template => template.id), ['shared']);
 				assert.strictEqual(templates[0].origin, 'global');
 				assert.strictEqual(templates[0].body, '# Global shared');
@@ -525,7 +525,7 @@ suite('PromptTemplateService Test Suite', () => {
 				fs.mkdirSync(workspaceDir, { recursive: true });
 				fs.writeFileSync(path.join(workspaceDir, 'shared.md'), '# Workspace shared', 'utf8');
 
-				// ワークスペース分は一覧に出ないため、グローバルへの初回作成では同梱分をコピーする
+				// The workspace ones are not listed, so the first creation in the global location copies the bundled ones
 				const service = createService({ workspacePromptTemplates: false });
 				await service.createGlobalTemplate('new_one');
 

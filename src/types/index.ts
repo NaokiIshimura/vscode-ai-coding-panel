@@ -1,15 +1,15 @@
 /**
- * 型定義とエラークラス
+ * Type definitions and error classes
  */
 
-// ファイル操作の結果
+// File operation result
 export interface FileOperationResult {
     success: boolean;
     message?: string;
     error?: Error;
 }
 
-// ファイル統計情報
+// File statistics
 export interface FileStats {
     size: number;
     created: Date;
@@ -20,14 +20,14 @@ export interface FileStats {
     permissions?: FilePermissions;
 }
 
-// ファイル権限
+// File permissions
 export interface FilePermissions {
     readable: boolean;
     writable: boolean;
     executable: boolean;
 }
 
-// 表示オプション
+// Display options
 export interface DisplayOptions {
     sortBy: SortField;
     sortOrder: SortOrder;
@@ -53,7 +53,7 @@ export enum ViewMode {
     Tree = 'tree'
 }
 
-// 操作の進捗状況
+// Operation progress
 export interface OperationProgress {
     total: number;
     completed: number;
@@ -61,7 +61,7 @@ export interface OperationProgress {
     percentage: number;
 }
 
-// エラータイプ
+// Error types
 export enum FileOperationErrorType {
     NotFound = 'NOT_FOUND',
     PermissionDenied = 'PERMISSION_DENIED',
@@ -72,7 +72,7 @@ export enum FileOperationErrorType {
     Unknown = 'UNKNOWN'
 }
 
-// カスタムエラークラス
+// Custom error class
 export class FileOperationError extends Error {
     constructor(
         public type: FileOperationErrorType,
@@ -86,35 +86,35 @@ export class FileOperationError extends Error {
     static notFound(path: string): FileOperationError {
         return new FileOperationError(
             FileOperationErrorType.NotFound,
-            `ファイルまたはフォルダが見つかりません: ${path}`
+            `File or folder not found: ${path}`
         );
     }
 
     static permissionDenied(path: string): FileOperationError {
         return new FileOperationError(
             FileOperationErrorType.PermissionDenied,
-            `アクセスが拒否されました: ${path}`
+            `Permission denied: ${path}`
         );
     }
 
     static alreadyExists(path: string): FileOperationError {
         return new FileOperationError(
             FileOperationErrorType.AlreadyExists,
-            `ファイルまたはフォルダは既に存在します: ${path}`
+            `File or folder already exists: ${path}`
         );
     }
 
     static invalidPath(path: string): FileOperationError {
         return new FileOperationError(
             FileOperationErrorType.InvalidPath,
-            `無効なパスです: ${path}`
+            `Invalid path: ${path}`
         );
     }
 
     static invalidName(name: string): FileOperationError {
         return new FileOperationError(
             FileOperationErrorType.InvalidName,
-            `無効なファイル名です: ${name}`
+            `Invalid file name: ${name}`
         );
     }
 }

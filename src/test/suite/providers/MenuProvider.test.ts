@@ -30,7 +30,7 @@ suite('MenuProvider Test Suite', () => {
 		test('Root menu should contain expected sections', async () => {
 			const children = await menuProvider.getChildren();
 
-			// メニューに特定のセクションが含まれているか確認
+			// Check that the menu contains specific sections
 			const labels = children.map(item => item.label);
 			assert.ok(labels.some(label => typeof label === 'string' && label.includes('Guide')));
 		});
@@ -38,7 +38,7 @@ suite('MenuProvider Test Suite', () => {
 		test('Global and Workspace should be expanded by default', async () => {
 			const rootItems = await menuProvider.getChildren();
 
-			// 子項目を一括取得させて往復回数を減らすため、展開状態で返す
+			// Returned expanded so that child items are fetched at once, reducing round trips
 			['Global', 'Workspace'].forEach(label => {
 				const item = rootItems.find(i => i.label === label);
 				assert.ok(item, `${label} should exist`);
@@ -53,7 +53,7 @@ suite('MenuProvider Test Suite', () => {
 			const rootItems = await menuProvider.getChildren();
 			const usageGuide = rootItems.find(item => item.label === 'Usage Guide');
 
-			// 項目数が多く常用しないため既定で閉じる
+			// Collapsed by default because it has many items and is not used often
 			assert.ok(usageGuide);
 			assert.strictEqual(
 				usageGuide!.collapsibleState,
@@ -64,7 +64,7 @@ suite('MenuProvider Test Suite', () => {
 		test('Should handle element parameter correctly', async () => {
 			const rootItems = await menuProvider.getChildren();
 
-			// 親要素を持つアイテムがあれば、その子要素を取得
+			// If an item has children, get its child items
 			const parentItem = rootItems.find(item => item.children && item.children.length > 0);
 
 			if (parentItem && parentItem.children) {
@@ -77,7 +77,7 @@ suite('MenuProvider Test Suite', () => {
 	suite('refresh', () => {
 		test('Should fire onDidChangeTreeData event', (done) => {
 			menuProvider.onDidChangeTreeData(() => {
-				// イベントが発火したことを確認
+				// Verify that the event fired
 				done();
 			});
 
@@ -92,7 +92,7 @@ suite('MenuProvider Test Suite', () => {
 
 		test('Should allow event subscription', () => {
 			const subscription = menuProvider.onDidChangeTreeData(() => {
-				// イベントハンドラー
+				// Event handler
 			});
 
 			assert.ok(subscription);

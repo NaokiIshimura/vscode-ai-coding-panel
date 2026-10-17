@@ -1,29 +1,29 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-// サービスクラスのインポート
+// Service class imports
 import { FileOperationService } from './services/FileOperationService';
 import { TemplateService } from './services/TemplateService';
 import { PromptTemplateService } from './services/PromptTemplateService';
 import { FileWatcherService } from './services/FileWatcherService';
 
-// コマンド登録のインポート
+// Command registration imports
 import { registerAllCommands } from './commands';
 
-// プロバイダーのインポート
+// Provider imports
 import { PlansProvider, MenuProvider, EditorProvider, TerminalProvider } from './providers';
 
 export function activate(context: vscode.ExtensionContext) {
-    // サービスクラスの初期化
+    // Initialize service classes
     const fileOperationService = new FileOperationService();
     const templateService = new TemplateService(context);
     const promptTemplateService = new PromptTemplateService(context, templateService);
 
-    // 共通のファイルウォッチャーサービスを作成
+    // Create the shared file watcher service
     const fileWatcherService = new FileWatcherService();
     context.subscriptions.push(fileWatcherService);
 
-    // ステータスバーアイテムを作成
+    // Create the status bar item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.text = "$(gear) AI Coding Panel Settings";
     statusBarItem.tooltip = "AI Coding Panel extension workspace settings";
@@ -31,24 +31,24 @@ export function activate(context: vscode.ExtensionContext) {
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 
-    // TreeDataProviderを作成
+    // Create the TreeDataProvider
     const menuProvider = new MenuProvider();
     const plansProvider = new PlansProvider(fileWatcherService, context.extensionUri);
     const editorProvider = new EditorProvider(context.extensionUri, templateService, promptTemplateService);
 
-    // EditorProviderをPlansProviderに設定
+    // Set the EditorProvider on the PlansProvider
     plansProvider.setEditorProvider(editorProvider);
-    // PlansProviderをEditorProviderに設定
+    // Set the PlansProvider on the EditorProvider
     editorProvider.setDetailsProvider(plansProvider);
     editorProvider.setPlansProvider(plansProvider);
 
-    // Terminal Providerを作成（EditorProviderに設定するため先に作成）
+    // Create the Terminal Provider (created first so it can be set on the EditorProvider)
     const terminalProvider = new TerminalProvider(context.extensionUri);
     editorProvider.setTerminalProvider(terminalProvider);
     terminalProvider.setEditorProvider(editorProvider);
     terminalProvider.setPlansProvider(plansProvider);
 
-    // プロジェクトルートを設定
+    // Set the project root
     const initializeWithWorkspaceRoot = async () => {
         if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
             return;
@@ -56,7 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
-        // 設定から相対パスを取得
+        // Get the relative path from settings
         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
         const defaultRelativePath = config.get<string>('plans.defaultRelativePath');
 
@@ -64,11 +64,11 @@ export function activate(context: vscode.ExtensionContext) {
         let relativePath: string | undefined;
 
         if (defaultRelativePath && defaultRelativePath.trim()) {
-            // 相対パスを絶対パスに変換
+            // Convert the relative path to an absolute path
             relativePath = defaultRelativePath.trim();
             targetPath = path.resolve(workspaceRoot, relativePath);
         } else {
-            // ワークスペースルートを使用
+            // Use the workspace root
             targetPath = workspaceRoot;
             relativePath = undefined;
         }
@@ -76,7 +76,7 @@ export function activate(context: vscode.ExtensionContext) {
         await plansProvider.setRootPath(targetPath, relativePath);
     };
 
-    // ビューを登録
+    // Register the views
     context.subscriptions.push(
         vscode.window.createTreeView('workspaceSettings', {
             treeDataProvider: menuProvider,
@@ -84,8 +84,8 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // Plans Viewを登録
-    // 可視性の監視とクリック時の処理はPlansProvider内部で行う
+    // Register the Plans View
+    // Visibility monitoring and click handling are done inside PlansProvider
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             PlansProvider.viewType,
@@ -98,7 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
         )
     );
 
-    // Markdown Editor Viewを登録
+    // Register the Markdown Editor View
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             EditorProvider.viewType,
@@ -106,7 +106,7 @@ export function activate(context: vscode.ExtensionContext) {
         )
     );
 
-    // Terminal Viewを登録
+    // Register the Terminal View
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             TerminalProvider.viewType,
@@ -119,13 +119,13 @@ export function activate(context: vscode.ExtensionContext) {
         )
     );
 
-    // 初期化を実行
+    // Run initialization
     initializeWithWorkspaceRoot();
 
-    // ビューを有効化
+    // Enable the views
     vscode.commands.executeCommand('setContext', 'aiCodingSidebarView:enabled', true);
 
-    // 全てのコマンドを登録
+    // Register all commands
     const commandDeps = {
         plansProvider,
         editorProvider,
@@ -136,7 +136,7 @@ export function activate(context: vscode.ExtensionContext) {
     };
     registerAllCommands(context, commandDeps);
 
-    // プロバイダーのリソースクリーンアップを登録
+    // Register resource cleanup for the providers
     context.subscriptions.push({
         dispose: () => {
             plansProvider.dispose();

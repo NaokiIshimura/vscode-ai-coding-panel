@@ -11,11 +11,11 @@ import {
 import { TemplateSourceSettings } from '../../../utils/templateSourceSettings';
 
 suite('templateUtils Test Suite', () => {
-	// テスト専用の一時ディレクトリを使用（既存のファイルを破壊しない）
+	// Use a test-only temporary directory (so existing files are not destroyed)
 	const testFixturesDir = path.join(__dirname, '../../fixtures/templates');
 	const extensionPath = path.join(__dirname, '../../../..');
 
-	// ワークスペース側のテンプレートは最優先のため、存在する環境ではテストをスキップする
+	// Workspace templates take top priority, so skip the tests when they exist
 	const workspaceTemplatePathFor = (templateType: TemplateType): string | undefined => {
 		const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 		return workspaceRoot
@@ -23,13 +23,13 @@ suite('templateUtils Test Suite', () => {
 			: undefined;
 	};
 
-	// テスト前にfixturesディレクトリを作成
+	// Create the fixtures directory before the tests
 	suiteSetup(() => {
 		if (!fs.existsSync(testFixturesDir)) {
 			fs.mkdirSync(testFixturesDir, { recursive: true });
 		}
 
-		// テスト用テンプレートファイルを作成
+		// Create the test template files
 		const promptTemplate = '# {{title}}\n\n{{content}}';
 		const taskTemplate = '## Task: {{taskName}}\n\n{{description}}';
 		const specTemplate = '# Spec: {{specName}}\n\n{{details}}';
@@ -39,9 +39,9 @@ suite('templateUtils Test Suite', () => {
 		fs.writeFileSync(path.join(testFixturesDir, 'spec.md'), specTemplate, 'utf8');
 	});
 
-	// テスト後にクリーンアップ
+	// Clean up after the tests
 	suiteTeardown(() => {
-		// テスト用ディレクトリ全体を削除
+		// Remove the whole test directory
 		if (fs.existsSync(testFixturesDir)) {
 			fs.rmSync(testFixturesDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 		}
@@ -49,8 +49,8 @@ suite('templateUtils Test Suite', () => {
 
 	suite('loadTemplate', () => {
 		test('Should load prompt template and replace variables', async () => {
-			// testFixturesDirの親ディレクトリをextensionPathとして設定
-			// loadTemplateは extensionPath/templates を探す
+			// Use the parent directory of testFixturesDir as extensionPath
+			// loadTemplate looks in extensionPath/templates
 			const mockExtensionPath = path.join(testFixturesDir, '..');
 			const context = {
 				extensionPath: mockExtensionPath
@@ -107,7 +107,7 @@ suite('templateUtils Test Suite', () => {
 		test('Should prefer the global template over the bundled one', async function () {
 			const workspaceTemplate = workspaceTemplatePathFor('prompt');
 			if (workspaceTemplate && fs.existsSync(workspaceTemplate)) {
-				// ワークスペース側に同名テンプレートがある環境では優先順位が変わるため対象外
+				// Skipped when the workspace has a template with the same name, because the priority changes
 				this.skip();
 				return;
 			}
@@ -140,7 +140,7 @@ suite('templateUtils Test Suite', () => {
 
 			const globalRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'global-templates-test-'));
 			try {
-				// templatesディレクトリを作らないまま実行する
+				// Run without creating the templates directory
 				const context = {
 					extensionPath: path.join(testFixturesDir, '..'),
 					globalStorageUri: vscode.Uri.file(globalRoot)
@@ -148,7 +148,7 @@ suite('templateUtils Test Suite', () => {
 
 				const result = await loadTemplate(context, { title: 'Test Title', content: 'Body' }, 'prompt');
 
-				// fixturesの同梱テンプレート（# {{title}}\n\n{{content}}）が使われる
+				// The bundled fixture template (# {{title}}\n\n{{content}}) is used
 				assert.ok(result.includes('Test Title'));
 				assert.ok(result.includes('Body'));
 			} finally {
@@ -178,13 +178,13 @@ suite('templateUtils Test Suite', () => {
 			const variables = {};
 
 			const result = await loadTemplate(context, variables, 'prompt');
-			// 変数が置換されないため、{{title}}などがそのまま残る
+			// Variables are not replaced, so {{title}} and others remain as is
 			assert.ok(result.includes('{{title}}'));
 			assert.ok(result.includes('{{content}}'));
 		});
 
 		test('Should replace multiple occurrences of the same variable', () => {
-			// 同じ変数が複数回出現するテンプレート
+			// Template in which the same variable appears more than once
 			const multiTemplate = '{{name}} is {{name}}';
 			const multiTemplatePath = path.join(testFixturesDir, 'multi.md');
 			fs.writeFileSync(multiTemplatePath, multiTemplate, 'utf8');
@@ -198,8 +198,8 @@ suite('templateUtils Test Suite', () => {
 				name: 'John'
 			};
 
-			// テンプレートタイプを'multi'として指定できないため、
-			// 直接ファイルを読んで変数置換をテスト
+			// The template type cannot be specified as 'multi',
+			// so read the file directly and test the variable replacement
 			let content = fs.readFileSync(multiTemplatePath, 'utf8');
 			for (const [key, value] of Object.entries(variables)) {
 				const regex = new RegExp(`{{${key}}}`, 'g');
@@ -211,7 +211,7 @@ suite('templateUtils Test Suite', () => {
 	});
 
 	suite('loadTemplate with template source settings', () => {
-		// 読み込み元の設定。既定は現行どおり全て読み込む
+		// Source settings. By default, all sources are loaded as before
 		const settingsWith = (overrides: Partial<TemplateSourceSettings>): TemplateSourceSettings => ({
 			workspaceTemplates: true,
 			globalTemplates: true,
@@ -220,7 +220,7 @@ suite('templateUtils Test Suite', () => {
 			...overrides
 		});
 
-		// グローバルのテンプレートを持つ一時ディレクトリを用意する
+		// Prepare a temporary directory with global templates
 		const withGlobalTemplate = async (
 			content: string | undefined,
 			run: (context: vscode.ExtensionContext) => Promise<void>
@@ -245,7 +245,7 @@ suite('templateUtils Test Suite', () => {
 		test('Should skip the global template when it is disabled', async function () {
 			const workspaceTemplate = workspaceTemplatePathFor('prompt');
 			if (workspaceTemplate && fs.existsSync(workspaceTemplate)) {
-				// ワークスペース側が最優先になる環境では対象外
+				// Skipped when the workspace takes top priority
 				this.skip();
 				return;
 			}
@@ -258,7 +258,7 @@ suite('templateUtils Test Suite', () => {
 					settingsWith({ globalTemplates: false })
 				);
 
-				// グローバルを飛ばして同梱（fixtures）が使われる
+				// The global one is skipped and the bundled one (fixtures) is used
 				assert.ok(!result.startsWith('global:'));
 				assert.ok(result.includes('Test Title'));
 				assert.ok(result.includes('Body'));
@@ -287,7 +287,7 @@ suite('templateUtils Test Suite', () => {
 					settingsWith({ workspaceTemplates: false, globalTemplates: false })
 				);
 
-				// 同梱分は無効化できないため必ず見つかる
+				// The bundled templates cannot be disabled, so one is always found
 				assert.ok(!result.startsWith('global:'));
 				assert.ok(result.includes('Test Title'));
 				assert.ok(result.includes('Body'));
@@ -297,12 +297,12 @@ suite('templateUtils Test Suite', () => {
 		test('Should skip the workspace template when it is disabled', async function () {
 			const workspaceTemplate = workspaceTemplatePathFor('prompt');
 			if (!workspaceTemplate) {
-				// ワークスペース未オープンでは検証できない
+				// Cannot be verified without an open workspace
 				this.skip();
 				return;
 			}
 			if (fs.existsSync(workspaceTemplate)) {
-				// 既存のワークスペーステンプレートを壊さないため対象外
+				// Skipped so as not to break existing workspace templates
 				this.skip();
 				return;
 			}
@@ -314,7 +314,7 @@ suite('templateUtils Test Suite', () => {
 
 			try {
 				await withGlobalTemplate('global: {{title}}', async context => {
-					// 既定ではワークスペースが優先される
+					// The workspace takes precedence by default
 					const preferred = await loadTemplate(context, { title: 'Test Title' }, 'prompt');
 					assert.strictEqual(preferred, 'workspace: Test Title');
 

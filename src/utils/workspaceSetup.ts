@@ -4,7 +4,7 @@ import * as path from 'path';
 import { TEMPLATE_FILE_NAMES, WORKSPACE_TEMPLATES_RELATIVE_PATH } from './templateUtils';
 import { getGlobalTemplatesDir, openGlobalTemplatesRoot } from './globalTemplatePaths';
 
-// ファイルが存在するかチェックするヘルパー関数
+// Helper that checks whether a file exists
 async function fileExists(filePath: string): Promise<boolean> {
     try {
         await fsPromises.access(filePath);
@@ -14,20 +14,20 @@ async function fileExists(filePath: string): Promise<boolean> {
     }
 }
 
-// settings.jsonを設定するヘルパー関数
+// Helper that sets up settings.json
 export async function setupSettingsJson(workspaceRoot: string): Promise<void> {
     const vscodeDir = path.join(workspaceRoot, '.vscode');
     const settingsPath = path.join(vscodeDir, 'settings.json');
 
     try {
-        // .vscodeディレクトリを作成（存在しない場合）
+        // Create the .vscode directory (if it does not exist)
         if (!await fileExists(vscodeDir)) {
             await fsPromises.mkdir(vscodeDir, { recursive: true });
         }
 
         let settings: any = {};
 
-        // 既存のsettings.jsonを読み込み
+        // Read the existing settings.json
         if (await fileExists(settingsPath)) {
             try {
                 const content = await fsPromises.readFile(settingsPath, 'utf8');
@@ -37,16 +37,16 @@ export async function setupSettingsJson(workspaceRoot: string): Promise<void> {
             }
         }
 
-        // デフォルト設定を追加
+        // Add the default settings
         if (!settings.hasOwnProperty('aiCodingSidebar.plans.defaultRelativePath')) {
             settings['aiCodingSidebar.plans.defaultRelativePath'] = '.claude';
         }
 
-        // settings.jsonに書き込み
+        // Write settings.json
         const settingsContent = JSON.stringify(settings, null, 2);
         await fsPromises.writeFile(settingsPath, settingsContent, 'utf8');
 
-        // ファイルを開く
+        // Open the file
         const document = await vscode.workspace.openTextDocument(settingsPath);
         await vscode.window.showTextDocument(document);
 
@@ -57,11 +57,11 @@ export async function setupSettingsJson(workspaceRoot: string): Promise<void> {
 }
 
 /**
- * 同梱テンプレートを指定ディレクトリへコピーする
- * 既に存在するファイルは上書きしない
+ * Copy the bundled templates to the specified directory
+ * Existing files are not overwritten
  *
- * コピー対象は templateUtils の TEMPLATE_FILE_NAMES から導出しているため、
- * テンプレート種別を追加した際のコピー漏れが起きない
+ * The files to copy are derived from TEMPLATE_FILE_NAMES in templateUtils,
+ * so adding a template type cannot cause it to be left out of the copy
  */
 export async function copyBundledTemplates(
     context: vscode.ExtensionContext,
@@ -77,7 +77,7 @@ export async function copyBundledTemplates(
             continue;
         }
 
-        // 拡張機能内のtemplatesから読み込む
+        // Read from the templates bundled in the extension
         const extensionTemplatePath = path.join(context.extensionPath, 'templates', templateFile);
         if (!await fileExists(extensionTemplatePath)) {
             throw new Error(`Template file not found: ${extensionTemplatePath}`);
@@ -88,10 +88,10 @@ export async function copyBundledTemplates(
 }
 
 /**
- * コピーしたテンプレートの先頭ファイルを開く
+ * Open the first of the copied templates
  *
- * ワークスペース側のみで使う。グローバル側は特定のファイルを勝手に開かず、
- * OSのファイラーでディレクトリを表示するだけにしている
+ * Used only for the workspace side. The global side does not open any particular file on its own,
+ * and only shows the directory in the OS file manager
  */
 async function openFirstTemplate(templatesDir: string): Promise<void> {
     const firstTemplatePath = path.join(templatesDir, TEMPLATE_FILE_NAMES[0]);
@@ -99,7 +99,7 @@ async function openFirstTemplate(templatesDir: string): Promise<void> {
     await vscode.window.showTextDocument(document);
 }
 
-// テンプレートを設定するヘルパー関数
+// Helper that sets up the templates
 export async function setupTemplate(context: vscode.ExtensionContext, workspaceRoot: string): Promise<void> {
     const templatesDir = path.join(workspaceRoot, WORKSPACE_TEMPLATES_RELATIVE_PATH);
 
@@ -107,7 +107,7 @@ export async function setupTemplate(context: vscode.ExtensionContext, workspaceR
         await copyBundledTemplates(context, templatesDir);
         await openFirstTemplate(templatesDir);
 
-        // templatesフォルダをエクスプローラーで表示
+        // Reveal the templates folder in the Explorer
         vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(templatesDir));
 
         vscode.window.showInformationMessage(`Template files created: ${TEMPLATE_FILE_NAMES.join(', ')}`);
@@ -117,11 +117,11 @@ export async function setupTemplate(context: vscode.ExtensionContext, workspaceR
 }
 
 /**
- * グローバルのテンプレートを設定するヘルパー関数
+ * Helper that sets up the global templates
  *
- * ワークスペースが開かれていなくても実行できる。
- * 4ファイルのうちどれを編集したいかは利用者によるため、
- * 特定のファイルをエディタで開かずグローバル配置先を新しいウィンドウで開く
+ * Can run even when no workspace is open.
+ * Which of the 4 files the user wants to edit varies,
+ * so no particular file is opened in the editor; the global location is opened in a new window instead
  */
 export async function setupGlobalTemplate(context: vscode.ExtensionContext): Promise<void> {
     const templatesDir = getGlobalTemplatesDir(context);
@@ -133,7 +133,7 @@ export async function setupGlobalTemplate(context: vscode.ExtensionContext): Pro
     try {
         await copyBundledTemplates(context, templatesDir);
 
-        // 新しいウィンドウへフォーカスが移るため、通知を先に出す
+        // Show the notification first because focus moves to the new window
         vscode.window.showInformationMessage(`Global template files are ready: ${templatesDir}`);
 
         await openGlobalTemplatesRoot(context);
@@ -142,19 +142,19 @@ export async function setupGlobalTemplate(context: vscode.ExtensionContext): Pro
     }
 }
 
-// .claudeフォルダを設定するヘルパー関数
+// Helper that sets up the .claude folder
 export async function setupClaudeFolder(workspaceRoot: string): Promise<void> {
     try {
-        // .claudeフォルダを作成（存在しない場合）
+        // Create the .claude folder (if it does not exist)
         const claudeDir = path.join(workspaceRoot, '.claude');
         if (!await fileExists(claudeDir)) {
             await fsPromises.mkdir(claudeDir, { recursive: true });
         }
 
-        // settings.jsonも更新
+        // Also update settings.json
         await setupSettingsJson(workspaceRoot);
 
-        // 設定を適用
+        // Apply the settings
         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
         await config.update('plans.defaultRelativePath', '.claude', vscode.ConfigurationTarget.Workspace);
 

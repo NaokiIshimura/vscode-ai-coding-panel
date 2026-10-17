@@ -1,29 +1,29 @@
 import * as vscode from 'vscode';
 
 /**
- * ターミナル出力イベントのリスナー型
+ * Listener type for terminal output events
  */
 export type TerminalOutputListener = (data: string) => void;
 
 /**
- * ターミナルセッション終了イベントのリスナー型
+ * Listener type for terminal session exit events
  */
 export type TerminalExitListener = (sessionId: string, exitCode: number, signal?: number) => void;
 
 /**
- * プロセス情報
+ * Process information
  */
 export interface ProcessInfo {
     pid: number;
     ppid: number;
     command: string;
-    name?: string;           // プロセス名（例: "bash", "vim", "claude"）
-    isForeground?: boolean;  // フォアグラウンドプロセスか
+    name?: string;           // Process name (e.g. "bash", "vim", "claude")
+    isForeground?: boolean;  // Whether it is the foreground process
 }
 
 /**
- * プロセスツリーの解析結果
- * 1回のpsコマンド実行でClaude Code検知とフォアグラウンドプロセス名の両方を取得する
+ * Result of analyzing the process tree
+ * Gets both the Claude Code detection and the foreground process name from a single ps command run
  */
 export interface ProcessTreeResult {
     isClaudeCodeRunning: boolean;
@@ -31,89 +31,89 @@ export interface ProcessTreeResult {
 }
 
 /**
- * ターミナルサービスのインターフェース
+ * Interface of the terminal service
  */
 export interface ITerminalService extends vscode.Disposable {
     /**
-     * ターミナルセッションを作成
-     * @param cwd 作業ディレクトリ（オプション）
-     * @returns セッションID
+     * Create a terminal session
+     * @param cwd Working directory (optional)
+     * @returns Session ID
      */
     createSession(cwd?: string): Promise<string>;
 
     /**
-     * ターミナルセッションを終了
-     * @param sessionId セッションID
+     * Kill a terminal session
+     * @param sessionId Session ID
      */
     killSession(sessionId: string): void;
 
     /**
-     * ターミナルにデータを書き込む
-     * @param sessionId セッションID
-     * @param data 入力データ
+     * Write data to the terminal
+     * @param sessionId Session ID
+     * @param data Input data
      */
     write(sessionId: string, data: string): void;
 
     /**
-     * 出力リスナーを登録
-     * @param sessionId セッションID
-     * @param callback 出力時のコールバック
-     * @returns 登録解除用のDisposable
+     * Register an output listener
+     * @param sessionId Session ID
+     * @param callback Callback invoked on output
+     * @returns Disposable for unregistering
      */
     onOutput(sessionId: string, callback: TerminalOutputListener): vscode.Disposable;
 
     /**
-     * ターミナルをリサイズ
-     * @param sessionId セッションID
-     * @param cols 列数
-     * @param rows 行数
+     * Resize the terminal
+     * @param sessionId Session ID
+     * @param cols Number of columns
+     * @param rows Number of rows
      */
     resize(sessionId: string, cols: number, rows: number): void;
 
     /**
-     * node-ptyが利用可能かどうかを確認
+     * Check whether node-pty is available
      */
     isAvailable(): boolean;
 
     /**
-     * node-ptyが利用不可の場合の理由を取得
-     * @returns エラー理由（利用可能な場合は空文字列）
+     * Get the reason node-pty is unavailable
+     * @returns Error reason (empty string if available)
      */
     getUnavailableReason(): string;
 
     /**
-     * セッション終了イベントのリスナーを登録
-     * @param callback セッション終了時のコールバック
-     * @returns 登録解除用のDisposable
+     * Register a listener for session exit events
+     * @param callback Callback invoked when a session exits
+     * @returns Disposable for unregistering
      */
     onSessionExit(callback: TerminalExitListener): vscode.Disposable;
 
     /**
-     * 指定されたセッションの子プロセスを取得
-     * @param sessionId セッションID
-     * @returns プロセス情報の配列
+     * Get the child processes of the given session
+     * @param sessionId Session ID
+     * @returns Array of process information
      */
     getChildProcesses(sessionId: string): Promise<ProcessInfo[]>;
 
     /**
-     * 指定されたセッションでClaude Codeが起動しているか確認
-     * @param sessionId セッションID
-     * @returns Claude Codeが起動している場合true
+     * Check whether Claude Code is running in the given session
+     * @param sessionId Session ID
+     * @returns true if Claude Code is running
      */
     isClaudeCodeRunning(sessionId: string): Promise<boolean>;
 
     /**
-     * 指定されたセッションのフォアグラウンドプロセス名を取得
-     * @param sessionId セッションID
-     * @returns フォアグラウンドプロセス名（存在しない場合はnull）
+     * Get the foreground process name of the given session
+     * @param sessionId Session ID
+     * @returns Foreground process name (null if none)
      */
     getForegroundProcess(sessionId: string): Promise<string | null>;
 
     /**
-     * 指定されたセッションのプロセスツリーを1回のpsコマンドで取得し、
-     * Claude Code検知とフォアグラウンドプロセス名の両方を算出する
-     * @param sessionId セッションID
-     * @returns プロセスツリーの解析結果
+     * Get the process tree of the given session with a single ps command and
+     * compute both the Claude Code detection and the foreground process name
+     * @param sessionId Session ID
+     * @returns Result of analyzing the process tree
      */
     getProcessTree(sessionId: string): Promise<ProcessTreeResult>;
 }

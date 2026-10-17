@@ -3,20 +3,20 @@ import * as path from 'path';
 import { CommandDependencies } from './types';
 
 /**
- * ドキュメント関連のコマンドを登録
+ * Register documentation-related commands
  */
 export function registerDocumentationCommands(
     context: vscode.ExtensionContext,
     _deps: CommandDependencies
 ): void {
-    // ドキュメントを開くコマンド
+    // Command to open the documentation
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openDocumentation', () => {
             vscode.env.openExternal(vscode.Uri.parse('https://github.com/NaokiIshimura/vscode-ai-coding-sidebar'));
         })
     );
 
-    // Quick Startを開くコマンド
+    // Command to open Quick Start
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openGettingStarted', async () => {
             const extensionPath = context.extensionPath;
@@ -26,7 +26,7 @@ export function registerDocumentationCommands(
         })
     );
 
-    // Plans View Guideを開くコマンド
+    // Command to open the Plans View Guide
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openPlansViewGuide', async () => {
             const extensionPath = context.extensionPath;
@@ -36,7 +36,7 @@ export function registerDocumentationCommands(
         })
     );
 
-    // Editor View Guideを開くコマンド
+    // Command to open the Editor View Guide
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openEditorViewGuide', async () => {
             const extensionPath = context.extensionPath;
@@ -46,7 +46,7 @@ export function registerDocumentationCommands(
         })
     );
 
-    // Terminal View Guideを開くコマンド
+    // Command to open the Terminal View Guide
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openTerminalViewGuide', async () => {
             const extensionPath = context.extensionPath;
@@ -56,7 +56,7 @@ export function registerDocumentationCommands(
         })
     );
 
-    // Keyboard Shortcutsを開くコマンド
+    // Command to open Keyboard Shortcuts
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openKeyboardShortcuts', async () => {
             const extensionPath = context.extensionPath;

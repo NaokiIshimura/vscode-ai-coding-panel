@@ -8,22 +8,22 @@ import { setupSettingsJson, setupTemplate, setupGlobalTemplate, setupClaudeFolde
 suite('workspaceSetup Test Suite', () => {
 	const testWorkspaceRoot = path.join(__dirname, '../../fixtures/testWorkspace');
 
-	// テスト前にテストワークスペースを作成
+	// Create the test workspace before the tests
 	suiteSetup(() => {
 		if (!fs.existsSync(testWorkspaceRoot)) {
 			fs.mkdirSync(testWorkspaceRoot, { recursive: true });
 		}
 	});
 
-	// 各テスト後にクリーンアップ
+	// Clean up after each test
 	teardown(() => {
-		// .vscodeディレクトリを削除（Windowsでのファイルロック対策としてリトライを追加）
+		// Remove the .vscode directory (with retries to handle file locks on Windows)
 		const vscodeDir = path.join(testWorkspaceRoot, '.vscode');
 		if (fs.existsSync(vscodeDir)) {
 			try {
 				fs.rmSync(vscodeDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 			} catch (error) {
-				// Windows環境ではFile Watcherがロックしているため、削除失敗を許容
+				// On Windows the File Watcher holds a lock, so allow the removal to fail
 				if (process.platform === 'win32') {
 					console.warn(`Warning: Could not remove ${vscodeDir}:`, error);
 				} else {
@@ -32,13 +32,13 @@ suite('workspaceSetup Test Suite', () => {
 			}
 		}
 
-		// .claudeディレクトリを削除
+		// Remove the .claude directory
 		const claudeDir = path.join(testWorkspaceRoot, '.claude');
 		if (fs.existsSync(claudeDir)) {
 			try {
 				fs.rmSync(claudeDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 			} catch (error) {
-				// Windows環境ではFile Watcherがロックしているため、削除失敗を許容
+				// On Windows the File Watcher holds a lock, so allow the removal to fail
 				if (process.platform === 'win32') {
 					console.warn(`Warning: Could not remove ${claudeDir}:`, error);
 				} else {
@@ -48,13 +48,13 @@ suite('workspaceSetup Test Suite', () => {
 		}
 	});
 
-	// テスト後にテストワークスペースを削除
+	// Remove the test workspace after the tests
 	suiteTeardown(() => {
 		if (fs.existsSync(testWorkspaceRoot)) {
 			try {
 				fs.rmSync(testWorkspaceRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 			} catch (error) {
-				// Windows環境ではFile Watcherがロックしているため、削除失敗を許容
+				// On Windows the File Watcher holds a lock, so allow the removal to fail
 				if (process.platform === 'win32') {
 					console.warn(`Warning: Could not remove ${testWorkspaceRoot}:`, error);
 				} else {
@@ -86,7 +86,7 @@ suite('workspaceSetup Test Suite', () => {
 		});
 
 		test('Should preserve existing settings when updating', async () => {
-			// 既存の設定を作成
+			// Create existing settings
 			const vscodeDir = path.join(testWorkspaceRoot, '.vscode');
 			fs.mkdirSync(vscodeDir, { recursive: true });
 
@@ -97,33 +97,33 @@ suite('workspaceSetup Test Suite', () => {
 			};
 			fs.writeFileSync(settingsPath, JSON.stringify(existingSettings, null, 2), 'utf8');
 
-			// setupSettingsJsonを実行
+			// Run setupSettingsJson
 			await setupSettingsJson(testWorkspaceRoot);
 
-			// 設定を読み込み
+			// Read the settings
 			const content = fs.readFileSync(settingsPath, 'utf8');
 			const settings = JSON.parse(content);
 
-			// 既存の設定が保持されているか確認
+			// Check that the existing settings are kept
 			assert.strictEqual(settings['editor.fontSize'], 14);
 			assert.strictEqual(settings['editor.tabSize'], 2);
 
-			// 新しい設定が追加されているか確認
+			// Check that the new settings are added
 			assert.ok(settings.hasOwnProperty('aiCodingSidebar.plans.defaultRelativePath'));
 		});
 
 		test('Should handle malformed settings.json gracefully', async () => {
-			// 不正なJSONファイルを作成
+			// Create an invalid JSON file
 			const vscodeDir = path.join(testWorkspaceRoot, '.vscode');
 			fs.mkdirSync(vscodeDir, { recursive: true });
 
 			const settingsPath = path.join(vscodeDir, 'settings.json');
 			fs.writeFileSync(settingsPath, 'invalid json content', 'utf8');
 
-			// setupSettingsJsonを実行（エラーをスローしないことを確認）
+			// Run setupSettingsJson (verify that it does not throw)
 			await setupSettingsJson(testWorkspaceRoot);
 
-			// 設定ファイルが正しいJSON形式で書き直されていることを確認
+			// Verify that the settings file is rewritten as valid JSON
 			const content = fs.readFileSync(settingsPath, 'utf8');
 			assert.doesNotThrow(() => JSON.parse(content));
 		});
@@ -131,16 +131,16 @@ suite('workspaceSetup Test Suite', () => {
 
 	suite('setupTemplate', () => {
 		test('Should create templates directory', async () => {
-			// テスト用のフィクスチャディレクトリを使用（実際のプロジェクトファイルを保護）
+			// Use a test fixture directory (to protect the actual project files)
 			const testExtensionPath = path.join(__dirname, '../../fixtures/testExtension');
 			const extensionTemplatesDir = path.join(testExtensionPath, 'templates');
 
-			// モックの拡張機能コンテキストを作成
+			// Create a mock extension context
 			const context = {
 				extensionPath: testExtensionPath
 			} as vscode.ExtensionContext;
 
-			// テスト用のテンプレートディレクトリとファイルを作成
+			// Create the test template directory and files
 			if (!fs.existsSync(extensionTemplatesDir)) {
 				fs.mkdirSync(extensionTemplatesDir, { recursive: true });
 			}
@@ -155,7 +155,7 @@ suite('workspaceSetup Test Suite', () => {
 				const templatesDir = path.join(testWorkspaceRoot, '.vscode', 'ai-coding-panel', 'templates');
 				assert.ok(fs.existsSync(templatesDir));
 
-				// 4つのテンプレートファイルがすべてコピーされていることを確認
+				// Verify that all 4 template files are copied
 				for (const templateFile of ['task.md', 'spec.md', 'prompt.md', 'quick_start.md']) {
 					assert.ok(
 						fs.existsSync(path.join(templatesDir, templateFile)),
@@ -163,12 +163,12 @@ suite('workspaceSetup Test Suite', () => {
 					);
 				}
 			} finally {
-				// テスト用ディレクトリのみをクリーンアップ（実際のプロジェクトファイルは保護）
+				// Clean up only the test directory (the actual project files are protected)
 				if (fs.existsSync(testExtensionPath)) {
 					try {
 						fs.rmSync(testExtensionPath, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 					} catch (error) {
-						// Windows環境ではFile Watcherがロックしているため、削除失敗を許容
+						// On Windows the File Watcher holds a lock, so allow the removal to fail
 						if (process.platform === 'win32') {
 							console.warn(`Warning: Could not remove ${testExtensionPath}:`, error);
 						} else {
@@ -181,7 +181,7 @@ suite('workspaceSetup Test Suite', () => {
 	});
 
 	suite('setupGlobalTemplate', () => {
-		// 同梱テンプレートを差し替えるため、一時ディレクトリをextensionPathに見立てる
+		// Treat a temporary directory as extensionPath to replace the bundled templates
 		const withGlobalFixture = async (
 			run: (context: vscode.ExtensionContext, globalTemplatesDir: string) => Promise<void>
 		): Promise<void> => {
@@ -222,7 +222,7 @@ suite('workspaceSetup Test Suite', () => {
 				.getConfiguration('aiCodingSidebar')
 				.get<string>('globalTemplatesPath', '');
 			if (configured && configured.trim()) {
-				// 設定でコピー先が差し替えられている環境では対象外
+				// Skipped when the destination is overridden by the settings
 				this.skip();
 				return;
 			}
@@ -260,7 +260,7 @@ suite('workspaceSetup Test Suite', () => {
 					fs.readFileSync(path.join(globalTemplatesDir, 'task.md'), 'utf8'),
 					'# Customized'
 				);
-				// 他のファイルはコピーされる
+				// The other files are copied
 				assert.ok(fs.existsSync(path.join(globalTemplatesDir, 'prompt.md')));
 			});
 		});

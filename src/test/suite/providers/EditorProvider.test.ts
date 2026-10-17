@@ -14,24 +14,24 @@ suite('EditorProvider Integration Test Suite', () => {
 	const testFilePath = path.join(testDir, 'test.md');
 
 	setup(async () => {
-		// テストディレクトリを作成
+		// Create the test directory
 		if (!fs.existsSync(testDir)) {
 			fs.mkdirSync(testDir, { recursive: true });
 		}
 
-		// テストファイルを作成
+		// Create the test file
 		fs.writeFileSync(testFilePath, '# Test Content', 'utf8');
 
-		// TemplateServiceを初期化
+		// Initialize TemplateService
 		templateService = new TemplateService();
 
-		// EditorProviderを初期化（WebView初期化なし）
+		// Initialize EditorProvider (without initializing the WebView)
 		const extensionUri = vscode.Uri.file(__dirname);
 		editorProvider = new EditorProvider(extensionUri, templateService);
 	});
 
 	teardown(() => {
-		// クリーンアップ
+		// Clean up
 		editorProvider.dispose();
 
 		if (fs.existsSync(testDir)) {
@@ -48,7 +48,7 @@ suite('EditorProvider Integration Test Suite', () => {
 		test('Should return current file path after showFile', async () => {
 			await editorProvider.showFile(testFilePath);
 
-			// showFileを呼ぶと、_currentFilePathが設定される
+			// Calling showFile sets _currentFilePath
 			const filePath = editorProvider.getCurrentFilePath();
 			assert.strictEqual(filePath, testFilePath);
 		});
@@ -59,8 +59,8 @@ suite('EditorProvider Integration Test Suite', () => {
 			const mockPlansProvider = {} as PlansProvider;
 			editorProvider.setPlansProvider(mockPlansProvider);
 
-			// PlansProviderが設定されたことを確認（内部プロパティなのでテストは難しい）
-			// エラーが発生しないことを確認
+			// Check that PlansProvider is set (hard to test because it is an internal property)
+			// Verify that no error occurs
 			assert.ok(true);
 		});
 	});
@@ -70,7 +70,7 @@ suite('EditorProvider Integration Test Suite', () => {
 			const mockPlansProvider = {} as PlansProvider;
 			editorProvider.setDetailsProvider(mockPlansProvider);
 
-			// DetailsProviderが設定されたことを確認
+			// Check that DetailsProvider is set
 			assert.ok(true);
 		});
 	});
@@ -83,7 +83,7 @@ suite('EditorProvider Integration Test Suite', () => {
 			};
 			editorProvider.setTerminalProvider(mockTerminalProvider);
 
-			// TerminalProviderが設定されたことを確認
+			// Check that TerminalProvider is set
 			assert.ok(true);
 		});
 	});
@@ -101,7 +101,7 @@ suite('EditorProvider Integration Test Suite', () => {
 		test('Should not throw error when inserting paths without WebView', () => {
 			const paths = [testFilePath];
 
-			// WebViewが初期化されていない状態でも、エラーは発生しない
+			// No error occurs even when the WebView is not initialized
 			assert.doesNotThrow(() => {
 				editorProvider.insertPaths(paths);
 			});
@@ -110,7 +110,7 @@ suite('EditorProvider Integration Test Suite', () => {
 
 	suite('saveSync', () => {
 		test('Should not throw error when saving without WebView', () => {
-			// WebViewが初期化されていない状態でも、エラーは発生しない
+			// No error occurs even when the WebView is not initialized
 			assert.doesNotThrow(() => {
 				editorProvider.saveSync();
 			});
@@ -119,7 +119,7 @@ suite('EditorProvider Integration Test Suite', () => {
 
 	suite('dispose', () => {
 		test('Should dispose resources', () => {
-			// disposeを呼んでもエラーが発生しないことを確認
+			// Verify that calling dispose does not throw
 			assert.doesNotThrow(() => {
 				editorProvider.dispose();
 			});
@@ -128,7 +128,7 @@ suite('EditorProvider Integration Test Suite', () => {
 
 	suite('insertPromptTemplate', () => {
 		test('Should not throw error when PromptTemplateService is not set', async () => {
-			// サービス未設定時は警告を出して終了する
+			// Without the service, it shows a warning and returns
 			await editorProvider.insertPromptTemplate();
 			assert.ok(true);
 		});
@@ -142,29 +142,29 @@ suite('EditorProvider Integration Test Suite', () => {
 	});
 
 	suite('_escapeShellArgument', () => {
-		// privateメソッドを直接検証する（コマンド生成の安全性はUIを介さず確認したい）
+		// Verify the private method directly (to check the safety of command generation without going through the UI)
 		const escape = (arg: string): string =>
 			(editorProvider as unknown as { _escapeShellArgument(a: string): string })._escapeShellArgument(arg);
 
 		test('Should wrap the value in double quotes outside single quotes', () => {
-			// テンプレート側のダブルクォートを閉じて開き直す形になっている
+			// It closes and reopens the template's double quotes
 			assert.strictEqual(escape('hello'), '"\'hello\'"');
 		});
 
 		test('Should protect backticks so that the shell does not run them', () => {
-			// Markdownのインラインコードがコマンド置換として実行されないこと
+			// Markdown inline code must not run as command substitution
 			const escaped = escape('Run `claude attach fdf4892c` to open it');
 			assert.strictEqual(escaped, '"\'Run `claude attach fdf4892c` to open it\'"');
 		});
 
 		test('Should protect a code fence', () => {
-			// コードフェンスは空のバッククォート対になり command not found を起こしていた
+			// A code fence became an empty pair of backquotes and caused command not found
 			assert.strictEqual(escape('```'), '"\'```\'"');
 		});
 
 		test('Should protect an exclamation mark from history expansion', () => {
-			// 対話シェルではダブルクォート内の ! がヒストリ展開される
-			assert.strictEqual(escape('重要!注意'), '"\'重要!注意\'"');
+			// In an interactive shell, ! inside double quotes triggers history expansion
+			assert.strictEqual(escape('Important!Note'), '"\'Important!Note\'"');
 		});
 
 		test('Should protect dollar signs from parameter expansion', () => {
@@ -176,18 +176,18 @@ suite('EditorProvider Integration Test Suite', () => {
 		});
 
 		test('Should close and reopen quoting around a single quote', () => {
-			// シングルクォートはクォートを閉じてエスケープし、再度開く
+			// A single quote closes the quote, is escaped, and reopens it
 			assert.strictEqual(escape("it's"), '"\'it\'\\\'\'s\'"');
 		});
 
 		test('Should keep newlines as is', () => {
-			// 本文全体を1引数として渡すため改行はそのまま保持する
+			// Newlines are kept as is because the whole body is passed as one argument
 			assert.strictEqual(escape('line1\nline2'), '"\'line1\nline2\'"');
 		});
 
 		test('Should produce a single argument when embedded in a quoted template', () => {
-			// テンプレート "${editorContent}" へ埋め込むと ""'値'"" となり、
-			// シェルは隣接する引用符を連結して1つの引数として扱う
+			// Embedded in the template "${editorContent}", it becomes ""'value'"",
+			// and the shell joins the adjacent quotes into one argument
 			const command = '${commandPrefix} "${editorContent}"'
 				.replace('${commandPrefix}', 'claude')
 				.replace('${editorContent}', escape('# task\n```\n`ls`\n```'));
@@ -195,7 +195,7 @@ suite('EditorProvider Integration Test Suite', () => {
 		});
 
 		test('Should produce a single argument when embedded mid-sentence', () => {
-			// Plan / Spec は文の途中へ埋め込むため、前後のダブルクォートと連結される
+			// Plan / Spec embed it in the middle of a sentence, so it is joined with the surrounding double quotes
 			const command = '${commandPrefix} "Review the file at ${filePath} and create a plan."'
 				.replace('${commandPrefix}', 'claude')
 				.replace(/\$\{filePath\}/g, escape('.claude/plans/x.md'));
@@ -233,7 +233,7 @@ suite('EditorProvider Integration Test Suite', () => {
 			return { provider, sent, getFocused: () => focused };
 		};
 
-		// EditorProviderと同じ基準（ワークスペースルートからの相対パス）で期待値を求める
+		// Compute the expected value on the same basis as EditorProvider (relative path from the workspace root)
 		const expectedRelativeDir = (): string => {
 			const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 			const relativeFilePath = workspaceRoot ? path.relative(workspaceRoot, testFilePath) : testFilePath;
@@ -364,7 +364,7 @@ suite('EditorProvider Integration Test Suite', () => {
 		};
 
 		test('Should append the output md prompt by default (Quick Run is off)', async function () {
-			// 設定が既定と異なる環境では検証できないためスキップする
+			// Skipped because it cannot be verified when the settings differ from the defaults
 			const quickRun = vscode.workspace.getConfiguration('aiCodingSidebar').get<boolean>('editor.quickRun', false);
 			if (quickRun) {
 				this.skip();
@@ -378,7 +378,7 @@ suite('EditorProvider Integration Test Suite', () => {
 			assert.strictEqual(terminal.sent.length, 1);
 			assert.ok(terminal.sent[0].includes('# Test Content\n\n# output md\nRecord the current status'));
 			assert.ok(terminal.sent[0].includes('_status.md'));
-			// 指示文は送信するコマンドにのみ含め、ファイルには書き込まない
+			// The instruction is included only in the sent command and is not written to the file
 			assert.ok(!fs.readFileSync(testFilePath, 'utf8').includes('_status.md'));
 		});
 	});
@@ -417,7 +417,7 @@ suite('EditorProvider Integration Test Suite', () => {
 			return { provider, sent };
 		};
 
-		// 設定が既定と異なる環境では検証できないためスキップする
+		// Skipped because it cannot be verified when the settings differ from the defaults
 		const skipUnlessDefaultPrefix = (context: Mocha.Context) => {
 			const config = vscode.workspace.getConfiguration('aiCodingSidebar');
 			if (config.get<string>('editor.commandPrefix', 'claude') !== 'claude'
@@ -438,7 +438,7 @@ suite('EditorProvider Integration Test Suite', () => {
 			const entry = templateService.findLatestSessionMetadata(metadata);
 			assert.strictEqual(entry?.commandType, 'run');
 			assert.strictEqual(entry?.fileName, 'test.md');
-			// 記録したセッションIDで送信している
+			// Sent with the recorded session ID
 			assert.ok(terminal.sent[0].command.includes(`--session-id ${entry?.sessionId}`));
 		});
 
@@ -513,8 +513,8 @@ suite('EditorProvider Integration Test Suite', () => {
 
 	suite('Integration with TemplateService', () => {
 		test('Should use TemplateService for file operations', () => {
-			// TemplateServiceが注入されていることを確認
-			// EditorProviderがTemplateServiceを使用してタイムスタンプ生成などを行う
+			// Check that TemplateService is injected
+			// EditorProvider uses TemplateService for timestamp generation and so on
 			const timestamp = templateService.generateTimestamp();
 			assert.ok(timestamp.match(/^\d{4}_\d{4}_\d{4}_\d{2}$/));
 		});

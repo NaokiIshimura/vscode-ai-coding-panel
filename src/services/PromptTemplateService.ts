@@ -9,59 +9,59 @@ import {
 } from '../utils/templateSourceSettings';
 
 /**
- * テンプレートの作成先
+ * Where a template is created
  */
 export type PromptTemplateTarget = 'workspace' | 'global';
 
 /**
- * テンプレートの出所
+ * Origin of a template
  */
 export type PromptTemplateOrigin = PromptTemplateTarget | 'bundled';
 
 /**
- * Editor Viewへ挿入するプロンプトテンプレート（スニペット）
+ * Prompt template (snippet) inserted into the Editor View
  */
 export interface PromptTemplate {
-    /** ファイル名（拡張子なし）。一覧からの選択キーとして使うため一意であること */
+    /** File name without extension. Must be unique because it is used as the selection key in the list */
     id: string;
-    /** 表示名（先頭のH1見出し、無ければファイル名） */
+    /** Display name (the first H1 heading, or the file name if there is none) */
     label: string;
-    /** 一覧に表示する補足（ファイル名。グローバル分は`(global)`付き） */
+    /** Supplementary text shown in the list (the file name, with `(global)` for global templates) */
     description: string;
-    /** ファイルの内容そのまま（変数置換前・H1を含む） */
+    /** File content as is (before variable replacement, including the H1) */
     body: string;
-    /** 元ファイルの絶対パス */
+    /** Absolute path of the source file */
     filePath: string;
-    /** どこに置かれているテンプレートか */
+    /** Where the template is located */
     origin: PromptTemplateOrigin;
 }
 
-/** ワークスペース上のテンプレート配置先（既定値） */
+/** Template location in the workspace (default) */
 const DEFAULT_TEMPLATES_RELATIVE_PATH = '.vscode/ai-coding-panel/prompts';
 
-/** 拡張機能に同梱するテンプレートの配置先 */
+/** Location of the templates bundled with the extension */
 const BUNDLED_TEMPLATES_DIR = ['resources', 'prompt-templates'];
 
-/** ファイル名に使えない文字 */
+/** Characters that cannot be used in file names */
 const INVALID_FILE_NAME_PATTERN = /[:*?"<>|]/;
 
 /**
- * プロンプトテンプレート（スニペット）を管理するサービス
+ * Service that manages prompt templates (snippets)
  *
- * ファイル新規作成時の雛形（TemplateService / templateUtils）とは用途が異なるため、
- * 配置ディレクトリもサービスも分離している。
+ * Its purpose differs from the file templates used when creating new files (TemplateService / templateUtils),
+ * so both the directory and the service are kept separate.
  */
 export class PromptTemplateService {
     constructor(
         private readonly context: vscode.ExtensionContext,
         private readonly templateService: TemplateService,
-        // テストから読み込み元の設定を差し替えられるようにしている
+        // Allows tests to replace the settings for template sources
         private readonly readSettings: TemplateSourceSettingsReader = readTemplateSourceSettings
     ) {}
 
     /**
-     * ワークスペース側のテンプレートディレクトリを取得
-     * ワークスペースが開かれていない場合はundefinedを返す
+     * Get the workspace template directory
+     * Returns undefined if no workspace is open
      */
     getWorkspaceTemplatesDir(): string | undefined {
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -80,36 +80,36 @@ export class PromptTemplateService {
     }
 
     /**
-     * 拡張機能に同梱しているテンプレートディレクトリを取得
+     * Get the template directory bundled with the extension
      */
     getBundledTemplatesDir(): string {
         return path.join(this.context.extensionPath, ...BUNDLED_TEMPLATES_DIR);
     }
 
     /**
-     * グローバルのテンプレートディレクトリを取得
-     * 解決できない場合はundefinedを返す
+     * Get the global template directory
+     * Returns undefined if it cannot be resolved
      */
     getGlobalTemplatesDir(): string | undefined {
         return getGlobalPromptTemplatesDir(this.context);
     }
 
     /**
-     * テンプレート一覧を取得
+     * Get the list of templates
      *
-     * ワークスペースとグローバルをマージし、**同名ファイルはワークスペースを優先**する。
-     * 排他（どちらか片方だけ）にすると、グローバルへ共通スニペットを置いても
-     * ワークスペース側に1件でもあった時点で共通分が消えてしまい実用にならないため。
+     * Merges workspace and global templates; **for files with the same name, the workspace one takes precedence**.
+     * Making them exclusive (only one of the two) would be impractical: shared snippets placed in the global location
+     * would disappear as soon as the workspace had even one template.
      *
-     * 同梱分は有効な読み込み元に1件も無い場合のみ返す。
-     * ユーザー定義と混在させると同名ファイルの優先順位が分かりづらくなるため。
+     * Bundled templates are returned only when none of the enabled sources has any template.
+     * Mixing them with user-defined templates would make the precedence of same-named files hard to understand.
      *
-     * 並び順はワークスペース分→グローバル分で、各グループ内はファイル名昇順。
+     * Workspace templates come first, then global ones; each group is sorted by file name in ascending order.
      */
     async listTemplates(): Promise<PromptTemplate[]> {
         const sources = this.getEnabledSourceDirs();
 
-        // idは選択キーのため一意にする必要がある。同名は先勝ち（ワークスペース優先）
+        // The id is the selection key and must be unique. For duplicates the first one wins (workspace takes precedence)
         const usedIds = new Set<string>();
         const merged: PromptTemplate[] = [];
 
@@ -132,11 +132,11 @@ export class PromptTemplateService {
     }
 
     /**
-     * 一覧・重複判定の対象となるディレクトリを優先順に返す
+     * Return the directories used for the list and the duplicate check, in order of precedence
      *
-     * 設定で無効化された読み込み元は含めない。
-     * `listTemplates()`と`hasNoUserTemplates()`で判定基準を揃えるために共通化している
-     * （ずれると「1件作った瞬間に同梱分が一覧から消える」不具合が再発する）
+     * Template sources disabled in the settings are excluded.
+     * Shared so that `listTemplates()` and `hasNoUserTemplates()` use the same criteria
+     * (if they diverge, the bug where "bundled templates disappear from the list as soon as one is created" comes back)
      */
     private getEnabledSourceDirs(): { dir: string; origin: PromptTemplateTarget }[] {
         const settings = this.readSettings();
@@ -156,10 +156,10 @@ export class PromptTemplateService {
     }
 
     /**
-     * 同梱テンプレートをワークスペースへコピーする
-     * 既に存在するファイルは上書きしない
+     * Copy the bundled templates to the workspace
+     * Existing files are not overwritten
      *
-     * @returns コピー先ディレクトリ（ワークスペース未オープン時はundefined）
+     * @returns The destination directory (undefined when no workspace is open)
      */
     async setupWorkspaceTemplates(): Promise<string | undefined> {
         const workspaceDir = this.getWorkspaceTemplatesDir();
@@ -172,10 +172,10 @@ export class PromptTemplateService {
     }
 
     /**
-     * 同梱テンプレートをグローバルへコピーする
-     * 既に存在するファイルは上書きしない
+     * Copy the bundled templates to the global location
+     * Existing files are not overwritten
      *
-     * @returns コピー先ディレクトリ（解決できない場合はundefined）
+     * @returns The destination directory (undefined if it cannot be resolved)
      */
     async setupGlobalTemplates(): Promise<string | undefined> {
         const globalDir = this.getGlobalTemplatesDir();
@@ -188,10 +188,10 @@ export class PromptTemplateService {
     }
 
     /**
-     * 同梱テンプレートを指定ディレクトリへコピーする
-     * 既に存在するファイルは上書きしない
+     * Copy the bundled templates to the given directory
+     * Existing files are not overwritten
      *
-     * globalStorageUri配下はVS Codeが自動作成しないため必ずmkdirする
+     * Always mkdir, because VS Code does not create the globalStorageUri directory automatically
      */
     private async copyBundledTemplatesTo(destinationDir: string): Promise<void> {
         await fsPromises.mkdir(destinationDir, { recursive: true });
@@ -210,15 +210,15 @@ export class PromptTemplateService {
     }
 
     /**
-     * 新規テンプレートのファイル名として使えるかを検証する
+     * Validate whether the name can be used as the file name of a new template
      *
-     * `vscode.window.showInputBox`のvalidateInputから利用する。
-     * 既存ファイルとの衝突は作成先ごとに判定するため、
-     * 呼び出し側は名前入力より先に作成先を決めておくこと
+     * Used from validateInput of `vscode.window.showInputBox`.
+     * Collisions with existing files are checked per destination,
+     * so callers must decide the destination before asking for the name
      *
-     * @param name テンプレート名（拡張子は省略可）
-     * @param target 作成先
-     * @returns 問題がある場合はエラーメッセージ、問題なければundefined
+     * @param name Template name (the extension can be omitted)
+     * @param target Destination
+     * @returns An error message if there is a problem, otherwise undefined
      */
     async validateTemplateName(
         name: string,
@@ -252,10 +252,10 @@ export class PromptTemplateService {
     }
 
     /**
-     * ワークスペースへ新規テンプレートを作成する
+     * Create a new template in the workspace
      *
-     * @param name テンプレート名（拡張子は省略可）
-     * @returns 作成したファイルの絶対パス
+     * @param name Template name (the extension can be omitted)
+     * @returns Absolute path of the created file
      */
     async createWorkspaceTemplate(name: string): Promise<string> {
         const workspaceDir = this.getWorkspaceTemplatesDir();
@@ -267,10 +267,10 @@ export class PromptTemplateService {
     }
 
     /**
-     * グローバルへ新規テンプレートを作成する
+     * Create a new template in the global location
      *
-     * @param name テンプレート名（拡張子は省略可）
-     * @returns 作成したファイルの絶対パス
+     * @param name Template name (the extension can be omitted)
+     * @returns Absolute path of the created file
      */
     async createGlobalTemplate(name: string): Promise<string> {
         const globalDir = this.getGlobalTemplatesDir();
@@ -282,11 +282,11 @@ export class PromptTemplateService {
     }
 
     /**
-     * 指定ディレクトリへ新規テンプレートを作成する
+     * Create a new template in the given directory
      *
-     * 作成前にユーザー定義のテンプレートが1件も無い場合は、同梱テンプレートを先にコピーする。
-     * 同梱分は「ワークスペースにもグローバルにも1件も無い場合のみ」一覧に出る仕様のため、
-     * コピーしないと1件作った瞬間に一覧から同梱分が消えてしまう
+     * If there are no user-defined templates yet, the bundled templates are copied first.
+     * Bundled templates appear in the list only "when neither the workspace nor the global location has any template",
+     * so without copying them they would disappear from the list as soon as one template is created
      */
     private async createTemplateIn(directoryPath: string, name: string): Promise<string> {
         const fileName = this.toTemplateFileName(name.trim());
@@ -302,7 +302,7 @@ export class PromptTemplateService {
             await fsPromises.mkdir(directoryPath, { recursive: true });
         }
 
-        // 見出しは一覧の表示名としても使われる
+        // The heading is also used as the display name in the list
         const label = path.basename(fileName, '.md');
         await fsPromises.writeFile(filePath, `# ${label}\n\n`, 'utf8');
 
@@ -310,7 +310,7 @@ export class PromptTemplateService {
     }
 
     /**
-     * 作成先に対応するディレクトリを取得
+     * Get the directory for the destination
      */
     private getTemplatesDirFor(target: PromptTemplateTarget): string | undefined {
         return target === 'global'
@@ -319,11 +319,11 @@ export class PromptTemplateService {
     }
 
     /**
-     * 一覧に出るユーザー定義のテンプレートが1件も無いかどうか
+     * Whether there are no user-defined templates that would appear in the list
      *
-     * 判定対象は`listTemplates()`と同じく有効な読み込み元のみ。
-     * 無効化された読み込み元にファイルがあっても一覧には出ないため、
-     * ここで数えると同梱分のコピーが行われず一覧が空になってしまう
+     * Like `listTemplates()`, only enabled template sources are checked.
+     * Files in disabled sources do not appear in the list, so counting them here
+     * would skip copying the bundled templates and leave the list empty
      */
     private async hasNoUserTemplates(): Promise<boolean> {
         for (const source of this.getEnabledSourceDirs()) {
@@ -336,19 +336,19 @@ export class PromptTemplateService {
     }
 
     /**
-     * テンプレート名をファイル名へ変換する（拡張子が無ければ.mdを付ける）
+     * Convert a template name to a file name (adds .md if there is no extension)
      */
     private toTemplateFileName(name: string): string {
         return name.toLowerCase().endsWith('.md') ? name : `${name}.md`;
     }
 
     /**
-     * テンプレートの変数を置換して挿入用の文字列を生成する
+     * Replace the template variables and build the string to insert
      *
-     * 本文は加工しない（H1見出しもそのまま残す）
+     * The body is not modified (the H1 heading is kept as is)
      *
-     * @param template 対象のテンプレート
-     * @param currentFilePath Editor Viewで開いているファイルの絶対パス（未オープン時はundefined）
+     * @param template Target template
+     * @param currentFilePath Absolute path of the file open in the Editor View (undefined when no file is open)
      */
     renderTemplate(template: PromptTemplate, currentFilePath?: string): string {
         return this.templateService.renderVariables(
@@ -358,8 +358,8 @@ export class PromptTemplateService {
     }
 
     /**
-     * 挿入時に使用するテンプレート変数を生成する
-     * ファイル未オープン時はファイル関連の変数を空文字にする
+     * Build the template variables used on insertion
+     * File-related variables are empty strings when no file is open
      */
     private buildVariables(currentFilePath?: string): TemplateVariables {
         const timestamp = this.templateService.generateTimestamp();
@@ -382,10 +382,10 @@ export class PromptTemplateService {
     }
 
     /**
-     * 指定ディレクトリ直下の.mdファイルをテンプレートとして読み込む
-     * ディレクトリが存在しない場合は空配列を返す
+     * Load the .md files directly under the given directory as templates
+     * Returns an empty array if the directory does not exist
      *
-     * グローバル分はワークスペース分と見分けがつくよう、descriptionに`(global)`を付ける
+     * Global templates get `(global)` in their description so they can be told apart from workspace ones
      */
     private async readTemplatesFrom(
         directoryPath: string,
@@ -413,15 +413,15 @@ export class PromptTemplateService {
     }
 
     /**
-     * 指定ディレクトリ直下の.mdファイル名をファイル名昇順で取得する
-     * サブディレクトリは辿らない
+     * Get the .md file names directly under the given directory, sorted by file name in ascending order
+     * Subdirectories are not traversed
      */
     private async readMarkdownFileNames(directoryPath: string): Promise<string[]> {
         let entries;
         try {
             entries = await fsPromises.readdir(directoryPath, { withFileTypes: true });
         } catch {
-            // ディレクトリが存在しない場合はテンプレート無しとして扱う
+            // Treat a missing directory as having no templates
             return [];
         }
 
@@ -432,8 +432,8 @@ export class PromptTemplateService {
     }
 
     /**
-     * 先頭のH1見出しを表示名として取り出す（無ければundefined）
-     * 本文からは除去しない（挿入時はファイルの内容をそのまま使う）
+     * Extract the first H1 heading as the display name (undefined if there is none)
+     * It is not removed from the body (the file content is used as is on insertion)
      */
     private extractLabel(body: string): string | undefined {
         for (const line of body.split('\n')) {
@@ -448,7 +448,7 @@ export class PromptTemplateService {
     }
 
     /**
-     * パスが存在するかどうかを確認
+     * Check whether a path exists
      */
     private async pathExists(targetPath: string): Promise<boolean> {
         try {

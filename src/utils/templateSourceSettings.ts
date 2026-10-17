@@ -1,30 +1,30 @@
 import * as vscode from 'vscode';
 
 /**
- * テンプレートの読み込み元を有効にするかどうか
+ * Whether each template source is enabled
  *
- * 設定側は`disableXxx`（無効化フラグ）だが、ここでは
- * **true = 読み込む** の肯定形に反転して保持する。
- * 呼び出し側の条件式が二重否定にならないようにするため。
+ * The settings are `disableXxx` (disable flags), but here they
+ * are inverted and stored in positive form: **true = load**.
+ * This keeps callers' conditions free of double negatives.
  */
 export interface TemplateSourceSettings {
-    /** ワークスペースのファイル雛形（.vscode/ai-coding-panel/templates）を読み込むか */
+    /** Whether to load the workspace file templates (.vscode/ai-coding-panel/templates) */
     workspaceTemplates: boolean;
-    /** グローバルのファイル雛形（<global>/templates）を読み込むか */
+    /** Whether to load the global file templates (<global>/templates) */
     globalTemplates: boolean;
-    /** ワークスペースのスニペット（editor.promptTemplatesPath）を読み込むか */
+    /** Whether to load the workspace snippets (editor.promptTemplatesPath) */
     workspacePromptTemplates: boolean;
-    /** グローバルのスニペット（<global>/prompts）を読み込むか */
+    /** Whether to load the global snippets (<global>/prompts) */
     globalPromptTemplates: boolean;
 }
 
 /**
- * 設定を読み取る関数
- * テストから差し替えられるよう型として公開している
+ * Function that reads the settings
+ * Exported as a type so tests can substitute it
  */
 export type TemplateSourceSettingsReader = () => TemplateSourceSettings;
 
-/** 設定キー（`aiCodingSidebar`配下） */
+/** Setting keys (under `aiCodingSidebar`) */
 const SETTING_KEYS = {
     workspaceTemplates: 'editor.disableWorkspaceEditorTemplates',
     globalTemplates: 'editor.disableGlobalEditorTemplates',
@@ -33,15 +33,15 @@ const SETTING_KEYS = {
 } as const;
 
 /**
- * 読み込み元の設定を取得する
+ * Get the template source settings
  *
- * 呼ばれるたびに設定を読むためキャッシュしない。
- * 設定変更が拡張機能の再読み込み無しで反映される
+ * Not cached: the settings are read on every call,
+ * so changes take effect without reloading the extension
  */
 export function readTemplateSourceSettings(): TemplateSourceSettings {
     const config = vscode.workspace.getConfiguration('aiCodingSidebar');
 
-    // 設定は無効化フラグのため反転する
+    // Invert because the settings are disable flags
     const isEnabled = (key: string): boolean => !config.get<boolean>(key, false);
 
     return {

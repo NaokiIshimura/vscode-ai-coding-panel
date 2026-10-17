@@ -8,19 +8,19 @@ const tooltipElement = document.getElementById('tooltip');
 const searchInput = document.getElementById('search-input');
 const searchClearButton = document.getElementById('search-clear');
 
-// 内部ドラッグ用のMIMEタイプ（VS Codeのtext/uri-listと区別する）
+// MIME type for internal drags (distinguished from VS Code's text/uri-list)
 const INTERNAL_MIME = 'application/vnd.aicodingsidebar.paths';
 
-// 外部からのドロップでURI一覧が入りうるMIMEタイプ（先頭から順に確認する）
+// MIME types that may carry a URI list in an external drop (checked in order from the first)
 const URI_LIST_MIMES = ['text/uri-list', 'application/vnd.code.uri-list'];
 
-// VS CodeがリソースURIのJSON配列を入れるMIMEタイプ（DataTransfers.RESOURCES）
+// MIME type in which VS Code puts a JSON array of resource URIs (DataTransfers.RESOURCES)
 const RESOURCE_URLS_MIME = 'resourceurls';
 
-// 内容を読み取って転送するドロップファイルの上限サイズ（50MB）
+// Maximum size of a dropped file whose content is read and transferred (50MB)
 const MAX_DROP_FILE_SIZE = 50 * 1024 * 1024;
 
-// 検索入力から拡張側へ送るまでの待ち時間（ms）
+// Wait time before sending the search input to the extension (ms)
 const SEARCH_DEBOUNCE = 250;
 
 let items = [];
@@ -28,9 +28,9 @@ let selectedPath;
 let searchTimer;
 
 /**
- * コンテキストメニュー定義
- * contextValueごとに表示するコマンドを出し分ける
- * （旧 package.json の view/item/context 定義を踏襲）
+ * Context menu definitions
+ * The commands shown differ per contextValue
+ * (follows the old view/item/context definitions in package.json)
  */
 const CONTEXT_MENUS = {
     pathDisplay: [
@@ -79,8 +79,8 @@ const CONTEXT_MENUS = {
 };
 
 /**
- * 行ホバー時に表示するインラインアクション定義
- * （旧 package.json の view/item/context の inline グループを踏襲）
+ * Inline action definitions shown on row hover
+ * (follows the inline group of the old view/item/context in package.json)
  */
 const INLINE_ACTIONS = {
     pathDisplay: [
@@ -118,7 +118,7 @@ resumeSessionButton.addEventListener('click', () => {
 });
 
 /**
- * 選択された行に対してコマンドを実行するよう拡張側へ依頼する
+ * Ask the extension to run a command on the selected row
  */
 function executeItemCommand(commandId, item) {
     vscode.postMessage({
@@ -127,19 +127,19 @@ function executeItemCommand(commandId, item) {
         filePath: item.filePath,
         isDirectory: item.kind === 'directory' || item.kind === 'path' || item.kind === 'parent',
         label: item.label,
-        // archiveDirectoryが 'pathDisplayNonRoot' を判定するため引き継ぐ
+        // Passed through because archiveDirectory checks for 'pathDisplayNonRoot'
         contextValue: item.contextValue
     });
 }
 
-// メッセージを受信
+// Receive messages
 window.addEventListener('message', event => {
     const message = event.data;
     switch (message.type) {
         case 'update':
             items = message.items || [];
             selectedPath = message.selectedPath;
-            // rootディレクトリが無い（Create directory表示中）間は検索できない
+            // Searching is not possible while there is no root directory (Create directory is shown)
             searchInput.disabled = items.some(item => item.kind === 'createDirectory');
             resumeSessionButton.disabled = searchInput.disabled;
             render(message.message);
@@ -149,7 +149,7 @@ window.addEventListener('message', event => {
             updateSelection();
             break;
         case 'searchCleared':
-            // ディレクトリ移動などで拡張側が検索を終了した
+            // The extension ended the search (e.g. by moving to another directory)
             clearTimeout(searchTimer);
             searchInput.value = '';
             updateSearchClearButton();
@@ -158,7 +158,7 @@ window.addEventListener('message', event => {
 });
 
 /**
- * 一覧を描画する
+ * Render the list
  */
 function render(messageText) {
     hideContextMenu();
@@ -180,7 +180,7 @@ function render(messageText) {
 }
 
 /**
- * 1行分の要素を生成する
+ * Create the element for one row
  */
 function createRow(item) {
     const row = document.createElement('div');
@@ -213,7 +213,7 @@ function createRow(item) {
         row.appendChild(description);
     }
 
-    // 検索結果の件数行は表示のみ（選択・メニュー・ドラッグの対象外）
+    // The search result count row is display only (not a target for selection, menus or dragging)
     if (item.kind === 'searchHeader') {
         row.classList.add('search-header');
         return row;
@@ -237,7 +237,7 @@ function createRow(item) {
         showContextMenu(event, item);
     });
 
-    // ファイル・ディレクトリのみドラッグ可能
+    // Only files and directories are draggable
     if (item.kind === 'file' || item.kind === 'directory') {
         row.draggable = true;
         row.addEventListener('dragstart', (event) => {
@@ -246,8 +246,8 @@ function createRow(item) {
         });
     }
 
-    // ディレクトリ・パス表示行は個別のドロップ先になれる
-    // （ファイル行や空白領域へのドロップはビュー全体のハンドラが現在のディレクトリとして受ける）
+    // Directory and path display rows can be individual drop targets
+    // (drops on file rows or empty areas are handled by the view-wide handler as the current directory)
     if (item.kind === 'directory' || item.kind === 'path' || item.kind === 'parent') {
         row.addEventListener('dragenter', (event) => {
             event.preventDefault();
@@ -257,7 +257,7 @@ function createRow(item) {
             event.stopPropagation();
             event.dataTransfer.dropEffect = 'copy';
             row.classList.add('drop-target');
-            // 行のハイライトとビュー全体のハイライトを二重に出さない
+            // Do not show both the row highlight and the view-wide highlight
             clearViewDropHighlight();
         });
         row.addEventListener('dragleave', () => {
@@ -276,7 +276,7 @@ function createRow(item) {
 }
 
 /**
- * 行ホバー時に表示するインラインアクションボタン群を生成する
+ * Create the inline action buttons shown on row hover
  */
 function createRowActions(item) {
     const entries = INLINE_ACTIONS[item.contextValue];
@@ -290,7 +290,7 @@ function createRowActions(item) {
     for (const entry of entries) {
         const button = document.createElement('button');
         button.className = 'row-action';
-        // 空のtitleで行（ファイルパス）のネイティブツールチップを抑止し、代わりに自前のものを表示する
+        // An empty title suppresses the row's native tooltip (the file path) and our own tooltip is shown instead
         button.title = '';
         button.setAttribute('aria-label', entry.title);
 
@@ -301,7 +301,7 @@ function createRowActions(item) {
         attachTooltip(button, entry.title);
 
         button.addEventListener('click', (event) => {
-            // 行本体のクリック（ディレクトリ移動・ファイルを開く）を発火させない
+            // Do not trigger the row click (moving into a directory / opening a file)
             event.stopPropagation();
             hideTooltip();
             executeItemCommand(entry.command, item);
@@ -313,16 +313,16 @@ function createRowActions(item) {
     return container;
 }
 
-// ツールチップ表示までの待ち時間（ms）
+// Wait time before showing the tooltip (ms)
 const TOOLTIP_DELAY = 300;
-// 要素とツールチップの間隔（px）
+// Gap between the element and the tooltip (px)
 const TOOLTIP_GAP = 4;
 
 let tooltipTimer;
 
 /**
- * 要素にホバーしたらツールチップを表示するよう登録する
- * （Webviewではネイティブのtitleツールチップが表示されないことがあるため自前で描画する）
+ * Register the element to show a tooltip on hover
+ * (drawn by ourselves because the native title tooltip is sometimes not shown in a Webview)
  */
 function attachTooltip(element, text) {
     element.addEventListener('mouseenter', () => {
@@ -334,7 +334,7 @@ function attachTooltip(element, text) {
 }
 
 /**
- * 対象要素の下（はみ出す場合は上）にツールチップを表示する
+ * Show the tooltip below the target element (above it if it would overflow)
  */
 function showTooltip(element, text) {
     if (!element.isConnected) {
@@ -366,12 +366,12 @@ function hideTooltip() {
     tooltipElement.classList.add('hidden');
 }
 
-// 一覧のスクロールやフォーカス喪失で位置がずれるため閉じる
+// Close it on list scroll or focus loss because its position would be off
 listElement.addEventListener('scroll', hideTooltip);
 window.addEventListener('blur', hideTooltip);
 
 /**
- * 選択状態の表示を更新する
+ * Update the display of the selection state
  */
 function updateSelection() {
     for (const row of listElement.querySelectorAll('.row')) {
@@ -384,8 +384,8 @@ function updateSelection() {
 }
 
 /**
- * ビュー全体をドロップ先として登録する
- * 行の上以外（空白領域・ファイル行）へのドロップは、現在表示中のディレクトリを対象にする
+ * Register the whole view as a drop target
+ * Drops anywhere other than on a row (empty area, file rows) target the currently displayed directory
  */
 function setupViewDropTarget() {
     document.addEventListener('dragenter', (event) => {
@@ -393,14 +393,14 @@ function setupViewDropTarget() {
     });
 
     document.addEventListener('dragover', (event) => {
-        // preventDefaultしないとdropが発火せず、Webviewがドロップされたファイルへ遷移してしまう
+        // Without preventDefault, drop does not fire and the Webview navigates to the dropped file
         event.preventDefault();
         event.dataTransfer.dropEffect = 'copy';
         document.body.classList.add('drag-over');
     });
 
     document.addEventListener('dragleave', (event) => {
-        // 子要素間の移動でも発火するため、ビューの外へ出たときだけ解除する
+        // This also fires when moving between child elements, so clear it only when leaving the view
         if (!event.relatedTarget) {
             clearViewDropHighlight();
         }
@@ -411,21 +411,21 @@ function setupViewDropTarget() {
     document.addEventListener('drop', (event) => {
         event.preventDefault();
         clearViewDropHighlight();
-        // targetPathを渡さないことで、拡張側が現在のディレクトリを使う
+        // By not passing targetPath, the extension uses the current directory
         handleDrop(event);
     });
 }
 
 /**
- * ビュー全体のドロップ中ハイライトを解除する
+ * Clear the drop highlight on the whole view
  */
 function clearViewDropHighlight() {
     document.body.classList.remove('drag-over');
 }
 
 /**
- * ドロップされた内容を拡張側へ送信する
- * targetPathを省略した場合は現在表示中のディレクトリが対象になる
+ * Send the dropped content to the extension
+ * When targetPath is omitted, the currently displayed directory is the target
  */
 function handleDrop(event, targetPath) {
     const sources = readInternalSources(event.dataTransfer);
@@ -434,15 +434,15 @@ function handleDrop(event, targetPath) {
         return;
     }
 
-    // パスが分かる場合はそのままコピーさせる（内容の読み取りが不要で確実）
+    // If the paths are known, copy them directly (reliable, no need to read the content)
     const uriList = readUriList(event.dataTransfer);
     if (hasFileUri(uriList)) {
         vscode.postMessage({ type: 'drop', targetPath, uriList });
         return;
     }
 
-    // FinderやVS Codeのエクスプローラーからのドロップは、Webviewからは絶対パスを取得できない
-    // （ElectronのFile.pathは廃止済み）ため、内容そのものを読み取って拡張側へ渡す
+    // For drops from Finder or the VS Code Explorer, the Webview cannot get absolute paths
+    // (Electron's File.path has been removed), so read the content itself and pass it to the extension
     const dropped = readDroppedEntries(event.dataTransfer);
     if (dropped.files.length > 0 || dropped.directories.length > 0) {
         sendDroppedFileContents(dropped, targetPath);
@@ -453,8 +453,8 @@ function handleDrop(event, targetPath) {
 }
 
 /**
- * ドロップされたファイルをイベント処理中に同期的に取り出す
- * DataTransferはハンドラを抜けると読めなくなるため、Fileオブジェクトをここで確保しておく
+ * Synchronously take the dropped files out during event handling
+ * DataTransfer can no longer be read after the handler returns, so the File objects are secured here
  */
 function readDroppedEntries(dataTransfer) {
     const files = [];
@@ -466,7 +466,7 @@ function readDroppedEntries(dataTransfer) {
                 continue;
             }
 
-            // ディレクトリはFile APIから中身を読めないため対象外にする
+            // Directories are excluded because their contents cannot be read through the File API
             const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
             if (entry && entry.isDirectory) {
                 directories.push(entry.name);
@@ -490,7 +490,7 @@ function readDroppedEntries(dataTransfer) {
 }
 
 /**
- * ドロップされたファイルの内容を読み取って拡張側へ送る
+ * Read the content of the dropped files and send it to the extension
  */
 async function sendDroppedFileContents(dropped, targetPath) {
     const files = [];
@@ -520,11 +520,11 @@ async function sendDroppedFileContents(dropped, targetPath) {
 }
 
 /**
- * 内容をpostMessageで送れるようbase64へ変換する
+ * Convert the content to base64 so it can be sent with postMessage
  */
 function encodeBase64(buffer) {
     const bytes = new Uint8Array(buffer);
-    // 一度に渡すと引数が多すぎてスタックが溢れるため分割する
+    // Split into chunks because passing everything at once has too many arguments and overflows the stack
     const chunkSize = 0x8000;
     let binary = '';
 
@@ -536,8 +536,8 @@ function encodeBase64(buffer) {
 }
 
 /**
- * URI一覧にfileスキームのURIが含まれるかを判定する
- * リンクのドロップなどコピー元にできないURIしか無い場合は、内容の読み取りへ回す
+ * Determine whether the URI list contains a file scheme URI
+ * If there are only URIs that cannot be copied from (e.g. a dropped link), fall back to reading the content
  */
 function hasFileUri(uriList) {
     if (!uriList) {
@@ -550,7 +550,7 @@ function hasFileUri(uriList) {
 }
 
 /**
- * ビュー内でのドラッグで設定したパス一覧を読み取る
+ * Read the path list set by a drag within the view
  */
 function readInternalSources(dataTransfer) {
     const internal = dataTransfer.getData(INTERNAL_MIME);
@@ -562,14 +562,14 @@ function readInternalSources(dataTransfer) {
         const parsed = JSON.parse(internal);
         return Array.isArray(parsed) ? parsed : [];
     } catch {
-        // パースできない場合は外部ドロップとして扱う
+        // If it cannot be parsed, treat it as an external drop
         return [];
     }
 }
 
 /**
- * 外部からのドロップに含まれるURI一覧を改行区切りで読み取る
- * ドラッグ元によって使われるMIMEタイプが異なるため順に確認する
+ * Read the URI list in an external drop as newline-separated values
+ * The MIME type used differs depending on the drag source, so check them in order
  */
 function readUriList(dataTransfer) {
     for (const mime of URI_LIST_MIMES) {
@@ -579,7 +579,7 @@ function readUriList(dataTransfer) {
         }
     }
 
-    // VS Codeのエクスプローラーはリソース一覧をJSON配列で渡すことがある
+    // The VS Code Explorer may pass the resource list as a JSON array
     const resourceUrls = dataTransfer.getData(RESOURCE_URLS_MIME);
     if (resourceUrls) {
         try {
@@ -588,7 +588,7 @@ function readUriList(dataTransfer) {
                 return parsed.join('\n');
             }
         } catch {
-            // パースできない場合は無視
+            // Ignore if it cannot be parsed
         }
     }
 
@@ -596,7 +596,7 @@ function readUriList(dataTransfer) {
 }
 
 /**
- * コンテキストメニューを表示する
+ * Show the context menu
  */
 function showContextMenu(event, item) {
     const entries = CONTEXT_MENUS[item.contextValue];
@@ -627,7 +627,7 @@ function showContextMenu(event, item) {
 
     contextMenuElement.classList.remove('hidden');
 
-    // 画面外にはみ出さないように位置を調整
+    // Adjust the position so the menu does not overflow the screen
     const menuRect = contextMenuElement.getBoundingClientRect();
     const left = Math.min(event.clientX, window.innerWidth - menuRect.width - 4);
     const top = Math.min(event.clientY, window.innerHeight - menuRect.height - 4);
@@ -646,21 +646,21 @@ document.addEventListener('click', (event) => {
 });
 
 document.addEventListener('contextmenu', (event) => {
-    // 行以外の場所ではメニューを閉じる
+    // Close the menu when right-clicking anywhere other than a row
     if (!event.target.closest('.row')) {
         hideContextMenu();
     }
 });
 
 /**
- * キーボードで選択できる行（検索結果の件数行は除く）
+ * Rows that can be selected with the keyboard (excluding the search result count row)
  */
 function getSelectableItems() {
     return items.filter(item => item.kind !== 'searchHeader');
 }
 
 /**
- * 指定した行を選択し、見える位置までスクロールする
+ * Select the given row and scroll it into view
  */
 function selectItem(item) {
     selectedPath = item.filePath;
@@ -671,7 +671,7 @@ function selectItem(item) {
     }
 }
 
-// キーボード操作（↑↓で選択移動、Enterで実行）
+// Keyboard operation (move the selection with Up/Down, run with Enter)
 listElement.addEventListener('keydown', (event) => {
     if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' && event.key !== 'Enter') {
         return;
@@ -701,7 +701,7 @@ listElement.addEventListener('keydown', (event) => {
 });
 
 // ---------------------------------------------------------------------
-// 検索
+// Search
 // ---------------------------------------------------------------------
 
 function updateSearchClearButton() {
@@ -709,7 +709,7 @@ function updateSearchClearButton() {
 }
 
 /**
- * 入力中の検索語を拡張側へ送る（空なら検索を終了する）
+ * Send the current search term to the extension (end the search if it is empty)
  */
 function sendSearchQuery() {
     clearTimeout(searchTimer);
@@ -737,13 +737,13 @@ searchInput.addEventListener('keydown', (event) => {
     }
 
     if (event.key === 'Enter') {
-        // デバウンスを待たずに検索する
+        // Search immediately without waiting for the debounce
         sendSearchQuery();
         event.preventDefault();
         return;
     }
 
-    // ↓で一覧へフォーカスを移し、先頭の結果を選択する
+    // Down moves the focus to the list and selects the first result
     if (event.key === 'ArrowDown') {
         const first = getSelectableItems()[0];
         if (first) {
@@ -761,5 +761,5 @@ searchClearButton.addEventListener('click', () => {
 
 setupViewDropTarget();
 
-// 拡張側へ準備完了を通知
+// Notify the extension that it is ready
 vscode.postMessage({ type: 'ready' });

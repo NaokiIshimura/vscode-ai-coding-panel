@@ -15,18 +15,18 @@ suite('TemplateService Test Suite', () => {
 		test('Should generate timestamp in YYYY_MMDD_HHMM_SS format', () => {
 			const timestamp = templateService.generateTimestamp();
 
-			// タイムスタンプの形式を検証（例: 2026_0125_1411_58）
+			// Verify the timestamp format (e.g. 2026_0125_1411_58)
 			const timestampRegex = /^\d{4}_\d{4}_\d{4}_\d{2}$/;
 			assert.ok(timestampRegex.test(timestamp), `Timestamp ${timestamp} should match YYYY_MMDD_HHMM_SS format`);
 		});
 
 		test('Should generate different timestamps when called multiple times', async () => {
 			const timestamp1 = templateService.generateTimestamp();
-			// 1秒待機
+			// Wait 1 second
 			await new Promise(resolve => setTimeout(resolve, 1000));
 			const timestamp2 = templateService.generateTimestamp();
 
-			// 異なるタイムスタンプが生成されることを確認
+			// Verify that a different timestamp is generated
 			assert.notStrictEqual(timestamp1, timestamp2);
 		});
 	});
@@ -35,7 +35,7 @@ suite('TemplateService Test Suite', () => {
 		test('Should format datetime in YYYY/MM/DD HH:MM:SS format', () => {
 			const datetime = templateService.formatDateTime();
 
-			// 日時の形式を検証
+			// Verify the date/time format
 			const datetimeRegex = /^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}$/;
 			assert.ok(datetimeRegex.test(datetime), `Datetime ${datetime} should match YYYY/MM/DD HH:MM:SS format`);
 		});
@@ -75,14 +75,14 @@ suite('TemplateService Test Suite', () => {
 		const testFixturesDir = path.join(__dirname, '../../fixtures/templates');
 
 		setup(() => {
-			// テスト用のテンプレートディレクトリを作成
+			// Create the test template directory
 			if (!fs.existsSync(testFixturesDir)) {
 				fs.mkdirSync(testFixturesDir, { recursive: true });
 			}
 		});
 
 		teardown(() => {
-			// クリーンアップ
+			// Clean up
 			if (fs.existsSync(testFixturesDir)) {
 				fs.rmSync(testFixturesDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 			}
@@ -99,7 +99,7 @@ suite('TemplateService Test Suite', () => {
 
 			const result = await templateService.loadTemplate(variables, 'prompt');
 
-			// デフォルトテンプレートには変数が含まれているはず
+			// The default template should contain variables
 			assert.ok(result.includes('test.md'));
 			assert.ok(result.includes('2026/01/25 12:00:00'));
 			assert.ok(result.includes('test'));
@@ -114,17 +114,17 @@ suite('TemplateService Test Suite', () => {
 				dirpath: 'test'
 			};
 
-			// テスト用のフィクスチャディレクトリを使用（実際のプロジェクトファイルを保護）
+			// Use a test fixture directory (to protect the actual project files)
 			const testExtensionPath = path.join(__dirname, '../../fixtures/testTemplateService');
 			const templatePath = path.join(testExtensionPath, 'templates', 'prompt.md');
 
-			// テスト用のtemplatesディレクトリを作成
+			// Create the test templates directory
 			const templatesDir = path.dirname(templatePath);
 			if (!fs.existsSync(templatesDir)) {
 				fs.mkdirSync(templatesDir, { recursive: true });
 			}
 
-			// テンプレートを作成
+			// Create a template
 			const templateContent = '# {{filename}}\n\nDate: {{datetime}}\nPath: {{filepath}}';
 			fs.writeFileSync(templatePath, templateContent, 'utf8');
 
@@ -134,18 +134,18 @@ suite('TemplateService Test Suite', () => {
 
 				const result = await serviceWithContext.loadTemplate(variables, 'prompt');
 
-				// 変数が置換されていることを確認
+				// Verify that the variables are replaced
 				assert.ok(result.includes('test.md'));
 				assert.ok(result.includes('2026/01/25 12:00:00'));
-				// filepathは相対パスに変換されるため、完全一致ではなく、ファイル名が含まれているかチェック
+				// filepath is converted to a relative path, so check that it contains the file name instead of an exact match
 				assert.ok(result.includes('test.md'));
 
-				// 変数プレースホルダーが残っていないことを確認
+				// Verify that no variable placeholders remain
 				assert.ok(!result.includes('{{filename}}'));
 				assert.ok(!result.includes('{{datetime}}'));
 				assert.ok(!result.includes('{{filepath}}'));
 			} finally {
-				// テスト用ディレクトリ全体をクリーンアップ（実際のプロジェクトファイルは保護）
+				// Clean up the whole test directory (the actual project files are protected)
 				if (fs.existsSync(testExtensionPath)) {
 					fs.rmSync(testExtensionPath, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 				}
@@ -369,12 +369,12 @@ suite('TemplateService Test Suite', () => {
 			const taskFile = templateService.generateTaskFileName();
 			const specFile = templateService.generateSpecFileName();
 
-			// タイムスタンプ部分を抽出
+			// Extract the timestamp part
 			const promptTimestamp = promptFile.replace('_PROMPT.md', '');
 			const taskTimestamp = taskFile.replace('_TASK.md', '');
 			const specTimestamp = specFile.replace('_SPEC.md', '');
 
-			// すべて同じタイムスタンプ形式であることを確認（例: 2026_0125_1411_58）
+			// Verify that all have the same timestamp format (e.g. 2026_0125_1411_58)
 			const timestampRegex = /^\d{4}_\d{4}_\d{4}_\d{2}$/;
 			assert.ok(timestampRegex.test(promptTimestamp));
 			assert.ok(timestampRegex.test(taskTimestamp));

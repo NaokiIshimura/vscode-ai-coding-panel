@@ -9,7 +9,7 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
     constructor() { }
 
     refresh(): void {
-        // メニュー構成は静的だが、再構築できるようキャッシュを破棄する
+        // The menu is static, but discard the cache so it can be rebuilt
         this._rootItems = undefined;
         this._onDidChangeTreeData.fire();
     }
@@ -20,11 +20,11 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
 
     getChildren(element?: MenuItem): MenuItem[] {
         if (element) {
-            // 子レベル: 親項目の子要素を返す
+            // Child level: return the children of the parent item
             return element.children || [];
         }
 
-        // ルートレベル: メニュー項目を返す（初回のみ構築してキャッシュ）
+        // Root level: return the menu items (built and cached on first call only)
         if (!this._rootItems) {
             this._rootItems = this._buildRootItems();
         }
@@ -33,16 +33,16 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
     }
 
     /**
-     * ルートレベルのメニュー項目を構築
+     * Build the root-level menu items
      *
-     * Global / Workspace は Expanded にしている。Collapsed だと親を開くたびに
-     * getChildren() の呼び出し（拡張ホストとの往復）が個別に発生するため、
-     * 初回展開時の一括取得にまとめて待ち回数を減らす。
-     * Usage Guide だけは項目数が多く常用しないため、既定で閉じる。
+     * Global / Workspace are Expanded. With Collapsed, each time a parent is opened
+     * a separate getChildren() call (a round trip to the extension host) occurs, so
+     * batch them into a single fetch on first expansion to reduce waits
+     * Only Usage Guide is collapsed by default, since it has many items and is rarely used
      */
     private _buildRootItems(): MenuItem[] {
         return [
-            // Usage Guide（親項目）
+            // Usage Guide (parent item)
             new MenuItem(
                 'Usage Guide',
                 'How to use this extension',
@@ -104,10 +104,10 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
                         new vscode.ThemeIcon('link-external')
                     )
                 ],
-                // Usage Guide は項目数が多く常用しないため既定で閉じる
+                // Usage Guide has many items and is rarely used, so it is collapsed by default
                 vscode.TreeItemCollapsibleState.Collapsed
             ),
-            // グローバル（親項目）
+            // Global (parent item)
             new MenuItem(
                 'Global',
                 'User-level settings',
@@ -144,7 +144,7 @@ export class MenuProvider implements vscode.TreeDataProvider<MenuItem> {
                 ],
                 vscode.TreeItemCollapsibleState.Expanded
             ),
-            // ワークスペース（親項目）
+            // Workspace (parent item)
             new MenuItem(
                 'Workspace',
                 'Workspace-level settings',

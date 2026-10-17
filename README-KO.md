@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.17-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.18-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | 한국어 | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português](README-PT-BR.md)
 
@@ -43,11 +43,12 @@ Claude Code의 생산성을 극대화하도록 설계된 강력한 VS Code 패�
 | **프롬프트 포함 디렉터리 생성** | "Create directory" 버튼을 누르면 `.claude/plans`와 Run/Plan/Spec 버튼 사용법 안내가 담긴 초기 프롬프트 파일(`YYYY_MMDD_HHMM_SS_PROMPT.md`)이 자동으로 생성됩니다. 파일은 Editor 뷰에서 자동으로 열립니다 |
 | **Quick Start** | 뷰 상단의 ⚡ Quick Start 버튼을 누르면 폴더 이름을 묻지 않고 타임스탬프 이름의 디렉터리(`YYYY_MMDD_HHMM_SS`)와 `QUICK_START.md` 파일을 생성합니다. 바로 작업 내용을 작성하고 싶을 때 사용하세요 |
 | **Search** | 뷰 상단의 검색 상자로 Plans 디렉터리 전체(`archived/` 포함)를 디렉터리 이름, 파일 이름, Markdown 본문에서 검색합니다. 공백으로 여러 단어를 구분하면 모두 포함하는 항목만 표시합니다(대소문자 구분 없음). 결과에는 Plans 루트 기준 상대 디렉터리가 표시되고, 본문 일치 시 마우스를 올리면 해당 줄이 표시됩니다. 파일을 클릭하면 해당 디렉터리로 이동해 열고, 디렉터리를 클릭하면 그 디렉터리로 이동합니다. `Escape` 또는 지우기 버튼으로 목록으로 돌아갑니다 |
+| **Resume Session** | 하단 바 오른쪽의 Resume Session 버튼은 현재 디렉터리의 `metadata.md`에 기록된 최신 Claude Code 세션을 다시 엽니다. Spec / Plan / Run을 실행할 때마다 전송한 파일의 디렉터리에 있는 `metadata.md`에 한 줄이 추가됩니다(예: `- 2026/10/17 18:54:39 \| run  \| 2026_1017_1854_39_PROMPT.md \| claude --resume 0f1d2c3b-...`). 전송한 파일을 Editor 뷰에서 열고, 활성 Terminal 탭에서 Claude Code가 이미 실행 중이면 새 탭에서 세션을 다시 엽니다 |
 | 경로 표시 | 현재 경로가 목록의 첫 번째 항목으로 표시되며, 인라인 액션 버튼(New PROMPT.md, New TASK.md, New SPEC.md, Copy, Rename, New Directory, Archive)이 함께 제공됩니다 |
 | **날짜/시간 접두어** | 디렉터리 이름 앞에 날짜 또는 시간을 표시합니다. 오늘이면 `[HH:MM]`, 그 외 날짜는 `[MM/DD]`입니다. 하위 디렉터리에서는 파일 이름 앞에도 표시합니다(루트 디렉터리의 파일에는 접두어가 붙지 않음). 타임스탬프 형식의 프롬프트 파일은 타임스탬프를 접두어로 바꿔 짧게 표시합니다(예: `2026_1011_0206_17_QUICK_START.md` → `[02:06] QUICK_START.md`). 실제 파일 이름은 바뀌지 않습니다 |
 | **Editor 대상 파일 아이콘** | Editor 뷰에서 열리는 파일(TASK.md, PROMPT.md, SPEC.md, QUICK_START.md)은 일반 Markdown 파일과 구분되도록 `edit` 아이콘으로 표시됩니다 |
 | 정렬 | 기본적으로 파일은 생성일 기준 오름차순으로 정렬됩니다 |
-| 드래그 앤 드롭 | 뷰 안에서 또는 외부에서 파일을 드래그하여 복사합니다. 뷰 외부에서 드래그해 올 때는 **Shift** 키를 누른 상태로 드래그하세요. VS Code는 Shift 키를 누르지 않으면 드래그 중에 webview 기반 뷰의 포인터 이벤트를 비활성화합니다. 디렉터리 행에 드롭하면 해당 디렉터리로, 뷰의 다른 곳에 드롭하면 현재 표시 중인 디렉터리로 복사됩니다. 폴더는 드롭할 수 없습니다(파일만 가능). 뷰 오른쪽 아래에 안내 문구가 표시됩니다 |
+| 드래그 앤 드롭 | 뷰 안에서 또는 외부에서 파일을 드래그하여 복사합니다. 뷰 외부에서 드래그해 올 때는 **Shift** 키를 누른 상태로 드래그하세요. VS Code는 Shift 키를 누르지 않으면 드래그 중에 webview 기반 뷰의 포인터 이벤트를 비활성화합니다. 디렉터리 행에 드롭하면 해당 디렉터리로, 뷰의 다른 곳에 드롭하면 현재 표시 중인 디렉터리로 복사됩니다. 폴더는 드롭할 수 없습니다(파일만 가능). 뷰 왼쪽 아래에 안내 문구가 표시됩니다 |
 | **인라인 액션 툴팁** | 행의 인라인 액션 아이콘(Archive, New PROMPT.md, Rename..., Insert Path to Editor 등)에 마우스를 올리면 액션 이름이 표시됩니다 |
 | **키보드 탐색** | ↑ / ↓ 키로 선택을 이동하고 Enter 키로 선택한 항목을 엽니다 |
 | 자동 새로고침 | 파일이 생성, 수정, 삭제되면 자동으로 갱신됩니다(뷰가 숨겨져 있어도 동작) |
@@ -298,7 +299,7 @@ datetime: {{datetime}}
 | `editor.runPlanCommand` | Plan 버튼을 클릭했을 때 실행할 명령 템플릿 | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | 파일 경로의 플레이스홀더로 `${filePath}`를 사용합니다. 값이 하나의 인수로 전달되도록 플레이스홀더를 큰따옴표로 감싸세요. |
 | `editor.runSpecCommand` | Spec 버튼을 클릭했을 때 실행할 명령 템플릿 | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | 파일 경로의 플레이스홀더로 `${filePath}`를 사용합니다. 값이 하나의 인수로 전달되도록 플레이스홀더를 큰따옴표로 감싸세요. |
 | `editor.recordSendTimestamp` | Spec / Plan / Run을 누르면 열려 있는 파일에 전송 일시를 추가 | boolean | `true` | 기록은 파일 끝의 `## sent history` 섹션에 추가됩니다 |
-| `editor.recordResumeCommand` | 생성된 세션 ID로 Spec / Plan / Run을 시작하고, 해당 `claude --resume <session-id>` 명령을 기록 | boolean | `true` | `editor.recordSendTimestamp`가 필요합니다. Claude Code가 이미 실행 중일 때, 그리고 `editor.commandPrefix`가 `claude`가 아니거나 이미 세션을 지정하고 있을 때는 건너뜁니다 |
+| `editor.recordResumeCommand` | 생성된 세션 ID로 Spec / Plan / Run을 시작하고, 해당 `claude --resume <session-id>` 명령을 기록 | boolean | `true` | 열린 파일과 같은 디렉터리의 `metadata.md`에 기록되며, `editor.recordSendTimestamp`가 켜져 있으면 전송 기록에도 기록됩니다. Claude Code가 이미 실행 중일 때, 그리고 `editor.commandPrefix`가 `claude`가 아니거나 이미 세션을 지정하고 있을 때는 건너뜁니다 |
 | `editor.quickRun` | Run이 기본으로 덧붙이는 output md 지시문 없이 에디터 내용을 그대로 보냄 | boolean | `false` | 지시문은 파일이 열려 있고 `editor.runCommand`가 `${editorContent}`를 사용할 때만 덧붙습니다. 열려 있는 파일은 수정되지 않습니다 |
 | `editor.outputMdPrompt` | output md 버튼이 실행 중인 Claude Code 세션에 보내는 지시문 | string | `"Record the current status of this task as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_status.md) in ${dirPath}. ..."` | `${filePath}`(열린 파일)와 `${dirPath}`(그 디렉터리)는 워크스페이스 루트 기준 상대 경로입니다. 셸 따옴표 없이 입력 텍스트로 전송됩니다. 한 줄로 작성하세요 |
 | `editor.outputMemoryPrompt` | output memory 버튼이 실행 중인 Claude Code 세션에 보내는 지시문 | string | `"Record the reusable knowledge from this session as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_memory.md) in ${dirPath}. ..."` | 플레이스홀더와 규칙은 `editor.outputMdPrompt`와 같습니다 |
@@ -394,14 +395,14 @@ npm run watch
 1. [GitHub Releases 페이지](https://github.com/NaokiIshimura/vscode-panel/releases)에서 최신 VSIX 파일을 다운로드합니다.
 2. 명령줄로 설치합니다:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.17.vsix
+   code --install-extension ai-coding-sidebar-1.2.18.vsix
    ```
 3. VS Code를 재시작합니다.
 
 #### 로컬 빌드 사용
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.18.vsix
 ```
 
 #### 직접 패키지 빌드
@@ -415,7 +416,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
    ```
 3. 생성된 VSIX 파일을 설치합니다:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.18.vsix
    ```
 4. VS Code를 재시작합니다.
 

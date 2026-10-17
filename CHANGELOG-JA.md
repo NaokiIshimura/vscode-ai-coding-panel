@@ -5,6 +5,21 @@
 フォーマットは [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/) に準拠しています。
 
+## [1.2.18] - 2026-10-17
+
+### 追加
+- **Resume Sessionボタン**: Plans View最下段の右側に、表示中のディレクトリの`metadata.md`に記録された最新のClaude Codeセッションを再開するResume Sessionボタンを追加
+  - 記録されたセッションIDと現在の`editor.commandPrefix`からコマンドを組み立て直すため、記録された文字列をそのままシェルへ送ることはない
+  - セッションを開始したファイルをEditor Viewで開き、Terminalのタブと関連付ける
+  - アクティブなTerminalタブでClaude Codeが起動中の場合は、新しいタブで再開する
+  - Plansディレクトリが無い間はボタンを無効化する。セッションが記録されていない場合は警告を表示する
+  - コマンド`Resume Session`からも実行できる
+- **metadata.md**: 新しいセッションを開始する Spec / Plan / Run の実行時に、送信したファイルのディレクトリの`metadata.md`へ日時・種別・ファイル名・再開コマンドを1行追記する
+
+### 変更
+- **ドラッグ&ドロップの注意書きの位置**: 「Hold Shift to drop files here」をPlans View最下段の左側へ移動
+- **`editor.recordResumeCommand`**: `editor.recordSendTimestamp`に依存しなくなった。送信日時の記録が無効な場合は`metadata.md`にのみ記録する
+
 ## [1.2.17] - 2026-10-12
 
 ### Added
@@ -2231,6 +2246,7 @@ v0.8.33以前からアップグレードする場合:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.17...v1.2.18
 [1.2.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.16...v1.2.17
 [1.2.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.15...v1.2.16
 [1.2.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.14...v1.2.15

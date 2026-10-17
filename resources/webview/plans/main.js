@@ -1,6 +1,7 @@
 const vscode = acquireVsCodeApi();
 
 const quickStartButton = document.getElementById('quick-start-button');
+const resumeSessionButton = document.getElementById('resume-session-button');
 const listElement = document.getElementById('list');
 const contextMenuElement = document.getElementById('context-menu');
 const tooltipElement = document.getElementById('tooltip');
@@ -112,6 +113,10 @@ quickStartButton.addEventListener('click', () => {
     vscode.postMessage({ type: 'quickStart' });
 });
 
+resumeSessionButton.addEventListener('click', () => {
+    vscode.postMessage({ type: 'resumeSession' });
+});
+
 /**
  * 選択された行に対してコマンドを実行するよう拡張側へ依頼する
  */
@@ -136,6 +141,7 @@ window.addEventListener('message', event => {
             selectedPath = message.selectedPath;
             // rootディレクトリが無い（Create directory表示中）間は検索できない
             searchInput.disabled = items.some(item => item.kind === 'createDirectory');
+            resumeSessionButton.disabled = searchInput.disabled;
             render(message.message);
             break;
         case 'select':

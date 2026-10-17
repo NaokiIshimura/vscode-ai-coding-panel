@@ -649,6 +649,26 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     }
 
     /**
+     * 新しいタブを作成してコマンドを送信する
+     *
+     * アクティブタブでClaude Codeが起動中の場合に、コマンドを入力テキストとして流さず
+     * 新しいシェルで実行するために使う
+     * @returns 送信した場合はtrue（タブ数の上限などでタブを作成できなかった場合はfalse）
+     */
+    public async sendCommandInNewTab(command: string, filePath?: string, commandType?: 'run' | 'plan' | 'spec'): Promise<boolean> {
+        const tabCount = this._tabs.length;
+        await this._createTab();
+
+        // _createTab()は失敗を返さないため、タブが増えたかどうかで作成できたかを判定する
+        if (this._tabs.length === tabCount) {
+            return false;
+        }
+
+        await this.sendCommand(command, true, filePath, commandType);
+        return true;
+    }
+
+    /**
      * ショートカットコマンドを処理
      * @param command 実行するコマンド
      * @param startsClaudeCode Claude Codeを起動するコマンドかどうか

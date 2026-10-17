@@ -295,6 +295,74 @@ suite('TemplateService Test Suite', () => {
 		});
 	});
 
+	suite('appendSessionMetadataLine', () => {
+		const dateTime = '2026/10/17 18:54:39';
+		const resume = 'claude --resume 0f1d2c3b-4a59-4687-8f0a-1b2c3d4e5f60';
+
+		test('Should create the file content with headings when empty', () => {
+			const result = templateService.appendSessionMetadataLine('', 'run', dateTime, 'a_PROMPT.md', resume);
+			assert.strictEqual(
+				result,
+				`# metadata\n\n## sessions\n- ${dateTime} | run  | a_PROMPT.md | ${resume}\n`
+			);
+		});
+
+		test('Should append after the last session line', () => {
+			const content = `# metadata\n\n## sessions\n- ${dateTime} | run  | a_PROMPT.md | ${resume}\n\n`;
+			const result = templateService.appendSessionMetadataLine(content, 'plan', '2026/10/17 19:02:11', 'b_PROMPT.md', 'claude --resume x');
+			const lines = result.split('\n');
+			assert.strictEqual(lines[4], '- 2026/10/17 19:02:11 | plan | b_PROMPT.md | claude --resume x');
+		});
+
+		test('Should add the sessions section when missing', () => {
+			const result = templateService.appendSessionMetadataLine('# metadata\n\nnote\n', 'spec', dateTime, 'a_SPEC.md', resume);
+			assert.strictEqual(result, `# metadata\n\nnote\n\n## sessions\n- ${dateTime} | spec | a_SPEC.md | ${resume}\n`);
+		});
+	});
+
+	suite('findLatestSessionMetadata', () => {
+		const first = '0f1d2c3b-4a59-4687-8f0a-1b2c3d4e5f60';
+		const second = '11111111-2222-4333-8444-555555555555';
+
+		test('Should return undefined without a sessions section', () => {
+			assert.strictEqual(templateService.findLatestSessionMetadata('# metadata\n'), undefined);
+		});
+
+		test('Should return the last session', () => {
+			let content = templateService.appendSessionMetadataLine('', 'run', '2026/10/17 18:54:39', 'a_PROMPT.md', `claude --resume ${first}`);
+			content = templateService.appendSessionMetadataLine(content, 'plan', '2026/10/17 19:02:11', 'b_PROMPT.md', `/usr/local/bin/claude --resume ${second}`);
+
+			assert.deepStrictEqual(templateService.findLatestSessionMetadata(content), {
+				commandType: 'plan',
+				fileName: 'b_PROMPT.md',
+				sessionId: second
+			});
+		});
+
+		test('Should skip lines whose session ID is not a UUID', () => {
+			const content = [
+				'## sessions',
+				`- 2026/10/17 18:54:39 | run  | a_PROMPT.md | claude --resume ${first}`,
+				'- 2026/10/17 19:00:00 | run  | b_PROMPT.md | claude --resume $(rm -rf ~)',
+				'- 2026/10/17 19:01:00 | run  | c_PROMPT.md | claude --resume abc;echo'
+			].join('\n');
+
+			assert.strictEqual(templateService.findLatestSessionMetadata(content)?.sessionId, first);
+		});
+
+		test('Should ignore lines outside the sessions section', () => {
+			const content = [
+				'## sessions',
+				`- 2026/10/17 18:54:39 | run  | a_PROMPT.md | claude --resume ${first}`,
+				'',
+				'---',
+				`- 2026/10/17 19:00:00 | run  | b_PROMPT.md | claude --resume ${second}`
+			].join('\n');
+
+			assert.strictEqual(templateService.findLatestSessionMetadata(content)?.sessionId, first);
+		});
+	});
+
 	suite('File name generation consistency', () => {
 		test('All file name generators should use the same timestamp format', () => {
 			const promptFile = templateService.generatePromptFileName();

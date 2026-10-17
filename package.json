@@ -2,7 +2,7 @@
   "name": "ai-coding-sidebar",
   "displayName": "AI Coding Panel",
   "description": "A powerful VS Code panel extension designed to maximize your productivity with Claude Code.",
-  "version": "1.2.17",
+  "version": "1.2.18",
   "publisher": "nacn",
   "icon": "images/icon.png",
   "repository": {
@@ -155,6 +155,11 @@
         "command": "aiCodingSidebar.quickStart",
         "title": "Quick Start",
         "icon": "$(zap)"
+      },
+      {
+        "command": "aiCodingSidebar.resumeSession",
+        "title": "Resume Session",
+        "icon": "$(debug-restart)"
       },
       {
         "command": "aiCodingSidebar.newDirectory",
@@ -462,7 +467,7 @@
         "aiCodingSidebar.editor.recordResumeCommand": {
           "type": "boolean",
           "default": true,
-          "description": "Start the Spec, Plan, and Run commands with a generated session ID and record the matching 'claude --resume <session-id>' command in the sent history. Requires aiCodingSidebar.editor.recordSendTimestamp."
+          "description": "Start the Spec, Plan, and Run commands with a generated session ID and record the matching 'claude --resume <session-id>' command in metadata.md in the same directory as the open file (used by Resume Session in the Plans view). The command is also added to the sent history when aiCodingSidebar.editor.recordSendTimestamp is enabled."
         },
         "aiCodingSidebar.editor.quickRun": {
           "type": "boolean",

@@ -92,6 +92,51 @@ suite('PlansProvider Integration Test Suite', () => {
 		});
 	});
 
+	suite('findLatestResumeSession', () => {
+		const sessionId = '0f1d2c3b-4a59-4687-8f0a-1b2c3d4e5f60';
+
+		test('Should return the latest session in metadata.md of the current directory', async () => {
+			const taskDir = path.join(testDir, 'task');
+			fs.mkdirSync(taskDir, { recursive: true });
+			fs.writeFileSync(path.join(taskDir, 'metadata.md'), [
+				'# metadata',
+				'',
+				'## sessions',
+				'- 2026/10/17 18:54:39 | run  | old_PROMPT.md | claude --resume 11111111-2222-4333-8444-555555555555',
+				`- 2026/10/17 19:02:11 | plan | new_PROMPT.md | claude --resume ${sessionId}`,
+				''
+			].join('\n'), 'utf8');
+			await plansProvider.setRootPath(testDir);
+			plansProvider.setActiveFolder(taskDir);
+
+			const session = await plansProvider.findLatestResumeSession();
+
+			assert.deepStrictEqual(session, {
+				commandType: 'plan',
+				fileName: 'new_PROMPT.md',
+				sessionId,
+				dirPath: taskDir
+			});
+		});
+
+		test('Should not look into subdirectories', async () => {
+			const taskDir = path.join(testDir, 'task');
+			fs.mkdirSync(taskDir, { recursive: true });
+			fs.writeFileSync(path.join(taskDir, 'metadata.md'),
+				`## sessions\n- 2026/10/17 18:54:39 | run  | a.md | claude --resume ${sessionId}\n`, 'utf8');
+			await plansProvider.setRootPath(testDir);
+
+			assert.strictEqual(await plansProvider.findLatestResumeSession(), undefined);
+		});
+
+		test('Should return undefined when metadata.md has no valid session', async () => {
+			fs.writeFileSync(path.join(testDir, 'metadata.md'), '# metadata\n\n## sessions\n', 'utf8');
+			await plansProvider.setRootPath(testDir);
+
+			assert.strictEqual(await plansProvider.findLatestResumeSession(), undefined);
+		});
+	});
+
 	suite('buildItems', () => {
 		test('Should return empty array when no root path is set', async () => {
 			const items = await plansProvider.buildItems();

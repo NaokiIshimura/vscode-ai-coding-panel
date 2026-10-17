@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.18] - 2026-10-17
+
+### Added
+- **Resume Session button**: The right side of the Plans view bottom bar now holds a Resume Session button that resumes the latest Claude Code session recorded in `metadata.md` of the directory shown in the view
+  - The command is rebuilt from the recorded session ID and the current `editor.commandPrefix`, so the recorded text is never sent to the shell as is
+  - The file that started the session is opened in the Editor view and associated with the Terminal tab
+  - If Claude Code is already running in the active Terminal tab, the session is resumed in a new tab
+  - The button is disabled while the Plans directory does not exist. A warning is shown when no session is recorded
+  - Also available as the `Resume Session` command
+- **metadata.md**: Each Spec / Plan / Run that starts a new session adds a line with the date, command type, file name, and resume command to `metadata.md` in the directory of the sent file
+
+### Changed
+- **Drag & drop hint position**: The "Hold Shift to drop files here" hint moved to the left side of the Plans view bottom bar
+- **`editor.recordResumeCommand`**: No longer requires `editor.recordSendTimestamp`. When the timestamp is off, the session is recorded only in `metadata.md`
+
 ## [1.2.17] - 2026-10-12
 
 ### Added
@@ -2760,6 +2775,7 @@ If you are upgrading from v0.8.33 or earlier:
 [1.2.7]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.6...v1.2.7
 [1.2.9]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.8...v1.2.9
 
+[1.2.18]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.17...v1.2.18
 [1.2.17]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.16...v1.2.17
 [1.2.16]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.15...v1.2.16
 [1.2.15]: https://github.com/NaokiIshimura/vscode-ai-coding-sidebar/compare/v1.2.14...v1.2.15

@@ -137,6 +137,39 @@ body {
     cursor: not-allowed;
 }
 
+/* Resume Sessionボタン（Editor ViewのPrompts / Editと同じ透明背景＋枠線のデザインにする） */
+.resume-session-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding: 2px 8px;
+    font-size: 11px;
+    line-height: 16px;
+    font-family: inherit;
+    font-weight: normal;
+    white-space: nowrap;
+    background-color: transparent;
+    color: var(--vscode-foreground);
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.resume-session-button:hover {
+    background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.resume-session-button .codicon {
+    font-size: 14px;
+    line-height: 16px;
+}
+
+.resume-session-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* ファイル一覧 */
 #list {
     flex: 1 1 auto;
@@ -144,7 +177,7 @@ body {
     outline: none;
 }
 
-/* フッター（Editor Viewの右下と同じ位置にドラッグ&ドロップの注意を表示する） */
+/* フッター（左にドラッグ&ドロップの注意、右にResume Sessionボタン） */
 #footer {
     box-sizing: border-box;
     min-height: var(--button-bar-height);
@@ -153,7 +186,8 @@ body {
     border-top: 1px solid var(--vscode-panel-border);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
+    gap: 8px;
     flex-shrink: 0;
 }
 

@@ -5,6 +5,7 @@ import * as path from 'path';
 import { FileItem, getFileIconName } from './items/FileItem';
 import { FileInfo } from '../utils/fileUtils';
 import { FileWatcherService } from '../services/FileWatcherService';
+import { TemplateService, SESSION_METADATA_FILE_NAME, SessionMetadataEntry } from '../services/TemplateService';
 
 // Forward declaration for EditorProvider to avoid circular dependency
 export interface IEditorProvider {
@@ -159,6 +160,9 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
                 break;
             case 'quickStart':
                 await vscode.commands.executeCommand('aiCodingSidebar.quickStart');
+                break;
+            case 'resumeSession':
+                await vscode.commands.executeCommand('aiCodingSidebar.resumeSession');
                 break;
             case 'itemClick':
                 await this._handleItemClick(message.kind, message.filePath);
@@ -718,6 +722,27 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
 
     getCurrentPath(): string | undefined {
         return this.activeFolderPath || this.rootPath;
+    }
+
+    /**
+     * 表示中のディレクトリのmetadata.mdから、最後に記録されたセッションを取得する
+     * @returns セッションと、metadata.mdのあるディレクトリ。見つからない場合はundefined
+     */
+    async findLatestResumeSession(): Promise<(SessionMetadataEntry & { dirPath: string }) | undefined> {
+        const dirPath = this.getCurrentPath();
+        if (!dirPath || this.pathNotFound) {
+            return undefined;
+        }
+
+        let content: string;
+        try {
+            content = await fsPromises.readFile(path.join(dirPath, SESSION_METADATA_FILE_NAME), 'utf8');
+        } catch {
+            return undefined;
+        }
+
+        const entry = new TemplateService().findLatestSessionMetadata(content);
+        return entry ? { ...entry, dirPath } : undefined;
     }
 
     setSelectedItem(item: FileItem | undefined): void {

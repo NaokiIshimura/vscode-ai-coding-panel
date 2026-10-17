@@ -651,6 +651,34 @@ export function registerPlansCommands(
             }
         })
     );
+
+    // 16. resumeSession - 表示中ディレクトリのmetadata.mdに記録された最新のセッションを再開
+    context.subscriptions.push(
+        vscode.commands.registerCommand('aiCodingSidebar.resumeSession', async () => {
+            const session = await plansProvider.findLatestResumeSession();
+            if (!session) {
+                vscode.window.showWarningMessage('No resumable session found in this directory.');
+                return;
+            }
+
+            // セッションを開始したファイルが残っていれば開き、タブと関連付ける（消えていても再開はする）
+            const sessionFilePath = path.join(session.dirPath, path.basename(session.fileName));
+            let filePath: string | undefined;
+            try {
+                await fsPromises.access(sessionFilePath);
+                filePath = sessionFilePath;
+            } catch {
+                filePath = undefined;
+            }
+
+            if (filePath) {
+                await editorProvider.showFile(filePath);
+                await plansProvider.revealFile(filePath);
+            }
+
+            await editorProvider.resumeSession(session.sessionId, filePath, session.commandType);
+        })
+    );
 }
 
 /**

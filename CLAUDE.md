@@ -386,6 +386,45 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.18新機能: Plans ViewのResume Sessionボタンと metadata.md
+
+v1.2.1で記録するようにした再開コマンドを、Plans View最下段（`#footer`）右側の `Resume Session` ボタンから実行できるようにした。再開の情報源はプロンプトファイルの送信履歴ではなく、タスクディレクトリの `metadata.md`：
+
+```markdown
+# metadata
+
+## sessions
+- 2026/10/17 18:54:39 | run  | 2026_1017_1854_39_PROMPT.md | claude --resume 0f1d2c3b-4a59-4687-8f0a-1b2c3d4e5f60
+```
+
+**書き込み（`EditorProvider._appendSessionMetadata()`）**
+- Spec / Plan / Run で `_prepareResumeSession()` がセッションIDを付与した場合のみ、`_appendSendHistory()` の直後に追記する
+- 書き込み先は**送信したファイルのディレクトリ**。読み取りは**Plans Viewの表示中ディレクトリ**。通常は一致するが、Run直後に別ディレクトリへ移動してもセッションがそのタスクに残るようにしている
+- `metadata.md` 自体を送信した場合は記録しない（送信履歴の追記と同じファイルを書き換えて競合するため）
+- `_prepareResumeSession()` から `recordSendTimestamp` の条件を外した。`recordResumeCommand` のみで判定する。プロンプトファイルの送信履歴には従来どおりresumeコマンドも記録する
+
+**読み取り（`PlansProvider.findLatestResumeSession()` → `TemplateService.findLatestSessionMetadata()`）**
+- `getCurrentPath()` 直下の `metadata.md` のみ。サブディレクトリは見ない
+- `## sessions` の最後の有効な行を返す。**セッションIDはUUID形式のみ受け付ける**（`isValidSessionId()`）。`metadata.md` は手で編集できるため
+
+**再開（`EditorProvider.resumeSession()`）— 記録された文字列は送らない（最重要）**
+- UUIDから `${commandPrefix} --resume <uuid>` を組み立て直す（`_buildResumeCommand()`）。プレフィックスがclaude以外、または `RESUME_CONFLICTING_OPTIONS` を含む場合は `claude` を使う。記録された実行ファイル名も使わない
+- アクティブタブでClaude Code起動中なら `ITerminalProvider.sendCommandInNewTab?()` で新しいタブに送る。起動中のタブへ送ると入力テキストとして扱われるため（v1.0.12）
+- `sendCommandInNewTab` はオプショナル。未実装なら起動中は警告して送らない（`sendSessionPrompt()` と同じく安全側）
+- `TerminalProvider.sendCommandInNewTab()` は `_createTab()` が失敗を返さないため、タブ数の増減で作成できたかを判定する（`MAX_TABS` 到達時など）
+- 再開時は送信履歴にも `metadata.md` にも追記しない
+- コマンド `aiCodingSidebar.resumeSession`（`commands/plans.ts`）が、記録されたファイルが残っていれば `showFile()` ＋ `revealFile()` してから再開する。ファイルが消えていても再開はする
+
+**フッター**
+- `#footer` を `justify-content: space-between` にし、左に「Hold Shift to drop files here」、右にボタン。ボタンは `flex-shrink: 0`、狭いときはヒント側を省略表示
+- ボタンはルート未作成（`createDirectory` 行の表示中）の間だけ無効。検索欄と同じ条件
+- デザインはEditor ViewのPrompts / Editと同じ（透明背景＋`--vscode-button-border`の枠線、ホバーで`--vscode-toolbar-hoverBackground`）。Quick Startの黄色と競合させない
+
+**ローカルでのテスト実行について**
+- `vscode` をスタブ化したNode上でmocha（`--ui tdd`）を実行して確認している（`TemplateService` / `EditorProvider` / `PlansProvider` 計133 passing）
+- `TerminalProvider.test.ts` はスタブ上で変更前後とも 21 passing / 8 failing（PTYを使う `before each` とv1.0.12で廃止したBracketed Paste Modeのテスト）。`sendCommandInNewTab()` のテストはこのため追加していない
+- フッターのボタン（配置・`resumeSession` の送信・無効化）はjsdom上で `main.js` を実行して確認している
+
 ### v1.2.17新機能: Runへのoutput md指示の自動付与と Quick Run 設定
 
 Runで送るエディタの内容の末尾に、output mdボタン（v1.2.15）と同じ指示文を空行区切りで**既定で**連結する。設定 `aiCodingSidebar.editor.quickRun`（既定 `false`。設定画面の表示名は `Quick Run`）を有効にすると連結せず、エディタの内容をそのまま送る：
@@ -2536,7 +2575,7 @@ Terminal Viewの安定性向上のため、以下の改善を実施：
 - `aiCodingSidebar.editor.runCommandWithoutFile`: ファイルなし時のRunコマンド
 - `aiCodingSidebar.editor.runPlanCommand`: Planボタン実行コマンド（旧 `aiCodingSidebar.editor.planCommand`）
 - `aiCodingSidebar.editor.runSpecCommand`: Specボタン実行コマンド（旧 `aiCodingSidebar.editor.specCommand`）
-- `aiCodingSidebar.editor.recordResumeCommand`: Spec / Plan / Run の実行時にセッションIDを指定し、resumeコマンドを送信履歴へ記録するか（デフォルト: `true`）
+- `aiCodingSidebar.editor.recordResumeCommand`: Spec / Plan / Run の実行時にセッションIDを指定し、resumeコマンドを `metadata.md`（と送信履歴）へ記録するか（デフォルト: `true`）
 - `aiCodingSidebar.editor.quickRun`: Runが既定で連結するoutput mdの指示文を省き、エディタの内容をそのまま送るか（デフォルト: `false`）
 - `aiCodingSidebar.editor.outputMdPrompt`: output mdボタンで起動中のClaude Codeへ送る指示文（`${filePath}` / `${dirPath}`）
 - `aiCodingSidebar.editor.outputMemoryPrompt`: output memoryボタンで起動中のClaude Codeへ送る指示文（`${filePath}` / `${dirPath}`）

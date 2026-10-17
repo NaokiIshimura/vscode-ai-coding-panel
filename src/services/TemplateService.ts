@@ -39,6 +39,89 @@ const SEND_HISTORY_LABELS: Record<SendCommandType, string> = {
 const SEND_HISTORY_SEPARATOR = '|';
 
 /**
+ * セッション情報を記録するファイル名（タスクディレクトリ直下に置く）
+ */
+export const SESSION_METADATA_FILE_NAME = 'metadata.md';
+
+/**
+ * セッション情報ファイルの見出し
+ */
+const SESSION_METADATA_TITLE = '# metadata';
+
+/**
+ * セッション情報ファイルのセッション一覧セクションの見出し
+ */
+export const SESSION_METADATA_HEADING = '## sessions';
+
+/**
+ * セッション情報の1行
+ * 例: - 2026/10/17 18:54:39 | run  | 2026_1017_1854_39_PROMPT.md | claude --resume <uuid>
+ */
+const SESSION_METADATA_LINE_PATTERN = /^-\s+[^|]+\|\s*(run|plan|spec)\s*\|\s*([^|]+?)\s*\|\s*\S+\s+--resume\s+(\S+)\s*$/;
+
+/**
+ * セッションID（Claude CodeのUUID）
+ */
+const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * セッションIDとして受け付ける形式（UUID）かどうかを判定する
+ */
+export function isValidSessionId(sessionId: string): boolean {
+    return SESSION_ID_PATTERN.test(sessionId);
+}
+
+/**
+ * セッション情報ファイルから読み取った再開対象のセッション
+ */
+export interface SessionMetadataEntry {
+    /** 送信したコマンドの種別 */
+    commandType: SendCommandType;
+    /** 送信したファイル名（セッション情報ファイルと同じディレクトリ） */
+    fileName: string;
+    /** 再開するセッションのID */
+    sessionId: string;
+}
+
+/**
+ * 見出しで始まるセクションの範囲を探す
+ *
+ * 見出しは行全体の完全一致で判定し、次の見出しまたは水平線（---）の手前までをセクションとみなす
+ * @returns 見出しの行番号と、セクション終端（含まない）の行番号
+ */
+function findSectionRange(lines: string[], heading: string): { headingIndex: number; endIndex: number } | undefined {
+    const headingIndex = lines.findIndex(line => line.trim() === heading);
+    if (headingIndex === -1) {
+        return undefined;
+    }
+
+    let endIndex = lines.length;
+    for (let i = headingIndex + 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (/^#{1,6}\s/.test(line) || line === '---') {
+            endIndex = i;
+            break;
+        }
+    }
+
+    return { headingIndex, endIndex };
+}
+
+/**
+ * セクション内の最後の内容行の直後へ1行挿入する
+ */
+function insertLineIntoSection(lines: string[], range: { headingIndex: number; endIndex: number }, line: string): string {
+    // 末尾の空行を飛ばし、セクション内の最後の内容行の直後へ挿入する
+    let insertIndex = range.endIndex;
+    while (insertIndex > range.headingIndex + 1 && lines[insertIndex - 1].trim() === '') {
+        insertIndex--;
+    }
+
+    lines.splice(insertIndex, 0, line);
+    return lines.join('\n');
+}
+
+/**
  * テンプレート生成サービス
  */
 export class TemplateService {
@@ -246,33 +329,84 @@ datetime   : ${variables.datetime}
         const historyLine = `- ${SEND_HISTORY_LABELS[commandType]}: ${dateTime}${suffix}`;
         const lines = content.split('\n');
         // 見出しは行全体の完全一致で判定する（本文中の類似表記へ追記しないため）
-        const headingIndex = lines.findIndex(line => line.trim() === SENT_HISTORY_HEADING);
+        const range = findSectionRange(lines, SENT_HISTORY_HEADING);
 
-        if (headingIndex === -1) {
+        if (!range) {
             // セクションが無い場合は末尾に新規作成する
             const body = content.replace(/\s+$/, '');
             const prefix = body ? `${body}\n\n` : '';
             return `${prefix}${SENT_HISTORY_HEADING}\n${historyLine}\n`;
         }
 
-        // セクションの終端（次の見出し、または水平線）を探す
-        let endIndex = lines.length;
-        for (let i = headingIndex + 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (/^#{1,6}\s/.test(line) || line === '---') {
-                endIndex = i;
-                break;
+        return insertLineIntoSection(lines, range, historyLine);
+    }
+
+    /**
+     * セッション情報ファイル（metadata.md）の内容へセッションを1行追記する
+     *
+     * 「## sessions」セクションの末尾へ追加する。内容が空の場合は見出しごと作成し、
+     * セクションが無い場合は末尾に新規作成する。
+     *
+     * @param content 追記対象の内容（ファイルが無い場合は空文字）
+     * @param commandType 送信したコマンドの種別
+     * @param dateTime 記録する日時（formatDateTime()の戻り値）
+     * @param fileName 送信したファイル名
+     * @param resumeCommand 送信したセッションを再開するコマンド（例: claude --resume <uuid>）
+     * @returns 追記後の内容
+     */
+    appendSessionMetadataLine(
+        content: string,
+        commandType: SendCommandType,
+        dateTime: string,
+        fileName: string,
+        resumeCommand: string
+    ): string {
+        const sep = SEND_HISTORY_SEPARATOR;
+        const line = `- ${dateTime} ${sep} ${SEND_HISTORY_LABELS[commandType]} ${sep} ${fileName} ${sep} ${resumeCommand}`;
+        const body = content.replace(/\s+$/, '');
+
+        if (!body) {
+            return `${SESSION_METADATA_TITLE}\n\n${SESSION_METADATA_HEADING}\n${line}\n`;
+        }
+
+        const lines = content.split('\n');
+        const range = findSectionRange(lines, SESSION_METADATA_HEADING);
+        if (!range) {
+            return `${body}\n\n${SESSION_METADATA_HEADING}\n${line}\n`;
+        }
+
+        return insertLineIntoSection(lines, range, line);
+    }
+
+    /**
+     * セッション情報ファイル（metadata.md）の内容から最新のセッションを取得する
+     *
+     * 「## sessions」セクションの最後の有効な行を返す。
+     * ファイルは手で編集できるため、セッションIDはUUID形式のもののみ受け付ける
+     * （記録された文字列をそのままシェルへ送らないため）
+     *
+     * @param content セッション情報ファイルの内容
+     * @returns 最新のセッション。有効な行が無い場合はundefined
+     */
+    findLatestSessionMetadata(content: string): SessionMetadataEntry | undefined {
+        const lines = content.split('\n');
+        const range = findSectionRange(lines, SESSION_METADATA_HEADING);
+        if (!range) {
+            return undefined;
+        }
+
+        for (let i = range.endIndex - 1; i > range.headingIndex; i--) {
+            const match = SESSION_METADATA_LINE_PATTERN.exec(lines[i].trim());
+            if (match && isValidSessionId(match[3])) {
+                return {
+                    commandType: match[1] as SendCommandType,
+                    fileName: match[2],
+                    sessionId: match[3]
+                };
             }
         }
 
-        // 末尾の空行を飛ばし、セクション内の最後の内容行の直後へ挿入する
-        let insertIndex = endIndex;
-        while (insertIndex > headingIndex + 1 && lines[insertIndex - 1].trim() === '') {
-            insertIndex--;
-        }
-
-        lines.splice(insertIndex, 0, historyLine);
-        return lines.join('\n');
+        return undefined;
     }
 
     /**

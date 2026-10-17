@@ -4,7 +4,7 @@ import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
 import { PlansProvider } from './PlansProvider';
-import { TemplateService, SendCommandType } from '../services/TemplateService';
+import { TemplateService, SendCommandType, SESSION_METADATA_FILE_NAME, isValidSessionId } from '../services/TemplateService';
 import { PromptTemplateService, PromptTemplateTarget } from '../services/PromptTemplateService';
 import { openInIntegratedBrowser } from '../utils/browserUtils';
 
@@ -13,6 +13,11 @@ export interface ITerminalProvider {
     focus(): void;
     sendCommand(command: string, addNewline?: boolean, filePath?: string, commandType?: 'run' | 'plan' | 'spec'): Promise<void>;
     isClaudeCodeRunning?(): boolean;
+    /**
+     * 新しいタブを作成してコマンドを送信する
+     * @returns 送信できた場合はtrue（タブ数の上限などで作成できなかった場合はfalse）
+     */
+    sendCommandInNewTab?(command: string, filePath?: string, commandType?: 'run' | 'plan' | 'spec'): Promise<boolean>;
 }
 
 /**
@@ -223,7 +228,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
      * Claude Codeのセッションを後から再開できるよう、コマンドプレフィックスへ --session-id を付与する
      *
      * 以下の場合はセッションIDを付与せず、プレフィックスをそのまま返す
-     * - 送信履歴を記録しない設定になっている（記録先が無いため）
+     * - resumeコマンドを記録しない設定になっている
      * - プレフィックスがclaude以外、もしくは既にセッションを指定している
      * - Claude Code起動中（コマンドではなく入力テキストとして扱われ、新規セッションが始まらない）
      *
@@ -232,8 +237,8 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
      */
     private _prepareResumeSession(commandPrefix: string): ResumeSession {
         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-        if (!config.get<boolean>('editor.recordSendTimestamp', true)
-            || !config.get<boolean>('editor.recordResumeCommand', true)) {
+        // 再開に使う情報はmetadata.mdへ記録するため、送信履歴の設定（recordSendTimestamp）には依存しない
+        if (!config.get<boolean>('editor.recordResumeCommand', true)) {
             return { commandPrefix };
         }
 
@@ -314,6 +319,69 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             }
         } catch (error) {
             console.error(`Failed to append send history: ${error}`);
+        }
+    }
+
+    /**
+     * 送信したセッションの再開情報を、送信したファイルと同じディレクトリのmetadata.mdへ追記する
+     *
+     * Plans ViewのResume Sessionはこのファイルから再開するセッションを読み取る。
+     * 追記に失敗してもコマンドの送信は継続するため、エラーは記録のみ行う
+     * @param commandType 送信するコマンドの種別
+     * @param resumeCommand 送信するセッションを再開するコマンド（無い場合は記録しない）
+     */
+    private async _appendSessionMetadata(commandType: SendCommandType, resumeCommand?: string): Promise<void> {
+        if (!this._currentFilePath || !resumeCommand) {
+            return;
+        }
+
+        const metadataPath = path.join(path.dirname(this._currentFilePath), SESSION_METADATA_FILE_NAME);
+        if (path.resolve(metadataPath) === path.resolve(this._currentFilePath)) {
+            // metadata.md自体を送信した場合は送信履歴の追記と競合するため記録しない
+            return;
+        }
+
+        const fileName = path.basename(this._currentFilePath);
+        const dateTime = this.templateService.formatDateTime();
+        const append = (content: string) =>
+            this.templateService.appendSessionMetadataLine(content, commandType, dateTime, fileName, resumeCommand);
+
+        try {
+            if (this._isFileOpenInTab(metadataPath)) {
+                // VS Codeのタブで開いている場合は、未保存の変更と競合しないようドキュメント経由で書き換える
+                const document = await vscode.workspace.openTextDocument(metadataPath);
+                const wasDirty = document.isDirty;
+                const original = document.getText();
+
+                const edit = new vscode.WorkspaceEdit();
+                edit.replace(
+                    document.uri,
+                    new vscode.Range(document.positionAt(0), document.positionAt(original.length)),
+                    append(original)
+                );
+
+                if (!await vscode.workspace.applyEdit(edit)) {
+                    console.error('Failed to append session metadata: applyEdit was rejected');
+                    return;
+                }
+
+                // 元々未保存の変更が無かった場合のみ保存する（編集中の状態を勝手に確定させない）
+                if (!wasDirty) {
+                    await document.save();
+                }
+            } else {
+                let original = '';
+                try {
+                    original = await fsPromises.readFile(metadataPath, 'utf8');
+                } catch (error) {
+                    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+                        throw error;
+                    }
+                }
+                await fsPromises.writeFile(metadataPath, append(original), 'utf8');
+            }
+        } catch (error) {
+            console.error(`Failed to append session metadata: ${error}`);
         }
     }
 
@@ -464,6 +532,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
                         // 送信した記録としてファイルへ日時とresumeコマンドを追記する
                         await this._appendSendHistory('plan', resumeSession.resumeCommand);
+                        await this._appendSessionMetadata('plan', resumeSession.resumeCommand);
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {
@@ -510,6 +579,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
                         // 送信した記録としてファイルへ日時とresumeコマンドを追記する
                         await this._appendSendHistory('spec', resumeSession.resumeCommand);
+                        await this._appendSessionMetadata('spec', resumeSession.resumeCommand);
 
                         // Send command to Terminal view
                         if (this._terminalProvider) {
@@ -721,6 +791,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
             // 送信した記録としてファイルへ日時とresumeコマンドを追記する
             await this._appendSendHistory('run', resumeSession.resumeCommand);
+            await this._appendSessionMetadata('run', resumeSession.resumeCommand);
 
             // Send command to Terminal view
             if (this._terminalProvider) {
@@ -864,6 +935,55 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         return template
             .replace(/\$\{filePath\}/g, relativeFilePath)
             .replace(/\$\{dirPath\}/g, path.dirname(relativeFilePath));
+    }
+
+    /**
+     * 記録済みのClaude Codeセッションを再開する（Plans ViewのResume Session）
+     *
+     * 記録された文字列はそのまま送らず、セッションIDから再開コマンドを組み立て直す。
+     * アクティブタブでClaude Codeが起動中の場合は、入力テキストとして扱われないよう新しいタブで再開する
+     *
+     * @param sessionId 再開するセッションのID（UUID形式）
+     * @param filePath セッションを開始したファイル（タブとの関連付けに使う）
+     * @param commandType セッションを開始したコマンドの種別（タブのアイコンに使う）
+     * @returns 再開コマンドを送信した場合はtrue
+     */
+    public async resumeSession(sessionId: string, filePath?: string, commandType?: SendCommandType): Promise<boolean> {
+        if (!isValidSessionId(sessionId) || !this._terminalProvider) {
+            return false;
+        }
+
+        const command = this._buildResumeCommand(sessionId);
+
+        if (this._terminalProvider.isClaudeCodeRunning?.()) {
+            // 新しいタブを作れないプロバイダーでは、起動中のセッションへ流さないよう送らない
+            if (!this._terminalProvider.sendCommandInNewTab) {
+                vscode.window.showWarningMessage('Claude Code is running in the Terminal view. Exit it before resuming another session.');
+                return false;
+            }
+            this._terminalProvider.focus();
+            return this._terminalProvider.sendCommandInNewTab(command, filePath, commandType);
+        }
+
+        this._terminalProvider.focus();
+        await this._terminalProvider.sendCommand(command, true, filePath, commandType);
+        return true;
+    }
+
+    /**
+     * セッションを再開するコマンドを組み立てる
+     *
+     * 権限モード等の設定を再開時にも反映するため、現在のコマンドプレフィックスを使う。
+     * プレフィックスがclaudeを起動しない、もしくはセッション指定と競合する場合はclaudeを使う
+     */
+    private _buildResumeCommand(sessionId: string): string {
+        const config = vscode.workspace.getConfiguration('aiCodingSidebar');
+        const prefix = config.get<string>('editor.commandPrefix', 'claude').trim();
+        const usablePrefix = CLAUDE_EXECUTABLE_PATTERN.test(prefix) && !RESUME_CONFLICTING_OPTIONS.test(prefix)
+            ? prefix
+            : 'claude';
+
+        return `${usablePrefix} --resume ${sessionId}`;
     }
 
     public getCurrentFilePath(): string | undefined {

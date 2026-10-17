@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.17-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.18-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | 繁體中文 | [Português](README-PT-BR.md)
 
@@ -43,11 +43,12 @@
 | **建立目錄並產生提示詞檔案** | 「Create directory」按鈕會自動建立 `.claude/plans` 以及初始提示詞檔案（`YYYY_MMDD_HHMM_SS_PROMPT.md`），其中包含 Run/Plan/Spec 按鈕的使用說明。檔案會自動在 Editor 檢視中開啟 |
 | **Quick Start** | 檢視頂端的 ⚡ Quick Start 按鈕會建立以時間戳記命名的目錄（`YYYY_MMDD_HHMM_SS`）與 `QUICK_START.md` 檔案，不需要輸入資料夾名稱。適合想立即開始撰寫任務時使用 |
 | **Search** | 檢視頂端的搜尋方塊可依目錄名稱、檔案名稱與 Markdown 內文搜尋整個 Plans 目錄（包含 `archived/`）。以空白分隔多個字詞時，只顯示包含所有字詞的結果（不區分大小寫）。結果會顯示相對於 Plans 根目錄的目錄，內文相符時將游標移到上方即可看到相符的行。點擊檔案會移至其所在目錄並開啟，點擊目錄會移至該目錄。按 `Escape` 或清除按鈕返回清單 |
+| **Resume Session** | 底部列右側的 Resume Session 按鈕會恢復目前目錄 `metadata.md` 中記錄的最新 Claude Code 工作階段。每次 Spec / Plan / Run 都會在所傳送檔案所在目錄的 `metadata.md` 中新增一行（例如 `- 2026/10/17 18:54:39 \| run  \| 2026_1017_1854_39_PROMPT.md \| claude --resume 0f1d2c3b-...`）。所傳送的檔案會在 Editor 檢視中開啟；若作用中的 Terminal 分頁已在執行 Claude Code，則會在新分頁中恢復工作階段 |
 | 路徑顯示 | 目前路徑會顯示為清單中的第一個項目，並附有行內操作按鈕（New PROMPT.md、New TASK.md、New SPEC.md、Copy、Rename、New Directory、Archive） |
 | **日期/時間前綴** | 目錄名稱前會顯示日期或時間：當天顯示 `[HH:MM]`，其他日期顯示 `[MM/DD]`。在子目錄中，檔案名稱前也會顯示（根目錄中的檔案不顯示前綴）。時間戳記格式的提示詞檔案會以前綴取代時間戳記來縮短顯示（例如 `2026_1011_0206_17_QUICK_START.md` → `[02:06] QUICK_START.md`），實際檔案名稱不變 |
 | **Editor 目標檔案圖示** | 在 Editor 檢視中開啟的檔案（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）會顯示 `edit` 圖示，以便與一般 Markdown 檔案區分 |
 | 排序 | 預設依建立日期（遞增）排序檔案 |
-| 拖放 | 在檢視內或從外部來源拖曳檔案即可複製。從檢視外部拖入時請按住 **Shift**：除非按住 Shift，否則 VS Code 會在拖曳期間停用以 webview 為基礎之檢視的指標事件。放到目錄列上會複製到該目錄，放到檢視中的其他位置則會複製到目前顯示的目錄。無法拖放資料夾（僅限檔案）。檢視右下角會顯示提示 |
+| 拖放 | 在檢視內或從外部來源拖曳檔案即可複製。從檢視外部拖入時請按住 **Shift**：除非按住 Shift，否則 VS Code 會在拖曳期間停用以 webview 為基礎之檢視的指標事件。放到目錄列上會複製到該目錄，放到檢視中的其他位置則會複製到目前顯示的目錄。無法拖放資料夾（僅限檔案）。檢視左下角會顯示提示 |
 | **行內操作工具提示** | 將滑鼠移到列上的行內操作圖示（Archive、New PROMPT.md、Rename...、Insert Path to Editor 等）時，會顯示該操作的名稱 |
 | **鍵盤導覽** | 使用 ↑ / ↓ 移動選取項目，按 Enter 開啟選取的項目 |
 | 自動重新整理 | 檔案建立、修改或刪除時自動更新（即使檢視處於隱藏狀態） |
@@ -298,7 +299,7 @@ datetime: {{datetime}}
 | `editor.runPlanCommand` | 點擊 Plan 按鈕時執行的指令範本 | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | 使用 `${filePath}` 作為檔案路徑的預留位置。請以雙引號括住預留位置，讓值以單一引數傳遞。 |
 | `editor.runSpecCommand` | 點擊 Spec 按鈕時執行的指令範本 | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | 使用 `${filePath}` 作為檔案路徑的預留位置。請以雙引號括住預留位置，讓值以單一引數傳遞。 |
 | `editor.recordSendTimestamp` | 按下 Spec / Plan / Run 時，將傳送的日期與時間附加到開啟中的檔案 | boolean | `true` | 歷程記錄會加入到檔案結尾的 `## sent history` 區段 |
-| `editor.recordResumeCommand` | 以產生的工作階段 ID 啟動 Spec / Plan / Run，並記錄對應的 `claude --resume <session-id>` 指令 | boolean | `true` | 需要啟用 `editor.recordSendTimestamp`。當 Claude Code 已在執行中，或 `editor.commandPrefix` 不是 `claude` 或已指定工作階段時，會略過此功能 |
+| `editor.recordResumeCommand` | 以產生的工作階段 ID 啟動 Spec / Plan / Run，並記錄對應的 `claude --resume <session-id>` 指令 | boolean | `true` | 記錄在開啟檔案所在目錄的 `metadata.md` 中，啟用 `editor.recordSendTimestamp` 時也會記錄到傳送記錄。當 Claude Code 已在執行中，或 `editor.commandPrefix` 不是 `claude` 或已指定工作階段時，會略過此功能 |
 | `editor.quickRun` | 不附加 Run 預設加入的 output md 指示，直接傳送編輯器內容 | boolean | `false` | 僅在開啟檔案且 `editor.runCommand` 使用 `${editorContent}` 時才會附加指示。不會修改開啟的檔案 |
 | `editor.outputMdPrompt` | output md 按鈕傳送給正在執行的 Claude Code 工作階段的指示 | string | `"Record the current status of this task as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_status.md) in ${dirPath}. ..."` | `${filePath}`（開啟的檔案）與 `${dirPath}`（其目錄）為相對於工作區根目錄的路徑。以輸入文字傳送，不加 shell 引號。請寫成一行 |
 | `editor.outputMemoryPrompt` | output memory 按鈕傳送給正在執行的 Claude Code 工作階段的指示 | string | `"Record the reusable knowledge from this session as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_memory.md) in ${dirPath}. ..."` | 預留位置與規則與 `editor.outputMdPrompt` 相同 |
@@ -394,14 +395,14 @@ npm run watch
 1. 從 [GitHub Releases 頁面](https://github.com/NaokiIshimura/vscode-panel/releases) 下載最新的 VSIX 檔案。
 2. 透過命令列安裝：
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.17.vsix
+   code --install-extension ai-coding-sidebar-1.2.18.vsix
    ```
 3. 重新啟動 VS Code。
 
 #### 使用本機建置
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.18.vsix
 ```
 
 #### 自行建置套件
@@ -415,7 +416,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
    ```
 3. 安裝產生的 VSIX 檔案：
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.18.vsix
    ```
 4. 重新啟動 VS Code。
 

@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.17-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.18-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | [日本語](README-JA.md) | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | Português
 
@@ -43,11 +43,12 @@ Navegue e gerencie arquivos em uma lista plana com navegação por diretórios.
 | **Criar diretório com prompt** | O botão "Create directory" cria automaticamente `.claude/plans` e um arquivo de prompt inicial (`YYYY_MMDD_HHMM_SS_PROMPT.md`) com orientações úteis sobre o uso dos botões Run/Plan/Spec. O arquivo é aberto automaticamente na Editor view |
 | **Quick Start** | O botão ⚡ Quick Start no topo da view cria um diretório nomeado com timestamp (`YYYY_MMDD_HHMM_SS`) e um arquivo `QUICK_START.md` sem pedir um nome de pasta. Use-o quando quiser apenas começar a escrever uma tarefa imediatamente |
 | **Search** | A caixa de busca no topo da view pesquisa todo o diretório Plans (incluindo `archived/`) por nome de diretório, nome de arquivo e conteúdo Markdown. Separe palavras com espaços para exigir todas elas (sem diferenciar maiúsculas e minúsculas). Os resultados mostram o diretório relativo à raiz do Plans e, ao passar o mouse sobre uma correspondência no conteúdo, a linha correspondente é exibida. Clique em um arquivo para abri-lo em seu diretório ou em um diretório para navegar até ele. Pressione `Escape` ou o botão de limpar para voltar à lista |
+| **Resume Session** | O botão Resume Session à direita da barra inferior retoma a sessão mais recente do Claude Code registrada em `metadata.md` do diretório atual. Cada Spec / Plan / Run adiciona uma linha ao `metadata.md` no diretório do arquivo enviado (por exemplo, `- 2026/10/17 18:54:39 \| run  \| 2026_1017_1854_39_PROMPT.md \| claude --resume 0f1d2c3b-...`). O arquivo enviado é aberto na view Editor e, se o Claude Code já estiver em execução na aba ativa do Terminal, a sessão é retomada em uma nova aba |
 | Exibição do caminho | O caminho atual é mostrado como o primeiro item da lista, com botões de ação inline (New PROMPT.md, New TASK.md, New SPEC.md, Copy, Rename, New Directory, Archive) |
 | **Prefixo de data/hora** | Exibe a data ou a hora antes dos nomes dos diretórios: `[HH:MM]` para hoje, `[MM/DD]` para outras datas. Nos subdiretórios, os nomes dos arquivos também recebem o prefixo (os arquivos do diretório raiz são exibidos sem prefixo). Arquivos de prompt com timestamp são encurtados substituindo o timestamp pelo prefixo (ex.: `2026_1011_0206_17_QUICK_START.md` → `[02:06] QUICK_START.md`); o nome real do arquivo não muda |
 | **Ícones dos arquivos do Editor** | Arquivos abertos na Editor view (TASK.md, PROMPT.md, SPEC.md, QUICK_START.md) exibem um ícone `edit` para diferenciá-los de arquivos Markdown comuns |
 | Ordenação | Por padrão, os arquivos são ordenados por data de criação (crescente) |
-| Arrastar e soltar | Copie arquivos arrastando-os dentro da view ou de fontes externas. Mantenha **Shift** pressionado ao arrastar de fora da view: o VS Code desativa os eventos de ponteiro em views baseadas em webview durante um arrasto, a menos que o Shift esteja pressionado. Solte sobre a linha de um diretório para copiar para esse diretório, ou em qualquer outro ponto da view para copiar para o diretório exibido no momento. Pastas não podem ser soltas (somente arquivos). Um lembrete é exibido no canto inferior direito da view |
+| Arrastar e soltar | Copie arquivos arrastando-os dentro da view ou de fontes externas. Mantenha **Shift** pressionado ao arrastar de fora da view: o VS Code desativa os eventos de ponteiro em views baseadas em webview durante um arrasto, a menos que o Shift esteja pressionado. Solte sobre a linha de um diretório para copiar para esse diretório, ou em qualquer outro ponto da view para copiar para o diretório exibido no momento. Pastas não podem ser soltas (somente arquivos). Um lembrete é exibido no canto inferior esquerdo da view |
 | **Tooltips das ações inline** | Passar o mouse sobre um ícone de ação inline em uma linha (Archive, New PROMPT.md, Rename..., Insert Path to Editor etc.) mostra o nome da ação |
 | **Navegação por teclado** | Use ↑ / ↓ para mover a seleção e Enter para abrir o item selecionado |
 | Atualização automática | Atualiza automaticamente quando arquivos são criados, modificados ou excluídos (mesmo com a view oculta) |
@@ -298,7 +299,7 @@ Se o caminho relativo padrão não existir, o Plans exibe um botão "Create dire
 | `editor.runPlanCommand` | Template do comando executado ao clicar no botão Plan | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | Use `${filePath}` como placeholder para o caminho do arquivo. Coloque o placeholder entre aspas duplas para que o valor seja passado como um único argumento. |
 | `editor.runSpecCommand` | Template do comando executado ao clicar no botão Spec | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | Use `${filePath}` como placeholder para o caminho do arquivo. Coloque o placeholder entre aspas duplas para que o valor seja passado como um único argumento. |
 | `editor.recordSendTimestamp` | Adiciona a data e a hora do envio ao arquivo aberto quando Spec / Plan / Run é pressionado | boolean | `true` | O histórico é adicionado a uma seção `## sent history` no final do arquivo |
-| `editor.recordResumeCommand` | Inicia Spec / Plan / Run com um ID de sessão gerado e registra o comando `claude --resume <session-id>` correspondente | boolean | `true` | Requer `editor.recordSendTimestamp`. É ignorado enquanto o Claude Code já estiver em execução e quando `editor.commandPrefix` não for `claude` ou já especificar uma sessão |
+| `editor.recordResumeCommand` | Inicia Spec / Plan / Run com um ID de sessão gerado e registra o comando `claude --resume <session-id>` correspondente | boolean | `true` | Registrado em `metadata.md` no diretório do arquivo aberto e também no histórico de envio quando `editor.recordSendTimestamp` está ativado. É ignorado enquanto o Claude Code já estiver em execução e quando `editor.commandPrefix` não for `claude` ou já especificar uma sessão |
 | `editor.quickRun` | Envia o conteúdo do editor como está, sem a instrução do output md que o Run acrescenta por padrão | boolean | `false` | A instrução só é acrescentada quando há um arquivo aberto e `editor.runCommand` usa `${editorContent}`. O arquivo aberto não é modificado |
 | `editor.outputMdPrompt` | Instrução enviada à sessão do Claude Code em execução pelo botão output md | string | `"Record the current status of this task as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_status.md) in ${dirPath}. ..."` | `${filePath}` (arquivo aberto) e `${dirPath}` (seu diretório), relativos à raiz do workspace. Enviada como texto digitado, sem aspas de shell. Mantenha em uma única linha |
 | `editor.outputMemoryPrompt` | Instrução enviada à sessão do Claude Code em execução pelo botão output memory | string | `"Record the reusable knowledge from this session as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_memory.md) in ${dirPath}. ..."` | Mesmos placeholders e regras de `editor.outputMdPrompt` |
@@ -394,14 +395,14 @@ npm run watch
 1. Baixe o arquivo VSIX mais recente na [página de GitHub Releases](https://github.com/NaokiIshimura/vscode-panel/releases).
 2. Instale pela linha de comando:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.17.vsix
+   code --install-extension ai-coding-sidebar-1.2.18.vsix
    ```
 3. Reinicie o VS Code.
 
 #### Use um build local
 ```bash
 # Install directly from the releases directory
-code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.18.vsix
 ```
 
 #### Gere o pacote você mesmo
@@ -415,7 +416,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
    ```
 3. Instale o arquivo VSIX gerado:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.18.vsix
    ```
 4. Reinicie o VS Code.
 

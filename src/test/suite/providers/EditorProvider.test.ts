@@ -383,6 +383,134 @@ suite('EditorProvider Integration Test Suite', () => {
 		});
 	});
 
+	suite('session metadata', () => {
+		const metadataPath = path.join(testDir, 'metadata.md');
+		const sessionId = '0f1d2c3b-4a59-4687-8f0a-1b2c3d4e5f60';
+
+		interface SentCommand {
+			command: string;
+			filePath?: string;
+			commandType?: string;
+			newTab: boolean;
+		}
+
+		const createTerminalProvider = (isRunning: boolean, options: { newTab?: boolean; newTabResult?: boolean } = {}) => {
+			const sent: SentCommand[] = [];
+			const provider: {
+				focus(): void;
+				sendCommand(command: string, addNewline?: boolean, filePath?: string, commandType?: 'run' | 'plan' | 'spec'): Promise<void>;
+				isClaudeCodeRunning(): boolean;
+				sendCommandInNewTab?(command: string, filePath?: string, commandType?: 'run' | 'plan' | 'spec'): Promise<boolean>;
+			} = {
+				focus: () => { /* noop */ },
+				sendCommand: async (command, _addNewline, filePath, commandType) => {
+					sent.push({ command, filePath, commandType, newTab: false });
+				},
+				isClaudeCodeRunning: () => isRunning
+			};
+			if (options.newTab !== false) {
+				provider.sendCommandInNewTab = async (command, filePath, commandType) => {
+					sent.push({ command, filePath, commandType, newTab: true });
+					return options.newTabResult ?? true;
+				};
+			}
+			return { provider, sent };
+		};
+
+		// 設定が既定と異なる環境では検証できないためスキップする
+		const skipUnlessDefaultPrefix = (context: Mocha.Context) => {
+			const config = vscode.workspace.getConfiguration('aiCodingSidebar');
+			if (config.get<string>('editor.commandPrefix', 'claude') !== 'claude'
+				|| !config.get<boolean>('editor.recordResumeCommand', true)) {
+				context.skip();
+			}
+		};
+
+		test('Should record the session in metadata.md next to the file on Run', async function () {
+			skipUnlessDefaultPrefix(this);
+			const terminal = createTerminalProvider(false);
+			editorProvider.setTerminalProvider(terminal.provider);
+			await editorProvider.showFile(testFilePath);
+
+			await editorProvider.runTask();
+
+			const metadata = fs.readFileSync(metadataPath, 'utf8');
+			const entry = templateService.findLatestSessionMetadata(metadata);
+			assert.strictEqual(entry?.commandType, 'run');
+			assert.strictEqual(entry?.fileName, 'test.md');
+			// 記録したセッションIDで送信している
+			assert.ok(terminal.sent[0].command.includes(`--session-id ${entry?.sessionId}`));
+		});
+
+		test('Should not record the session while Claude Code is running', async () => {
+			const terminal = createTerminalProvider(true);
+			editorProvider.setTerminalProvider(terminal.provider);
+			await editorProvider.showFile(testFilePath);
+
+			await editorProvider.runTask();
+
+			assert.strictEqual(fs.existsSync(metadataPath), false);
+		});
+
+		test('Should resume in the active tab when Claude Code is not running', async function () {
+			skipUnlessDefaultPrefix(this);
+			const terminal = createTerminalProvider(false);
+			editorProvider.setTerminalProvider(terminal.provider);
+
+			const resumed = await editorProvider.resumeSession(sessionId, testFilePath, 'plan');
+
+			assert.strictEqual(resumed, true);
+			assert.deepStrictEqual(terminal.sent, [{
+				command: `claude --resume ${sessionId}`,
+				filePath: testFilePath,
+				commandType: 'plan',
+				newTab: false
+			}]);
+		});
+
+		test('Should resume in a new tab when Claude Code is running', async () => {
+			const terminal = createTerminalProvider(true);
+			editorProvider.setTerminalProvider(terminal.provider);
+
+			const resumed = await editorProvider.resumeSession(sessionId, testFilePath, 'run');
+
+			assert.strictEqual(resumed, true);
+			assert.strictEqual(terminal.sent.length, 1);
+			assert.strictEqual(terminal.sent[0].newTab, true);
+		});
+
+		test('Should not send to a running session when a new tab cannot be opened', async () => {
+			const terminal = createTerminalProvider(true, { newTab: false });
+			editorProvider.setTerminalProvider(terminal.provider);
+
+			const resumed = await editorProvider.resumeSession(sessionId);
+
+			assert.strictEqual(resumed, false);
+			assert.strictEqual(terminal.sent.length, 0);
+		});
+
+		test('Should not send a session ID that is not a UUID', async () => {
+			const terminal = createTerminalProvider(false);
+			editorProvider.setTerminalProvider(terminal.provider);
+
+			const resumed = await editorProvider.resumeSession('abc; rm -rf ~');
+
+			assert.strictEqual(resumed, false);
+			assert.strictEqual(terminal.sent.length, 0);
+		});
+
+		test('Should not append to the sent history or metadata.md when resuming', async () => {
+			const terminal = createTerminalProvider(false);
+			editorProvider.setTerminalProvider(terminal.provider);
+			await editorProvider.showFile(testFilePath);
+
+			await editorProvider.resumeSession(sessionId, testFilePath, 'run');
+
+			assert.strictEqual(fs.readFileSync(testFilePath, 'utf8'), '# Test Content');
+			assert.strictEqual(fs.existsSync(metadataPath), false);
+		});
+	});
+
 	suite('Integration with TemplateService', () => {
 		test('Should use TemplateService for file operations', () => {
 			// TemplateServiceが注入されていることを確認

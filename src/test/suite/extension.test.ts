@@ -136,6 +136,7 @@ suite('Extension Test Suite', () => {
 			'aiCodingSidebar.createDefaultPath',
 			'aiCodingSidebar.archiveDirectory',
 			'aiCodingSidebar.archiveFile',
+			'aiCodingSidebar.resumeSession',
 		];
 
 		plansCommands.forEach(cmd => {

@@ -1,6 +1,6 @@
 # AI Coding Panel for Claude Code
 
-[![Version](https://img.shields.io/badge/version-1.2.17-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
+[![Version](https://img.shields.io/badge/version-1.2.18-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar) [![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0%2B-blue)](https://code.visualstudio.com/) [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-blue)](https://marketplace.visualstudio.com/items?itemName=nacn.ai-coding-sidebar)
 
 [English](README.md) | 日本語 | [한국어](README-KO.md) | [简体中文](README-ZH-CN.md) | [繁體中文](README-ZH-TW.md) | [Português](README-PT-BR.md)
 
@@ -43,11 +43,12 @@ Claude Codeでの生産性を最大化するために設計された、強力な
 | **初期プロンプト付きディレクトリ作成** | 「Create directory」ボタンで`.claude/plans`ディレクトリと初期プロンプトファイル（`YYYY_MMDD_HHMM_SS_PROMPT.md`）を自動作成。Run/Plan/Specボタンの使い方を説明するテンプレート付き。ファイルは自動的にEditor Viewで開かれる |
 | **Quick Start** | ビュー最上部の⚡ Quick Startボタンで、フォルダ名を入力せずにタイムスタンプ名（`YYYY_MMDD_HHMM_SS`）のディレクトリと`QUICK_START.md`ファイルを作成。すぐにタスクを書き始めたいときに便利 |
 | **検索** | ビュー最上部の検索ボックスで、Plansディレクトリ全体（`archived/` を含む）をディレクトリ名・ファイル名・Markdownの本文から検索。空白区切りで複数語を指定するとすべてを含むものに絞り込む（大文字小文字は区別しない）。結果にはPlansルートからの相対ディレクトリを表示し、本文に一致した場合はマウスオーバーで該当行を表示。ファイルをクリックするとそのディレクトリへ移動して開き、ディレクトリをクリックするとそのディレクトリへ移動。`Escape` またはクリアボタンで一覧に戻る |
+| **Resume Session** | 最下段右側のResume Sessionボタンで、表示中のディレクトリの`metadata.md`に記録された最新のClaude Codeセッションを再開する。Spec / Plan / Run を実行するたびに、送信したファイルのディレクトリの`metadata.md`へ1行追記される（例: `- 2026/10/17 18:54:39 \| run  \| 2026_1017_1854_39_PROMPT.md \| claude --resume 0f1d2c3b-...`）。送信したファイルをEditor Viewで開き、アクティブなTerminalタブでClaude Codeが起動中の場合は新しいタブで再開する |
 | パス表示 | 現在のパスをリストの先頭アイテムとして表示（New PROMPT.md、New TASK.md、New SPEC.md、Copy、Rename、New Directory、Archiveボタン付き） |
 | **日付/時間プレフィックス** | ディレクトリ名の前に日付または時間を表示: 当日は`[HH:MM]`、当日以外は`[MM/DD]`。サブディレクトリではファイル名の前にも表示（ルートディレクトリのファイルはプレフィックスなし）。タイムスタンプ形式のプロンプトファイルは、タイムスタンプをプレフィックスに置き換えて短縮表示（例: `2026_1011_0206_17_QUICK_START.md` → `[02:06] QUICK_START.md`）。実ファイル名は変わらない |
 | **Editor対象ファイルアイコン** | Editor Viewで開くファイル（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）は`edit`アイコンで表示し、通常のMarkdownファイルと区別 |
 | ソート | ファイルはデフォルトで作成日時の昇順でソート |
-| ドラッグ&ドロップ | ビュー内または外部からのファイルをドラッグしてコピー。ビューの外からドラッグする場合は**Shiftキーを押しながら**ドロップする（VS Codeはドラッグ中、Shiftキーが押されていないとWebviewベースのビューへのポインタイベントを無効化するため）。ディレクトリ行にドロップするとそのディレクトリへ、それ以外の場所にドロップすると現在表示中のディレクトリへコピーされる。フォルダのドロップには非対応（ファイルのみ）。ビュー右下に注意書きを常時表示 |
+| ドラッグ&ドロップ | ビュー内または外部からのファイルをドラッグしてコピー。ビューの外からドラッグする場合は**Shiftキーを押しながら**ドロップする（VS Codeはドラッグ中、Shiftキーが押されていないとWebviewベースのビューへのポインタイベントを無効化するため）。ディレクトリ行にドロップするとそのディレクトリへ、それ以外の場所にドロップすると現在表示中のディレクトリへコピーされる。フォルダのドロップには非対応（ファイルのみ）。ビュー左下に注意書きを常時表示 |
 | **インラインアクションのツールチップ** | 行のインラインアクションアイコン（Archive、New PROMPT.md、Rename...、Insert Path to Editor など）にマウスオーバーすると、そのアクション名を表示 |
 | **キーボード操作** | ↑ / ↓ で選択を移動、Enterで選択項目を開く |
 | 自動更新 | ファイルが作成、変更、削除されたときに自動的に更新（ビュー非表示中でも反映） |
@@ -299,7 +300,7 @@ Editor Viewの **Prompts** ボタン向けに、以下のスニペットを同�
 | `editor.runPlanCommand` | Planボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用。プレースホルダーはダブルクォートで囲むこと（値が1つの引数として渡される） |
 | `editor.runSpecCommand` | Specボタンで実行されるコマンドテンプレート | string | `claude --permission-mode plan "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_plans.md) in the same directory as ${filePath}."` | `${filePath}`をファイルパスのプレースホルダーとして使用。プレースホルダーはダブルクォートで囲むこと（値が1つの引数として渡される） |
 | `editor.recordSendTimestamp` | Spec / Plan / Run の実行時に、開いているファイルへ送信日時を追記するか | boolean | `true` | ファイル末尾の`## sent history`セクションに追記される |
-| `editor.recordResumeCommand` | Spec / Plan / Run の実行時にセッションIDを指定し、`claude --resume <session-id>`を記録するか | boolean | `true` | `editor.recordSendTimestamp`が有効な場合のみ。Claude Code起動中や、`editor.commandPrefix`が`claude`以外／既にセッション指定を含む場合は付与しない |
+| `editor.recordResumeCommand` | Spec / Plan / Run の実行時にセッションIDを指定し、`claude --resume <session-id>`を記録するか | boolean | `true` | 開いているファイルと同じディレクトリの`metadata.md`へ記録し、`editor.recordSendTimestamp`が有効なら送信履歴にも記録する。Claude Code起動中や、`editor.commandPrefix`が`claude`以外／既にセッション指定を含む場合は付与しない |
 | `editor.quickRun` | Runが既定で追加するoutput mdの指示文を省き、エディタの内容をそのまま送るか | boolean | `false` | 指示文が追加されるのは、ファイルを開いていて`editor.runCommand`が`${editorContent}`を使う場合のみ。開いているファイルは変更しない |
 | `editor.outputMdPrompt` | output mdボタンで起動中のClaude Codeへ送る指示文 | string | `"Record the current status of this task as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_status.md) in ${dirPath}. ..."` | `${filePath}`（開いているファイル）と`${dirPath}`（そのディレクトリ）はワークスペースルートからの相対パス。シェルのクォートなしで入力として送られる。1行で記述すること |
 | `editor.outputMemoryPrompt` | output memoryボタンで起動中のClaude Codeへ送る指示文 | string | `"Record the reusable knowledge from this session as a Markdown file. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_memory.md) in ${dirPath}. ..."` | プレースホルダと注意点は`editor.outputMdPrompt`と同じ |
@@ -395,14 +396,14 @@ npm run watch
 1. [GitHubのReleasesページ](https://github.com/NaokiIshimura/vscode-panel/releases)から最新のVSIXファイルをダウンロード
 2. コマンドラインからインストール:
    ```bash
-   code --install-extension ai-coding-sidebar-1.2.17.vsix
+   code --install-extension ai-coding-sidebar-1.2.18.vsix
    ```
 3. VS Codeを再起動
 
 #### ローカルビルド版を使用する場合:
 ```bash
 # releasesディレクトリから直接インストール
-code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
+code --install-extension releases/ai-coding-sidebar-1.2.18.vsix
 ```
 
 #### 自分でパッケージを作成する場合:
@@ -416,7 +417,7 @@ code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
    ```
 3. 生成されたVSIXファイルをインストール:
    ```bash
-   code --install-extension releases/ai-coding-sidebar-1.2.17.vsix
+   code --install-extension releases/ai-coding-sidebar-1.2.18.vsix
    ```
 4. VS Codeを再起動
 

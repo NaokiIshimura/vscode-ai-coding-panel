@@ -14,14 +14,14 @@ async function main() {
 		// Download VS Code, unzip it and run the integration test
 		console.log('Starting test run...');
 
-		// VS Code 1.85.0以降のmacOSではバイナリ構造が変更されているため、
-		// CLIパスを使用してテストを実行
+		// On macOS, VS Code 1.85.0 and later changed the binary layout,
+		// so run the tests through the CLI path
 		const vscodeExecutablePath = await downloadAndUnzipVSCode();
 		let executablePath = vscodeExecutablePath;
 		try {
 			executablePath = resolveCliPathFromVSCodeExecutablePath(vscodeExecutablePath);
 		} catch {
-			// resolveCliPathが失敗した場合はデフォルトパスを使用
+			// Fall back to the default path if resolveCliPath fails
 		}
 
 		await runTests({

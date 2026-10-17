@@ -3,13 +3,13 @@ import { CommandDependencies } from './types';
 import { DEFAULT_BROWSER_URL, openInIntegratedBrowser } from '../utils/browserUtils';
 
 /**
- * ブラウザ関連のコマンドを登録
+ * Register browser-related commands
  */
 export function registerBrowserCommands(
     context: vscode.ExtensionContext,
     _deps: CommandDependencies
 ): void {
-    // 統合ブラウザを開く
+    // Open the integrated browser
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openIntegratedBrowser', async () => {
             const configuredUrl = vscode.workspace

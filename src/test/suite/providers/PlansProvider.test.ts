@@ -10,24 +10,24 @@ suite('PlansProvider Integration Test Suite', () => {
 	let plansProvider: PlansProvider;
 	let fileWatcherService: FileWatcherService;
 	const testDir = path.join(__dirname, '../../fixtures/plans');
-	// out/test/suite/providers から拡張機能のルートへ遡る
+	// Go up from out/test/suite/providers to the extension root
 	const extensionRoot = path.resolve(__dirname, '../../../..');
 
 	setup(async () => {
-		// テストディレクトリを作成
+		// Create the test directory
 		if (!fs.existsSync(testDir)) {
 			fs.mkdirSync(testDir, { recursive: true });
 		}
 
-		// FileWatcherServiceを初期化
+		// Initialize FileWatcherService
 		fileWatcherService = new FileWatcherService();
 
-		// PlansProviderを初期化（WebView初期化なし）
+		// Initialize PlansProvider (without initializing the WebView)
 		plansProvider = new PlansProvider(fileWatcherService, vscode.Uri.file(extensionRoot));
 	});
 
 	teardown(() => {
-		// クリーンアップ
+		// Clean up
 		plansProvider.dispose();
 		fileWatcherService.dispose();
 
@@ -37,8 +37,8 @@ suite('PlansProvider Integration Test Suite', () => {
 	});
 
 	/**
-	 * refresh()の呼び出しを記録するスパイを仕掛ける
-	 * Webview化により onDidChangeTreeData が無くなったため、更新契機の検証に使用する
+	 * Install a spy that records refresh() calls
+	 * Used to verify refresh triggers, since onDidChangeTreeData no longer exists after the Webview migration
 	 */
 	function spyOnRefresh(): { calledCount: () => number; restore: () => void } {
 		const original = plansProvider.refresh.bind(plansProvider);
@@ -76,7 +76,7 @@ suite('PlansProvider Integration Test Suite', () => {
 			const nonExistentPath = path.join(testDir, 'nonexistent');
 			await plansProvider.setRootPath(nonExistentPath);
 
-			// パスが見つからない場合、作成ボタンが表示される
+			// When the path is not found, the create button is shown
 			const items = await plansProvider.buildItems();
 			assert.strictEqual(items.length, 1);
 			assert.strictEqual(items[0].kind, 'createDirectory');
@@ -148,7 +148,7 @@ suite('PlansProvider Integration Test Suite', () => {
 
 			const items = await plansProvider.buildItems();
 			assert.ok(items.length > 0);
-			// Quick StartはHTMLボタンになったため、一覧の先頭はパス表示アイテム
+			// Quick Start became an HTML button, so the first item in the list is the path display item
 			assert.strictEqual(items[0].kind, 'path');
 			assert.strictEqual(items[0].contextValue, 'pathDisplay');
 		});
@@ -162,7 +162,7 @@ suite('PlansProvider Integration Test Suite', () => {
 		});
 
 		test('Should return parent directory item when not at root', async () => {
-			// サブディレクトリを作成
+			// Create a subdirectory
 			const subDir = path.join(testDir, 'subdir');
 			fs.mkdirSync(subDir, { recursive: true });
 
@@ -184,19 +184,19 @@ suite('PlansProvider Integration Test Suite', () => {
 			plansProvider.setActiveFolder(subDir);
 
 			const items = await plansProvider.buildItems();
-			// archiveDirectoryコマンドが 'pathDisplayNonRoot' を判定するため重要
+			// Important because the archiveDirectory command checks for 'pathDisplayNonRoot'
 			assert.strictEqual(items[0].contextValue, 'pathDisplayNonRoot');
 		});
 
 		test('Should list files and directories', async () => {
-			// テストファイルとディレクトリを作成
+			// Create test files and directories
 			fs.writeFileSync(path.join(testDir, 'test.md'), 'content', 'utf8');
 			fs.mkdirSync(path.join(testDir, 'testDir'), { recursive: true });
 
 			await plansProvider.setRootPath(testDir);
 
 			const items = await plansProvider.buildItems();
-			// パス表示アイテム + ファイル + ディレクトリ
+			// Path display item + file + directory
 			assert.ok(items.length >= 3);
 
 			const fileItem = items.find(item => item.filePath === path.join(testDir, 'test.md'));
@@ -226,8 +226,8 @@ suite('PlansProvider Integration Test Suite', () => {
 	});
 
 	suite('webview inline actions', () => {
-		// TreeViewの view/item/context inline グループをWebviewへ移植した際に
-		// これらのアクションが欠落した不具合があったため、定義の存在を検証する
+		// When the TreeView's view/item/context inline group was ported to the Webview,
+		// these actions went missing, so verify that their definitions exist
 		const mainJsPath = path.join(extensionRoot, 'resources', 'webview', 'plans', 'main.js');
 
 		test('Should define inline actions for file rows', () => {
@@ -274,7 +274,7 @@ suite('PlansProvider Integration Test Suite', () => {
 
 			assert.ok(html.includes('quick-start-button'));
 			assert.ok(html.includes('Quick Start'));
-			// テンプレート変数が全て置換されていること
+			// All template variables must be replaced
 			assert.ok(!html.includes('{{cspSource}}'));
 			assert.ok(!html.includes('{{styleUri}}'));
 			assert.ok(!html.includes('{{scriptUri}}'));
@@ -289,7 +289,7 @@ suite('PlansProvider Integration Test Suite', () => {
 
 			await plansProvider.setRootPath(testDir);
 
-			// アクティブフォルダを変更
+			// Change the active folder
 			plansProvider.setActiveFolder(subDir);
 
 			const activeFolderPath = plansProvider.getActiveFolderPath();
@@ -319,16 +319,16 @@ suite('PlansProvider Integration Test Suite', () => {
 		test('Should clear cache on full refresh', async () => {
 			await plansProvider.setRootPath(testDir);
 
-			// 初回読み込みでキャッシュを構築
+			// Build the cache on the first load
 			await plansProvider.buildItems();
 
-			// 新しいファイルを作成
+			// Create a new file
 			fs.writeFileSync(path.join(testDir, 'new.md'), 'content', 'utf8');
 
-			// 全体更新
+			// Refresh everything
 			plansProvider.refresh();
 
-			// キャッシュがクリアされているので新しいファイルが表示される
+			// The cache is cleared, so the new file is shown
 			const items = await plansProvider.buildItems();
 			const newFile = items.find(item => item.filePath === path.join(testDir, 'new.md'));
 			assert.ok(newFile);
@@ -410,7 +410,7 @@ suite('PlansProvider Integration Test Suite', () => {
 
 			const item = await (plansProvider as any)._createFileItem(subDir, true, 'subdir', 'pathDisplayNonRoot');
 
-			// archiveDirectoryコマンドが contextValue で現在ディレクトリか判定するため
+			// Because the archiveDirectory command uses contextValue to check whether it is the current directory
 			assert.strictEqual(item.contextValue, 'pathDisplayNonRoot');
 			assert.strictEqual(item.filePath, subDir);
 			assert.strictEqual(item.isDirectory, true);
@@ -465,7 +465,7 @@ suite('PlansProvider Integration Test Suite', () => {
 			const fileItem = items.find(item => item.filePath === path.join(testDir, 'test.md'));
 
 			assert.ok(fileItem);
-			// ルートディレクトリのファイルはプレフィックスなし
+			// Files in the root directory have no prefix
 			assert.strictEqual(fileItem!.label, 'test.md');
 		});
 
@@ -478,7 +478,7 @@ suite('PlansProvider Integration Test Suite', () => {
 			const dirItem = items.find(item => item.filePath === path.join(testDir, 'subdir'));
 
 			assert.ok(dirItem);
-			// ルートディレクトリのディレクトリはプレフィックス付きラベル
+			// Directories in the root directory have a prefixed label
 			assert.ok(dirItem!.label.endsWith('subdir'));
 			assert.ok(dirItem!.label.startsWith('['));
 		});
@@ -495,7 +495,7 @@ suite('PlansProvider Integration Test Suite', () => {
 			const fileItem = items.find(item => item.filePath === path.join(subDir, 'sub.md'));
 
 			assert.ok(fileItem);
-			// サブディレクトリのファイルはプレフィックス付きラベル
+			// Files in a subdirectory have a prefixed label
 			assert.match(fileItem!.label, /^\[(\d{2}:\d{2}|\d{2}\/\d{2})\] sub\.md$/);
 		});
 
@@ -510,7 +510,7 @@ suite('PlansProvider Integration Test Suite', () => {
 			const dirItem = items.find(item => item.filePath === path.join(subDir, 'nested'));
 
 			assert.ok(dirItem);
-			// サブディレクトリのディレクトリもプレフィックス付きラベル
+			// Directories in a subdirectory also have a prefixed label
 			assert.match(dirItem!.label, /^\[(\d{2}:\d{2}|\d{2}\/\d{2})\] nested$/);
 		});
 
@@ -573,9 +573,9 @@ suite('PlansProvider Integration Test Suite', () => {
 			const fileItem = items.find(item => item.filePath === filePath);
 
 			assert.ok(fileItem);
-			// ファイルの作成日時（今日）ではなくファイル名の日時を使う
+			// Use the date/time in the file name, not the file's creation time (today)
 			assert.strictEqual(fileItem!.label, '[01/02] QUICK_START.md');
-			// tooltipには実ファイルのパスを残す
+			// The tooltip keeps the actual file path
 			assert.strictEqual(fileItem!.tooltip, filePath);
 		});
 
@@ -605,7 +605,7 @@ suite('PlansProvider Integration Test Suite', () => {
 			const items = await plansProvider.buildItems();
 
 			assert.strictEqual(items.find(item => item.filePath === path.join(testDir, '2020_0102_0304_05_PROMPT.md'))!.label, '[01/02] PROMPT.md');
-			// タイムスタンプ形式以外のルートのファイルは従来どおりプレフィックス無し
+			// Root files without the timestamp format have no prefix, as before
 			assert.strictEqual(items.find(item => item.filePath === path.join(testDir, 'notes.md'))!.label, 'notes.md');
 		});
 
@@ -659,15 +659,15 @@ suite('PlansProvider Integration Test Suite', () => {
 		test('Should refresh when directory changes during polling', async () => {
 			await plansProvider.setRootPath(testDir);
 
-			// ポーリングの初期スナップショットを確定させる
+			// Settle the initial polling snapshot
 			await (plansProvider as any)._pollDirectory();
 
 			const spy = spyOnRefresh();
 
-			// ファイルを追加してディレクトリを変化させる
+			// Add a file to change the directory
 			fs.writeFileSync(path.join(testDir, 'polling_test.md'), 'content', 'utf8');
 
-			// _pollDirectoryを直接呼び出して変化を検知させる
+			// Call _pollDirectory directly to detect the change
 			await (plansProvider as any)._pollDirectory();
 
 			spy.restore();
@@ -678,12 +678,12 @@ suite('PlansProvider Integration Test Suite', () => {
 			await plansProvider.setRootPath(testDir);
 			fs.writeFileSync(path.join(testDir, 'stable.md'), 'content', 'utf8');
 
-			// 初回ポーリングでスナップショットを確定させる
+			// Settle the snapshot with the first poll
 			await (plansProvider as any)._pollDirectory();
 
 			const spy = spyOnRefresh();
 
-			// 2回目のポーリング（変化なし）
+			// Second poll (no change)
 			await (plansProvider as any)._pollDirectory();
 
 			spy.restore();
@@ -695,14 +695,14 @@ suite('PlansProvider Integration Test Suite', () => {
 			fs.mkdirSync(subDir, { recursive: true });
 			await plansProvider.setRootPath(testDir);
 
-			// スナップショットを設定
+			// Set a snapshot
 			(plansProvider as any)._lastDirFileCount = 5;
 			(plansProvider as any)._lastDirModTime = 12345;
 
-			// ディレクトリ移動（navigateToDirectoryの内部処理をシミュレート）
+			// Move to a directory (simulates the internal processing of navigateToDirectory)
 			await plansProvider.navigateToDirectory(subDir);
 
-			// スナップショットがリセットされているか確認
+			// Check that the snapshot is reset
 			assert.strictEqual((plansProvider as any)._lastDirFileCount, -1, 'File count should be reset after navigation');
 			assert.strictEqual((plansProvider as any)._lastDirModTime, 0, 'Mod time should be reset after navigation');
 		});
@@ -710,11 +710,11 @@ suite('PlansProvider Integration Test Suite', () => {
 
 	suite('search', () => {
 		/**
-		 * 検索用のフィクスチャを作成する
-		 *   login-feature/2026_0101_0000_00_PROMPT.md  （本文: Add OAuth login）
-		 *   login-feature/notes.txt                     （本文: oauth ※.md以外）
-		 *   archived/old_task/2026_0102_0000_00_TASK.md （本文: Refactor search）
-		 *   .hidden/secret.md                           （本文: oauth）
+		 * Create fixtures for search
+		 *   login-feature/2026_0101_0000_00_PROMPT.md  (body: Add OAuth login)
+		 *   login-feature/notes.txt                     (body: oauth, not .md)
+		 *   archived/old_task/2026_0102_0000_00_TASK.md (body: Refactor search)
+		 *   .hidden/secret.md                           (body: oauth)
 		 */
 		function createSearchFixture(): void {
 			const loginDir = path.join(testDir, 'login-feature');
@@ -755,7 +755,7 @@ suite('PlansProvider Integration Test Suite', () => {
 			assert.strictEqual(items[1].kind, 'directory');
 			assert.strictEqual(items[1].filePath, path.join(testDir, 'login-feature'));
 			assert.strictEqual(items[1].contextValue, 'directory');
-			// rootの直下のため相対ディレクトリは表示しない
+			// Directly under root, so no relative directory is shown
 			assert.strictEqual(items[1].description, undefined);
 		});
 
@@ -771,7 +771,7 @@ suite('PlansProvider Integration Test Suite', () => {
 			assert.strictEqual(fileItem!.description, path.join('archived', 'old_task'));
 			assert.strictEqual(fileItem!.contextValue, 'file');
 			assert.strictEqual(fileItem!.matchPreview, undefined);
-			// 検索結果もタイムスタンプ形式のファイルは短縮表示する
+			// Timestamped files are also shown in short form in search results
 			assert.strictEqual(fileItem!.label, '[01/02] TASK.md');
 		});
 
@@ -844,7 +844,7 @@ suite('PlansProvider Integration Test Suite', () => {
 			plansProvider.setSearchQuery('');
 			assert.strictEqual(plansProvider.isSearching(), false);
 
-			// ディレクトリ移動で検索を終了する
+			// Moving to a directory ends the search
 			plansProvider.setSearchQuery('task');
 			await plansProvider.navigateToDirectory(subDir);
 			assert.strictEqual(plansProvider.getSearchQuery(), undefined);

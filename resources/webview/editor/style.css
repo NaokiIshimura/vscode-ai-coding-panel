@@ -1,5 +1,5 @@
 body {
-    /* ボタン設置領域の高さ（Plans / Editor / Terminal の各Viewで共通） */
+    /* Height of the button bar (shared by the Plans / Editor / Terminal views) */
     --button-bar-height: 36px;
     margin: 0;
     padding: 0;
@@ -36,7 +36,7 @@ body.focused {
     flex-shrink: 0;
 }
 
-/* Editor View最下部のボタン設置領域 */
+/* Button bar at the bottom of the Editor View */
 #footer {
     box-sizing: border-box;
     min-height: var(--button-bar-height);
@@ -47,7 +47,7 @@ body.focused {
     color: var(--vscode-foreground);
     display: flex;
     align-items: center;
-    /* 左: output md / output memory、右: Next */
+    /* Left: output md / output memory, right: Next */
     justify-content: space-between;
     gap: 8px;
     flex-shrink: 0;
@@ -60,7 +60,7 @@ body.focused {
     flex-shrink: 0;
 }
 
-/* 各ボタンをアイコン＋ラベルの横並びにする */
+/* Lay out each button as icon + label side by side */
 .spec-button,
 .plan-button,
 .run-button,
@@ -77,7 +77,7 @@ body.focused {
     font-weight: normal;
 }
 
-/* アイコンのサイズはPlans ViewのQuick Startボタンと揃える */
+/* Match the icon size to the Quick Start button in the Plans View */
 .sub-header-actions .codicon,
 .footer-actions .codicon {
     font-size: 14px;
@@ -88,7 +88,7 @@ body.focused {
     padding: 2px 8px;
     font-size: 11px;
     line-height: 16px;
-    /* 赤系のまま彩度をやや落として、鮮やかすぎない柔らかい赤にする */
+    /* Keep it red but slightly desaturated, so it is a soft red rather than too vivid */
     background-color: #c9483f;
     color: #ffffff;
     border: none;
@@ -185,7 +185,7 @@ body.focused {
     background-color: var(--vscode-button-hoverBackground);
 }
 
-/* Insert Templateボタン（サブヘッダー左端、Editの左）。Spec / Plan / Runと競合しないようセカンダリ配色にする */
+/* Insert Template button (left end of the sub-header, left of Edit). Use secondary colors so it does not compete with Spec / Plan / Run */
 .template-button {
     padding: 2px 8px;
     font-size: 11px;
@@ -206,7 +206,7 @@ body.focused {
     cursor: not-allowed;
 }
 
-/* output md / output memoryボタン（最下段の左側）。Nextと競合しないようセカンダリ配色にする */
+/* output md / output memory buttons (left side of the bottom bar). Use secondary colors so they do not compete with Next */
 .output-md-button,
 .output-memory-button {
     padding: 2px 8px;
@@ -316,9 +316,9 @@ body.focused {
 }
 
 /*
- * URLリンク表示用のオーバーレイ
- * textareaはリンクを描画できないため、同じ折り返しになるミラー要素を重ねて
- * URL部分にだけ下線を引く。文字自体はtextarea側の描画を見せるためtransparentにする
+ * Overlay for displaying URL links
+ * A textarea cannot render links, so a mirror element with the same wrapping is layered on top
+ * to underline only the URL parts. The text itself is transparent so that the textarea's rendering shows through
  */
 #link-overlay {
     position: absolute;
@@ -334,7 +334,7 @@ body.focused {
     white-space: pre-wrap;
     overflow-wrap: break-word;
     color: transparent;
-    /* クリック・キャレット操作はtextareaに届かせる（当たり判定は矩形計算で行う） */
+    /* Let clicks and caret operations reach the textarea (hit testing is done by rectangle calculation) */
     pointer-events: none;
 }
 
@@ -343,7 +343,7 @@ body.focused {
     text-decoration-color: var(--vscode-textLink-foreground);
 }
 
-/* URL右クリック時のコンテキストメニュー */
+/* Context menu shown when right-clicking a URL */
 .context-menu {
     position: fixed;
     z-index: 10000;
@@ -381,7 +381,7 @@ body.focused {
     color: var(--vscode-menu-selectionForeground, var(--vscode-list-activeSelectionForeground));
 }
 
-/* テンプレート選択メニュー最下部の「Add template」項目（アイコン＋ラベル） */
+/* "Add template" item at the bottom of the template menu (icon + label) */
 .context-menu.prompt-menu .prompt-menu-add-item {
     display: flex;
     align-items: center;
@@ -394,7 +394,7 @@ body.focused {
     flex-shrink: 0;
 }
 
-/* テンプレート選択メニューは狭いサイドバー幅・高さに収める */
+/* Keep the template menu within the narrow sidebar width and height */
 .context-menu.prompt-menu {
     max-width: calc(100vw - 8px);
     max-height: calc(100vh - 16px);

@@ -16,9 +16,9 @@ let originalContent = '';
 let currentFilePath = '';
 let isReadOnly = false;
 
-// エディタにフォーカスを当て、カーソルを先頭へ移動する
+// Focus the editor and move the cursor to the beginning
 const focusEditor = () => {
-    // 描画完了後にフォーカスを当てる（内容反映前だとカーソル位置がずれるため）
+    // Focus after rendering completes (before the content is applied, the cursor position would be off)
     requestAnimationFrame(() => {
         editor.focus();
         editor.setSelectionRange(0, 0);
@@ -26,25 +26,25 @@ const focusEditor = () => {
     });
 };
 
-// URL検出パターン（Terminal Viewのリンク検出と同じ定義）
+// URL detection pattern (same definition as the link detection in the Terminal View)
 const URL_PATTERN = /(?:https?|HTTPS?):\/\/[^\s"'!*(){}|\\\^<>`]*[^\s"':,.!?{}|\\\^~\[\]`()<>]/g;
 
-// コンテキストメニューの見出しに表示するURLの最大文字数
+// Maximum number of URL characters shown in the context menu header
 const URL_LABEL_MAX_LENGTH = 60;
 
-// URL右クリック時のメニュー項目
+// Menu items shown when right-clicking a URL
 const URL_CONTEXT_MENU = [
     { title: 'Open in Default Browser', messageType: 'openUrl' },
     { title: 'Open in Integrated Browser', messageType: 'openUrlInIntegratedBrowser' }
 ];
 
-// オーバーレイ上のURL要素（クリック位置の判定に使用）
+// URL elements on the overlay (used to determine the click position)
 let linkElements = [];
 let overlayRenderHandle = null;
 
 /**
- * オーバーレイの位置・サイズ・スクロール量をtextareaに合わせる
- * 幅はclientWidth（スクロールバーを除いた幅）に合わせないと折り返し位置がずれる
+ * Match the overlay's position, size and scroll amount to the textarea
+ * The width must match clientWidth (the width excluding the scrollbar), otherwise the wrap positions are off
  */
 const syncLinkOverlay = () => {
     linkOverlay.style.width = `${editor.clientWidth}px`;
@@ -54,8 +54,8 @@ const syncLinkOverlay = () => {
 };
 
 /**
- * textareaの内容からオーバーレイを再構築する
- * URL部分だけを要素化し、その矩形をクリック位置の判定に使う
+ * Rebuild the overlay from the textarea content
+ * Only the URL parts become elements, and their rectangles are used to determine the click position
  */
 const renderLinkOverlay = () => {
     const text = editor.value;
@@ -77,13 +77,13 @@ const renderLinkOverlay = () => {
         linkElements.push(link);
         lastIndex = match.index + match[0].length;
     }
-    // 末尾に改行を足す。pre-wrapでは末尾の改行が潰れ、textareaと行数がずれるため
+    // Append a trailing newline. With pre-wrap the trailing newline collapses and the line count would differ from the textarea
     linkOverlay.appendChild(document.createTextNode(text.slice(lastIndex) + '\n'));
 
     syncLinkOverlay();
 };
 
-// 連続入力時は1フレームに1回だけ再構築する
+// During continuous input, rebuild at most once per frame
 const scheduleLinkOverlayRender = () => {
     if (overlayRenderHandle !== null) {
         return;
@@ -95,12 +95,12 @@ const scheduleLinkOverlayRender = () => {
 };
 
 /**
- * 指定座標にあるURLを返す（無ければnull）
- * オーバーレイはpointer-events: noneのため、要素の矩形と座標を突き合わせて判定する
+ * Return the URL at the given coordinates (null if none)
+ * The overlay has pointer-events: none, so this is determined by matching the element rectangles against the coordinates
  */
 const findUrlAtPoint = (x, y) => {
     for (const link of linkElements) {
-        // 折り返されたURLは複数の矩形になる
+        // A wrapped URL consists of multiple rectangles
         for (const rect of link.getClientRects()) {
             if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
                 return link.dataset.url;
@@ -110,7 +110,7 @@ const findUrlAtPoint = (x, y) => {
     return null;
 };
 
-// テンプレート選択メニューを開いているか（ボタンでの開閉判定に使う）
+// Whether the template menu is open (used to toggle it with the button)
 let promptMenuOpen = false;
 
 const hideContextMenu = () => {
@@ -119,7 +119,7 @@ const hideContextMenu = () => {
 };
 
 /**
- * メニューの区切り線を生成する
+ * Create a menu separator
  */
 const createMenuSeparator = () => {
     const separator = document.createElement('div');
@@ -128,13 +128,13 @@ const createMenuSeparator = () => {
 };
 
 /**
- * URLのコンテキストメニューを表示する
+ * Show the context menu for a URL
  */
 const showUrlContextMenu = (event, url) => {
     contextMenuElement.textContent = '';
     contextMenuElement.classList.remove('prompt-menu');
 
-    // 対象URLを見出しとして表示する
+    // Show the target URL as the header
     const header = document.createElement('div');
     header.className = 'context-menu-header';
     header.textContent = url.length > URL_LABEL_MAX_LENGTH
@@ -158,7 +158,7 @@ const showUrlContextMenu = (event, url) => {
 
     contextMenuElement.classList.remove('hidden');
 
-    // 画面外にはみ出さないように位置を調整
+    // Adjust the position so the menu does not overflow the screen
     const menuRect = contextMenuElement.getBoundingClientRect();
     const left = Math.min(event.clientX, window.innerWidth - menuRect.width - 4);
     const top = Math.min(event.clientY, window.innerHeight - menuRect.height - 4);
@@ -167,8 +167,8 @@ const showUrlContextMenu = (event, url) => {
 };
 
 /**
- * メニューが画面内に収まるように位置を決める
- * 基準要素の上側に出し、収まらない場合は下側へ反転する
+ * Position the menu so it fits within the screen
+ * Place it above the reference element, and flip it below if it does not fit
  */
 const placeMenuNearElement = (element) => {
     const anchorRect = element.getBoundingClientRect();
@@ -177,7 +177,7 @@ const placeMenuNearElement = (element) => {
 
     let top = anchorRect.top - menuRect.height - gap;
     if (top < gap) {
-        // 上側に収まらない場合は下側へ出す
+        // If it does not fit above, place it below
         top = Math.min(anchorRect.bottom + gap, window.innerHeight - menuRect.height - gap);
     }
 
@@ -188,7 +188,7 @@ const placeMenuNearElement = (element) => {
 };
 
 /**
- * プロンプトテンプレートの選択メニューをボタンの近くに表示する
+ * Show the prompt template menu near the button
  */
 const showPromptTemplateMenu = (templates) => {
     contextMenuElement.textContent = '';
@@ -198,7 +198,7 @@ const showPromptTemplateMenu = (templates) => {
         const menuItem = document.createElement('div');
         menuItem.className = 'context-menu-item';
         menuItem.textContent = template.label;
-        // 同じ表示名でもファイル名で判別できるようにする
+        // Make templates with the same display name distinguishable by file name
         menuItem.title = template.description;
         menuItem.addEventListener('click', () => {
             hideContextMenu();
@@ -210,8 +210,8 @@ const showPromptTemplateMenu = (templates) => {
         contextMenuElement.appendChild(menuItem);
     }
 
-    // 最下部: テンプレートを新規作成する項目
-    // テンプレートが0件の場合は区切り線を出さない（メニューの先頭が区切り線になるため）
+    // Bottom: item to create a new template
+    // Do not show the separator when there are 0 templates (the menu would start with a separator)
     if (templates.length > 0) {
         contextMenuElement.appendChild(createMenuSeparator());
     }
@@ -231,15 +231,15 @@ const showPromptTemplateMenu = (templates) => {
     });
     contextMenuElement.appendChild(addItem);
 
-    // 位置計算には描画後のサイズが必要なため、先に表示する
+    // Position calculation needs the rendered size, so show it first
     contextMenuElement.classList.remove('hidden');
     placeMenuNearElement(templateButton);
     promptMenuOpen = true;
 };
 
-// URL上での右クリックのみ自前のメニューを表示する
-// preventDefault() を呼ばない場合はVSCode標準のメニューが表示される
-// documentに登録するのは、VSCode側がwindowで監視しているため先に処理する必要があるため
+// Show our own menu only when right-clicking on a URL
+// If preventDefault() is not called, the standard VSCode menu is shown
+// Registered on document because VSCode listens on window, so we need to handle it first
 document.addEventListener('contextmenu', (event) => {
     if (contextMenuElement.contains(event.target)) {
         return;
@@ -272,7 +272,7 @@ document.addEventListener('keydown', (event) => {
 
 window.addEventListener('blur', hideContextMenu);
 
-// URL上ではポインターカーソルにしてリンクであることを示す
+// Use a pointer cursor over URLs to indicate that they are links
 editor.addEventListener('mousemove', (event) => {
     editor.style.cursor = findUrlAtPoint(event.clientX, event.clientY) ? 'pointer' : '';
 });
@@ -281,20 +281,20 @@ editor.addEventListener('mouseleave', () => {
     editor.style.cursor = '';
 });
 
-// textareaのスクロールにオーバーレイを追従させる
+// Make the overlay follow the textarea scroll
 editor.addEventListener('scroll', () => {
     syncLinkOverlay();
     hideContextMenu();
 });
 
-// ビューの幅が変わると折り返し位置が変わるため、サイズ変更に追従する
+// The wrap positions change when the view width changes, so follow size changes
 if (typeof ResizeObserver !== 'undefined') {
     new ResizeObserver(() => syncLinkOverlay()).observe(editor);
 }
 
 renderLinkOverlay();
 
-// メッセージを受信
+// Receive messages
 window.addEventListener('message', event => {
     const message = event.data;
     switch (message.type) {
@@ -317,14 +317,14 @@ window.addEventListener('message', event => {
                 editButton.classList.remove('active');
             }
 
-            // 新規作成直後などはエディタにフォーカスを当て、先頭から入力できるようにする
+            // Right after a new file is created etc., focus the editor so input can start from the beginning
             if (message.focusEditor) {
                 focusEditor();
             }
             break;
         case 'updateContent':
-            // 拡張側でファイルが書き換わった場合の再同期
-            // （送信履歴の追記など）。カーソル位置とスクロール位置は維持する
+            // Resync when the file is rewritten on the extension side
+            // (e.g. appending to the sent history). Keep the cursor and scroll positions
             const selectionStart = editor.selectionStart;
             const selectionEnd = editor.selectionEnd;
             const scrollTop = editor.scrollTop;
@@ -373,20 +373,20 @@ window.addEventListener('message', event => {
             isReadOnly = false;
             break;
         case 'showPromptTemplates':
-            // テンプレート一覧を受け取ってボタン近くにメニューを表示する
+            // Receive the template list and show the menu near the button
             showPromptTemplateMenu(message.templates || []);
             break;
         case 'insertText':
-            // カーソル位置にテキストを挿入
+            // Insert text at the cursor position
             const start = editor.selectionStart;
             const end = editor.selectionEnd;
             const text = message.text;
             editor.value = editor.value.substring(0, start) + text + editor.value.substring(end);
-            // カーソルを挿入テキストの後に移動
+            // Move the cursor after the inserted text
             editor.selectionStart = editor.selectionEnd = start + text.length;
             editor.focus();
             renderLinkOverlay();
-            // 変更を通知
+            // Notify the change
             vscode.postMessage({ type: 'contentChanged', content: editor.value });
             if (editor.value !== originalContent) {
                 saveButton.classList.add('dirty');
@@ -395,7 +395,7 @@ window.addEventListener('message', event => {
     }
 });
 
-// エディタの内容変更を検知
+// Detect changes to the editor content
 editor.addEventListener('input', () => {
     scheduleLinkOverlayRender();
     if (isReadOnly) {
@@ -434,13 +434,13 @@ const runTask = () => {
 
 // Keyboard shortcuts
 editor.addEventListener('keydown', (e) => {
-    // Cmd+R / Ctrl+Rで実行
+    // Run with Cmd+R / Ctrl+R
     if ((e.metaKey || e.ctrlKey) && e.key === 'r') {
         e.preventDefault();
         runTask();
     }
 
-    // Cmd+M / Ctrl+MでCreate Markdown File
+    // Create Markdown File with Cmd+M / Ctrl+M
     if ((e.metaKey || e.ctrlKey) && e.key === 'm') {
         e.preventDefault();
         vscode.postMessage({
@@ -485,12 +485,12 @@ planButton.addEventListener('click', () => {
     });
 });
 
-// prompts button click handler - テンプレート一覧をボタン近くのメニューで表示する
+// prompts button click handler - show the template list in a menu near the button
 templateButton.addEventListener('click', (event) => {
-    // documentのclickハンドラで直後に閉じられないようにする
+    // Prevent the document click handler from closing it immediately
     event.stopPropagation();
 
-    // 開いている場合はトグルで閉じる
+    // If it is open, toggle it closed
     if (promptMenuOpen) {
         hideContextMenu();
         return;
@@ -498,7 +498,7 @@ templateButton.addEventListener('click', (event) => {
 
     hideContextMenu();
 
-    // 読み取り専用時は挿入してもtextareaの変更が保存されないため開かない
+    // Do not open when read-only, because inserted text would not be saved from the textarea
     if (isReadOnly) {
         vscode.postMessage({
             type: 'showWarning',
@@ -519,8 +519,8 @@ nextButton.addEventListener('click', () => {
     });
 });
 
-// output md / output memory button click handlers - 起動中のClaude Codeへ出力指示を送る
-// Claude Codeが読むのはセッションの文脈のため、エディタ内容の保存は行わない
+// output md / output memory button click handlers - send output instructions to the running Claude Code
+// Claude Code reads the session context, so the editor content is not saved
 outputMdButton.addEventListener('click', () => {
     vscode.postMessage({
         type: 'outputMd'
@@ -552,8 +552,8 @@ editButton.addEventListener('click', () => {
 
 // Editor click handler - open URL, or focus the tab in VS Code when readonly
 editor.addEventListener('click', (event) => {
-    // URL上のクリックは標準ブラウザで開く
-    // ドラッグでの範囲選択の終端がURLに重なった場合は開かない
+    // Clicking on a URL opens it in the default browser
+    // Do not open it when the end of a drag selection lands on a URL
     const hasSelection = editor.selectionStart !== editor.selectionEnd;
     const url = hasSelection ? null : findUrlAtPoint(event.clientX, event.clientY);
     if (url) {

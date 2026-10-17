@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { TerminalService } from '../../../services/TerminalService';
 
 /**
- * 書き込まれたデータを記録するモックPTY
+ * Mock PTY that records written data
  */
 class MockPty {
 	public written: string[] = [];
@@ -26,7 +26,7 @@ suite('TerminalService Test Suite', () => {
 	setup(() => {
 		service = new TerminalService();
 		pty = new MockPty();
-		// node-ptyを起動せずにセッションを登録する
+		// Register a session without starting node-pty
 		(service as any).sessions.set(sessionId, {
 			id: sessionId,
 			pty,
@@ -47,11 +47,11 @@ suite('TerminalService Test Suite', () => {
 		});
 
 		test('Should split long data into chunks and write all of them in order', async () => {
-			const data = 'あ'.repeat(500) + '\n';
+			const data = 'é'.repeat(600) + '\n';
 
 			service.write(sessionId, data);
 
-			// 最初のチャンクのみ即座に書き込まれる
+			// Only the first chunk is written immediately
 			assert.strictEqual(pty.written.length, 1);
 			await wait(200);
 

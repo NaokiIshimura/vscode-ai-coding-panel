@@ -1,5 +1,5 @@
 body {
-    /* ボタン設置領域の高さ（Plans / Editor / Terminal の各Viewで共通） */
+    /* Height of the button bar (shared by the Plans / Editor / Terminal views) */
     --button-bar-height: 36px;
     margin: 0;
     padding: 0;
@@ -13,7 +13,7 @@ body {
     background-color: var(--vscode-sideBar-background);
 }
 
-/* ヘッダー（Editor Viewのボタン領域と同じ見た目） */
+/* Header (same look as the Editor View button bar) */
 #header {
     box-sizing: border-box;
     min-height: var(--button-bar-height);
@@ -27,7 +27,7 @@ body {
     flex-shrink: 0;
 }
 
-/* 検索ボックス（幅が狭いときは検索ボックス側を縮める） */
+/* Search box (when the view is narrow, the search box shrinks) */
 .search-box {
     position: relative;
     display: flex;
@@ -115,7 +115,7 @@ body {
     font-size: 11px;
     line-height: 16px;
     font-family: inherit;
-    /* 白文字が読めるよう、黄色系のまま明度を落としたゴールドを使う */
+    /* Use a gold that keeps the yellow hue but is darker, so that white text stays readable */
     background-color: #9a7b00;
     color: #ffffff;
     border: none;
@@ -137,7 +137,7 @@ body {
     cursor: not-allowed;
 }
 
-/* Resume Sessionボタン（Editor ViewのPrompts / Editと同じ透明背景＋枠線のデザインにする） */
+/* Resume Session button (same transparent background + border design as Prompts / Edit in the Editor View) */
 .resume-session-button {
     display: inline-flex;
     align-items: center;
@@ -170,14 +170,14 @@ body {
     cursor: not-allowed;
 }
 
-/* ファイル一覧 */
+/* File list */
 #list {
     flex: 1 1 auto;
     overflow-y: auto;
     outline: none;
 }
 
-/* フッター（左にドラッグ&ドロップの注意、右にResume Sessionボタン） */
+/* Footer (drag & drop hint on the left, Resume Session button on the right) */
 #footer {
     box-sizing: border-box;
     min-height: var(--button-bar-height);
@@ -201,7 +201,7 @@ body {
     color: var(--vscode-descriptionForeground);
 }
 
-/* サイドバーの幅が狭いときは末尾を省略する */
+/* Truncate the end when the sidebar is narrow */
 .footer-hint span:last-child {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -229,7 +229,7 @@ body {
     background-color: var(--vscode-list-hoverBackground);
 }
 
-/* 検索結果の件数行（選択・クリックの対象外） */
+/* Search result count row (not selectable or clickable) */
 .row.search-header {
     cursor: default;
     color: var(--vscode-descriptionForeground);
@@ -253,7 +253,7 @@ body {
     background-color: var(--vscode-list-dropBackground);
 }
 
-/* 行以外（空白領域・ファイル行）へのドロップ中は一覧全体をハイライトする */
+/* Highlight the whole list while dropping somewhere other than a row (empty area, file rows) */
 body.drag-over #list {
     background-color: var(--vscode-list-dropBackground);
     outline: 1px dashed var(--vscode-focusBorder);
@@ -280,7 +280,7 @@ body.drag-over #list {
     text-overflow: ellipsis;
 }
 
-/* 行ホバー時のインラインアクション（旧TreeViewのinlineグループ相当） */
+/* Inline actions shown on row hover (equivalent to the inline group of the old TreeView) */
 .row-actions {
     display: none;
     align-items: center;
@@ -322,19 +322,19 @@ body.drag-over #list {
     font-weight: 600;
 }
 
-/* パス表示行 */
+/* Path display row */
 .row.path {
     font-weight: 600;
 }
 
-/* 空状態・エラー表示 */
+/* Empty state / error display */
 .message {
     padding: 8px;
     opacity: 0.8;
     white-space: normal;
 }
 
-/* ツールチップ（インラインアクションのホバー説明） */
+/* Tooltip (hover description for inline actions) */
 .tooltip {
     position: fixed;
     z-index: 200;
@@ -355,7 +355,7 @@ body.drag-over #list {
     display: none;
 }
 
-/* コンテキストメニュー */
+/* Context menu */
 .context-menu {
     position: fixed;
     z-index: 100;

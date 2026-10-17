@@ -14,42 +14,42 @@ export interface ITerminalProvider {
     sendCommand(command: string, addNewline?: boolean, filePath?: string, commandType?: 'run' | 'plan' | 'spec'): Promise<void>;
     isClaudeCodeRunning?(): boolean;
     /**
-     * 新しいタブを作成してコマンドを送信する
-     * @returns 送信できた場合はtrue（タブ数の上限などで作成できなかった場合はfalse）
+     * Create a new tab and send the command
+     * @returns true if sent (false if the tab could not be created, e.g. because the tab limit was reached)
      */
     sendCommandInNewTab?(command: string, filePath?: string, commandType?: 'run' | 'plan' | 'spec'): Promise<boolean>;
 }
 
 /**
- * 送信するコマンドと、そのセッションを再開するコマンド
+ * Command to send, and the command to resume that session
  */
 interface ResumeSession {
-    /** --session-id を付与したコマンドプレフィックス */
+    /** Command prefix with --session-id added */
     commandPrefix: string;
-    /** 送信履歴に記録するresumeコマンド（付与できなかった場合はundefined） */
+    /** Resume command to record in the sent history (undefined if the session ID could not be added) */
     resumeCommand?: string;
 }
 
 /**
- * セッション指定と競合するClaude CLIのオプション
- * 既に指定されている場合は --session-id を付与しない
+ * Claude CLI options that conflict with specifying a session
+ * If any of them is already specified, --session-id is not added
  */
 const RESUME_CONFLICTING_OPTIONS = /(^|\s)(--session-id|--resume|-r|--continue|-c|--fork-session)(\s|=|$)/;
 
 /**
- * コマンドプレフィックスがclaudeを起動するかどうかを判定する
- * パス付きの指定（/usr/local/bin/claude 等）も対象にする
+ * Determine whether the command prefix launches claude
+ * Paths are also covered (e.g. /usr/local/bin/claude)
  */
 const CLAUDE_EXECUTABLE_PATTERN = /^(\S*[/\\])?claude(\s|$)/;
 
 /**
- * 起動中のClaude Codeへ送る出力指示の種類（output md / output memory ボタン）
+ * Type of output instruction sent to the running Claude Code (output md / output memory buttons)
  */
 export type SessionPromptType = 'md' | 'memory';
 
 /**
- * 出力指示ごとの設定キーと既定値
- * Claude Codeの入力欄へテキストとして送るため、改行を含めない
+ * Setting key and default value for each output instruction
+ * Must not contain line breaks because it is sent as text to the Claude Code input field
  */
 const SESSION_PROMPTS: Record<SessionPromptType, { settingKey: string; defaultPrompt: string }> = {
     md: {
@@ -63,14 +63,14 @@ const SESSION_PROMPTS: Record<SessionPromptType, { settingKey: string; defaultPr
 };
 
 /**
- * Runで送る本文に連結する output md の指示文の見出し
- * 本文の指示と区別できるよう、Markdownの見出しとして指示文の前に置く
+ * Heading for the output md instruction appended to the body sent by Run
+ * Placed before the instruction as a Markdown heading so it can be told apart from the instructions in the body
  */
 export const OUTPUT_MD_HEADING = '# output md';
 
 /**
- * Runで送る本文の末尾へ、見出し付きの output md の指示文を空行区切りで連結する（Quick Run が無効のとき）
- * 指示文が空の場合は本文をそのまま返す（末尾に見出しだけが付くのを避けるため）
+ * Append the output md instruction with its heading to the end of the body sent by Run, separated by a blank line (when Quick Run is disabled)
+ * Return the body as is if the instruction is empty (to avoid appending only the heading)
  */
 export function appendOutputMdPrompt(content: string, prompt: string): string {
     const trimmedPrompt = prompt.trim();
@@ -106,30 +106,30 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     ) {
         this.templateService = templateService ?? new TemplateService();
         this.promptTemplateService = promptTemplateService;
-        // アクティブエディタの変更を監視
+        // Watch for active editor changes
         this._disposables.push(
             vscode.window.onDidChangeActiveTextEditor(editor => {
                 this._checkAndUpdateReadOnlyState(editor);
             })
         );
 
-        // タブグループの変更を監視（タブの開閉、移動を検知）
+        // Watch for tab group changes (detect tabs being opened, closed, or moved)
         this._disposables.push(
             vscode.window.tabGroups.onDidChangeTabs(event => {
                 this._checkAndUpdateReadOnlyState(undefined);
             })
         );
 
-        // ファイル保存を監視してEditor Viewを更新
+        // Watch for file saves and update the Editor View
         this._disposables.push(
             vscode.workspace.onDidSaveTextDocument(async (document) => {
-                // 保存されたファイルが現在Editor Viewで開いているファイルと一致するか確認
+                // Check whether the saved file matches the file currently open in the Editor View
                 if (this._currentFilePath && document.uri.fsPath === this._currentFilePath) {
                     try {
-                        // ファイル内容を再読み込み
+                        // Reload the file content
                         const content = await fs.promises.readFile(this._currentFilePath, 'utf8');
 
-                        // 内容が変更されている場合のみ更新
+                        // Update only if the content has changed
                         if (content !== this._currentContent) {
                             this._currentContent = content;
                             this._pendingContent = undefined;
@@ -138,7 +138,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                             const displayPath = path.basename(this._currentFilePath);
                             const isOpenInEditor = this._isFileOpenInTab(this._currentFilePath);
 
-                            // Webviewに更新内容を送信
+                            // Send the updated content to the Webview
                             if (this._view) {
                                 this._view.webview.postMessage({
                                     type: 'showContent',
@@ -157,10 +157,10 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * ファイルがVS Codeのタブで開かれているかチェック
+     * Check whether the file is open in a VS Code tab
      */
     private _isFileOpenInTab(filePath: string): boolean {
-        // すべてのタブグループをチェック
+        // Check all tab groups
         for (const group of vscode.window.tabGroups.all) {
             for (const tab of group.tabs) {
                 if (tab.input instanceof vscode.TabInputText) {
@@ -174,31 +174,31 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * コマンドテンプレートへ埋め込む値を安全にエスケープする
+     * Safely escape a value embedded in a command template
      *
-     * テンプレートは値をダブルクォートで囲む前提のため（例: `${commandPrefix} "${editorContent}"`）、
-     * 戻り値の前後にもダブルクォートを付けて一度そのクォートを閉じ、
-     * 値自体はシングルクォートで保護してから再度開く形にする。
-     * シェルは隣接する引用符を連結するため、結果は1つの引数のまま扱われる。
+     * Templates are expected to wrap the value in double quotes (e.g. `${commandPrefix} "${editorContent}"`),
+     * so double quotes are also added around the return value to close that quote once,
+     * protect the value itself with single quotes, and then reopen the quote.
+     * The shell concatenates adjacent quoted strings, so the result is still treated as a single argument.
      *
-     * ダブルクォートの中では ` $ \ が展開され、対話シェルでは ! のヒストリ展開まで起きるため、
-     * 値をシングルクォートで保護しないとMarkdownのコードフェンス等でコマンドが壊れる。
+     * Inside double quotes ` $ \ are expanded, and interactive shells even perform ! history expansion,
+     * so unless the value is protected with single quotes, Markdown code fences and the like break the command.
      */
     private _escapeShellArgument(arg: string): string {
-        // 内部のシングルクォートは '\'' に置換し、全体をシングルクォート、さらにダブルクォートで囲む
+        // Replace inner single quotes with '\'' and wrap the whole value in single quotes, then in double quotes
         return `"'${arg.replace(/'/g, "'\\''")}'"`;
     }
 
     /**
-     * コマンドテンプレートを設定から取得する
+     * Get a command template from the settings
      *
-     * 旧キーへ値を設定しているユーザーの設定が失われないよう、
-     * 新キーが未設定の場合に限り旧キーの値を引き継ぐ
+     * To avoid losing the settings of users who set a value on the old key,
+     * inherit the old key's value only when the new key is not set
      *
-     * @param config aiCodingSidebarの設定
-     * @param section 新しい設定キー（aiCodingSidebar配下）
-     * @param deprecatedSection 旧設定キー（aiCodingSidebar配下）
-     * @param defaultValue いずれも未設定の場合に使う既定値
+     * @param config The aiCodingSidebar configuration
+     * @param section New setting key (under aiCodingSidebar)
+     * @param deprecatedSection Old setting key (under aiCodingSidebar)
+     * @param defaultValue Default value used when neither key is set
      */
     private _getCommandTemplate(
         config: vscode.WorkspaceConfiguration,
@@ -225,19 +225,19 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * Claude Codeのセッションを後から再開できるよう、コマンドプレフィックスへ --session-id を付与する
+     * Add --session-id to the command prefix so that the Claude Code session can be resumed later
      *
-     * 以下の場合はセッションIDを付与せず、プレフィックスをそのまま返す
-     * - resumeコマンドを記録しない設定になっている
-     * - プレフィックスがclaude以外、もしくは既にセッションを指定している
-     * - Claude Code起動中（コマンドではなく入力テキストとして扱われ、新規セッションが始まらない）
+     * In the following cases no session ID is added and the prefix is returned as is
+     * - The setting to record resume commands is turned off
+     * - The prefix is not claude, or a session is already specified
+     * - Claude Code is running (the text is treated as input text, not a command, so no new session starts)
      *
-     * @param commandPrefix 設定から取得したコマンドプレフィックス
-     * @returns 送信に使うプレフィックスと、記録するresumeコマンド
+     * @param commandPrefix Command prefix obtained from the settings
+     * @returns The prefix to use for sending, and the resume command to record
      */
     private _prepareResumeSession(commandPrefix: string): ResumeSession {
         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
-        // 再開に使う情報はmetadata.mdへ記録するため、送信履歴の設定（recordSendTimestamp）には依存しない
+        // Resume information is recorded in metadata.md, so this does not depend on the sent history setting (recordSendTimestamp)
         if (!config.get<boolean>('editor.recordResumeCommand', true)) {
             return { commandPrefix };
         }
@@ -252,7 +252,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         }
 
         const sessionId = randomUUID();
-        // resumeコマンドにはプレフィックスと同じ実行ファイルを使う
+        // Use the same executable as the prefix for the resume command
         const executable = trimmed.split(/\s+/)[0];
 
         return {
@@ -262,15 +262,15 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * Spec / Plan / Run の送信履歴を現在のファイルへ追記する
+     * Append the Spec / Plan / Run sent history to the current file
      *
-     * 追記に失敗してもコマンドの送信は継続するため、エラーは記録のみ行う
-     * @param commandType 送信するコマンドの種別
-     * @param resumeCommand 送信するセッションを再開するコマンド
+     * The command is still sent even if appending fails, so errors are only logged
+     * @param commandType Type of the command being sent
+     * @param resumeCommand Command to resume the session being sent
      */
     private async _appendSendHistory(commandType: SendCommandType, resumeCommand?: string): Promise<void> {
         if (!this._currentFilePath) {
-            // ファイル未オープン時のRunは記録対象外
+            // Run without an open file is not recorded
             return;
         }
 
@@ -284,8 +284,8 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
         try {
             if (this._isFileOpenInTab(filePath)) {
-                // VS Codeのタブで開いている場合、ディスクへ直接書き込むと標準エディタの
-                // 未保存の変更と競合するため、ドキュメント経由で書き換える
+                // When the file is open in a VS Code tab, writing directly to disk conflicts with
+                // unsaved changes in the standard editor, so rewrite it through the document
                 const document = await vscode.workspace.openTextDocument(filePath);
                 const wasDirty = document.isDirty;
                 const original = document.getText();
@@ -306,12 +306,12 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
                 this._applySendHistory(updated);
 
-                // 元々未保存の変更が無かった場合のみ保存する（編集中の状態を勝手に確定させない）
+                // Save only if there were no unsaved changes beforehand (do not commit in-progress edits without the user's consent)
                 if (!wasDirty) {
                     await document.save();
                 }
             } else {
-                // 直前の保存結果を正とするため、ディスク上の内容を読み直す
+                // Re-read the content on disk so that the result of the preceding save is treated as authoritative
                 const original = await fsPromises.readFile(filePath, 'utf8');
                 const updated = this.templateService.appendSendHistoryLine(original, commandType, dateTime, resumeCommand);
                 await fsPromises.writeFile(filePath, updated, 'utf8');
@@ -323,12 +323,12 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * 送信したセッションの再開情報を、送信したファイルと同じディレクトリのmetadata.mdへ追記する
+     * Append the resume information of the sent session to metadata.md in the same directory as the sent file
      *
-     * Plans ViewのResume Sessionはこのファイルから再開するセッションを読み取る。
-     * 追記に失敗してもコマンドの送信は継続するため、エラーは記録のみ行う
-     * @param commandType 送信するコマンドの種別
-     * @param resumeCommand 送信するセッションを再開するコマンド（無い場合は記録しない）
+     * Resume Session in the Plans View reads the session to resume from this file.
+     * The command is still sent even if appending fails, so errors are only logged
+     * @param commandType Type of the command being sent
+     * @param resumeCommand Command to resume the session being sent (nothing is recorded if absent)
      */
     private async _appendSessionMetadata(commandType: SendCommandType, resumeCommand?: string): Promise<void> {
         if (!this._currentFilePath || !resumeCommand) {
@@ -337,7 +337,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
         const metadataPath = path.join(path.dirname(this._currentFilePath), SESSION_METADATA_FILE_NAME);
         if (path.resolve(metadataPath) === path.resolve(this._currentFilePath)) {
-            // metadata.md自体を送信した場合は送信履歴の追記と競合するため記録しない
+            // Do not record when metadata.md itself is sent, because it would conflict with appending the sent history
             return;
         }
 
@@ -348,7 +348,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
         try {
             if (this._isFileOpenInTab(metadataPath)) {
-                // VS Codeのタブで開いている場合は、未保存の変更と競合しないようドキュメント経由で書き換える
+                // When the file is open in a VS Code tab, rewrite it through the document to avoid conflicting with unsaved changes
                 const document = await vscode.workspace.openTextDocument(metadataPath);
                 const wasDirty = document.isDirty;
                 const original = document.getText();
@@ -365,7 +365,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                     return;
                 }
 
-                // 元々未保存の変更が無かった場合のみ保存する（編集中の状態を勝手に確定させない）
+                // Save only if there were no unsaved changes beforehand (do not commit in-progress edits without the user's consent)
                 if (!wasDirty) {
                     await document.save();
                 }
@@ -386,10 +386,10 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * 送信履歴の追記結果を保持中の状態とWebviewへ反映する
+     * Apply the result of appending the sent history to the held state and to the Webview
      *
-     * Webviewへ反映しないとEditor Viewの内容が古いままとなり、
-     * 次の保存操作で履歴行が失われる
+     * Without updating the Webview, the Editor View content stays stale,
+     * and the history lines are lost on the next save
      */
     private _applySendHistory(content: string): void {
         this._currentContent = content;
@@ -407,10 +407,10 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             return;
         }
 
-        // すべてのタブでファイルが開かれているかチェック（アクティブでなくてもタブが開いていれば）
+        // Check whether the file is open in any tab (even if the tab is not active)
         const isOpenInEditor = this._isFileOpenInTab(this._currentFilePath);
 
-        // webviewに読み取り専用状態を更新
+        // Update the read-only state in the webview
         this._view.webview.postMessage({
             type: 'setReadOnlyState',
             isReadOnly: isOpenInEditor
@@ -431,11 +431,11 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
         webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
 
-        // Webviewからのメッセージを受信
+        // Receive messages from the Webview
         webviewView.webview.onDidReceiveMessage(async (data) => {
             switch (data.type) {
                 case 'webviewReady':
-                    // Webviewの準備が完了したら、保留中のファイルを復元
+                    // When the Webview is ready, restore the pending file
                     if (this._pendingFileToRestore) {
                         await this.showFile(this._pendingFileToRestore);
                         this._pendingFileToRestore = undefined;
@@ -446,17 +446,17 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                     const savedPath = await this._saveCurrentContent(data.content);
                     if (savedPath) {
                         if (!hadFilePath) {
-                            // 新規ファイル作成の場合はファイル名を表示
+                            // For a new file, show the file name
                             const fileName = path.basename(savedPath);
                             vscode.window.showInformationMessage(`File saved: ${fileName}`);
                         } else {
-                            // 既存ファイルの上書き保存
+                            // Overwrite the existing file
                             vscode.window.showInformationMessage('File saved successfully');
                         }
                     }
                     break;
                 case 'contentChanged':
-                    // エディタの内容が変更された
+                    // The editor content has changed
                     this._pendingContent = data.content;
                     const isDirty = data.content !== this._currentContent;
                     if (this._isDirty !== isDirty) {
@@ -468,39 +468,39 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                     vscode.commands.executeCommand('aiCodingSidebar.createMarkdownFile');
                     break;
                 case 'requestPromptTemplates':
-                    // promptsボタン - テンプレート一覧をメニューで表示するため送信
+                    // prompts button - send the template list so it is shown in the menu
                     await this._sendPromptTemplates();
                     break;
                 case 'insertPromptTemplate':
-                    // メニューで選択されたテンプレートをカーソル位置へ挿入
+                    // Insert the template selected in the menu at the cursor position
                     await this._insertPromptTemplateById(data.templateId);
                     break;
                 case 'createPromptTemplate':
-                    // メニュー最下部の「Add template」 - テンプレートを新規作成して開く
+                    // "Add template" at the bottom of the menu - create a new template and open it
                     await this._createPromptTemplate();
                     break;
                 case 'showWarning':
                     vscode.window.showWarningMessage(data.message);
                     break;
                 case 'openUrl':
-                    // URLを標準ブラウザで開く
+                    // Open the URL in the default browser
                     if (data.url) {
                         vscode.env.openExternal(vscode.Uri.parse(data.url));
                     }
                     break;
                 case 'openUrlInIntegratedBrowser':
-                    // URLを統合ブラウザ（Simple Browser）で開く
+                    // Open the URL in the integrated browser (Simple Browser)
                     if (data.url) {
                         await openInIntegratedBrowser(data.url as string);
                     }
                     break;
                 case 'planTask':
                     // Plan button clicked - save file if needed, then send plan command to terminal
-                    // ファイルが未作成 or 未保存の場合、先に保存
+                    // If the file has not been created or saved yet, save it first
                     if (data.content && data.content.trim()) {
                         const planSavedPath = await this._saveCurrentContent(data.content);
                         if (!planSavedPath) {
-                            return; // 保存失敗
+                            return; // Save failed
                         }
                     }
 
@@ -522,7 +522,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         const commandTemplate = this._getCommandTemplate(config, 'editor.runPlanCommand', 'editor.planCommand',
                             '${commandPrefix} "Review the file at ${filePath} and create an implementation plan. Save it as a timestamped file (format: YYYY_MMDD_HHMM_SS_plan.md) in the same directory as ${filePath}."');
 
-                        // Claude Codeのセッションを後から再開できるようセッションIDを付与する
+                        // Add a session ID so that the Claude Code session can be resumed later
                         const resumeSession = this._prepareResumeSession(commandPrefix);
 
                         // Replace placeholders with safely escaped values
@@ -530,7 +530,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         let command = commandTemplate.replace(/\$\{commandPrefix\}/g, resumeSession.commandPrefix);
                         command = command.replace(/\$\{filePath\}/g, escapedPath);
 
-                        // 送信した記録としてファイルへ日時とresumeコマンドを追記する
+                        // Append the date/time and resume command to the file as a record of the send
                         await this._appendSendHistory('plan', resumeSession.resumeCommand);
                         await this._appendSessionMetadata('plan', resumeSession.resumeCommand);
 
@@ -543,11 +543,11 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                     break;
                 case 'specTask':
                     // Spec button clicked - save file if needed, then send spec command to terminal
-                    // ファイルが未作成 or 未保存の場合、先に保存
+                    // If the file has not been created or saved yet, save it first
                     if (data.content && data.content.trim()) {
                         const specSavedPath = await this._saveCurrentContent(data.content);
                         if (!specSavedPath) {
-                            return; // 保存失敗
+                            return; // Save failed
                         }
                     }
 
@@ -569,7 +569,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         const commandTemplate = this._getCommandTemplate(config, 'editor.runSpecCommand', 'editor.specCommand',
                             '${commandPrefix} "Review the file at ${filePath} and create specification documents. Save them as timestamped files (format: YYYY_MMDD_HHMM_SS_requirements.md, YYYY_MMDD_HHMM_SS_design.md, YYYY_MMDD_HHMM_SS_tasks.md) in the same directory as ${filePath}."');
 
-                        // Claude Codeのセッションを後から再開できるようセッションIDを付与する
+                        // Add a session ID so that the Claude Code session can be resumed later
                         const resumeSession = this._prepareResumeSession(commandPrefix);
 
                         // Replace placeholders with safely escaped values
@@ -577,7 +577,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                         let command = commandTemplate.replace(/\$\{commandPrefix\}/g, resumeSession.commandPrefix);
                         command = command.replace(/\$\{filePath\}/g, escapedPath);
 
-                        // 送信した記録としてファイルへ日時とresumeコマンドを追記する
+                        // Append the date/time and resume command to the file as a record of the send
                         await this._appendSendHistory('spec', resumeSession.resumeCommand);
                         await this._appendSessionMetadata('spec', resumeSession.resumeCommand);
 
@@ -642,12 +642,12 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
                     // Find and focus the tab
                     try {
-                        // すべてのタブグループをチェックして、該当ファイルのタブを見つける
+                        // Check all tab groups to find the tab for the file
                         for (const group of vscode.window.tabGroups.all) {
                             for (const tab of group.tabs) {
                                 if (tab.input instanceof vscode.TabInputText) {
                                     if (tab.input.uri.fsPath === this._currentFilePath) {
-                                        // タブが見つかったら、そのドキュメントを開いてフォーカス
+                                        // Once the tab is found, open its document and focus it
                                         const document = await vscode.workspace.openTextDocument(this._currentFilePath);
                                         await vscode.window.showTextDocument(document, {
                                             preview: false,
@@ -728,9 +728,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * Runコマンドを実行する
-     * ファイルが開いている場合は必要に応じて保存してからコマンドを送信し、
-     * ファイルが無い場合はエディタの内容をそのままコマンドに埋め込む
+     * Run the Run command
+     * If a file is open, save it if needed before sending the command;
+     * if there is no file, embed the editor content directly into the command
      */
     private async _runTask(content?: string | null, editorContent?: string): Promise<void> {
         if (this._currentFilePath) {
@@ -768,28 +768,28 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             const commandPrefix = config.get<string>('editor.commandPrefix', 'claude');
             const commandTemplate = config.get<string>('editor.runCommand', '${commandPrefix} "${editorContent}"');
 
-            // Claude Codeのセッションを後から再開できるようセッションIDを付与する
+            // Add a session ID so that the Claude Code session can be resumed later
             const resumeSession = this._prepareResumeSession(commandPrefix);
 
-            // 送信履歴を追記する前の内容（エディタに表示されている内容）を${editorContent}に使う
+            // Use the content before the sent history is appended (the content shown in the editor) for ${editorContent}
             const latestContent = this._pendingContent ?? this._currentContent ?? '';
 
-            // タスクの完了後に状況を出力させるため、output md の指示文を本文の末尾へ連結する
-            // Quick Run が有効な場合は状況の出力を省いて素早く実行するため、連結しない
-            // 送信するコマンドにのみ含め、ファイルやエディタの内容には書き込まない
+            // Append the output md instruction to the end of the body so that the status is output after the task completes
+            // When Quick Run is enabled, do not append it, so the task runs quickly without outputting the status
+            // Included only in the command being sent; not written to the file or the editor content
             const runContent = config.get<boolean>('editor.quickRun', false)
                 ? latestContent
                 : appendOutputMdPrompt(latestContent, this._buildSessionPrompt('md', relativeFilePath.trim()));
 
             // Replace placeholders with safely escaped values
-            // ${editorContent}は最後に置換する（内容に含まれる${...}を展開しないため）
+            // Replace ${editorContent} last (so that ${...} contained in the content is not expanded)
             const escapedPath = this._escapeShellArgument(relativeFilePath.trim());
             const escapedContent = this._escapeShellArgument(runContent.trim());
             let command = commandTemplate.replace(/\$\{commandPrefix\}/g, resumeSession.commandPrefix);
             command = command.replace(/\$\{filePath\}/g, escapedPath);
             command = command.replace(/\$\{editorContent\}/g, escapedContent);
 
-            // 送信した記録としてファイルへ日時とresumeコマンドを追記する
+            // Append the date/time and resume command to the file as a record of the send
             await this._appendSendHistory('run', resumeSession.resumeCommand);
             await this._appendSessionMetadata('run', resumeSession.resumeCommand);
 
@@ -820,14 +820,14 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * Editor View以外（Terminal Viewのショートカット等）からRunコマンドを実行する
-     * Editor ViewのRunボタン・Cmd+Rと同じ内容（未保存の編集内容を含む）で実行する
+     * Run the Run command from outside the Editor View (e.g. Terminal View shortcuts)
+     * Runs with the same content as the Editor View Run button / Cmd+R (including unsaved edits)
      */
     public async runTask(): Promise<void> {
         const latestContent = this._pendingContent ?? this._currentContent;
 
         if (this._currentFilePath) {
-            // 未保存の変更がある場合のみ保存対象として渡す（VS Codeのタブで開いている間は保存しない）
+            // Pass the content to save only when there are unsaved changes (do not save while the file is open in a VS Code tab)
             const isReadOnly = this._isFileOpenInTab(this._currentFilePath);
             const unsavedContent = this._isDirty && !isReadOnly ? latestContent : undefined;
             await this._runTask(unsavedContent);
@@ -837,9 +837,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * ファイルをEditor Viewに表示する
-     * @param filePath 表示するファイルのパス
-     * @param options focusEditor: 表示後にエディタ（テキストエリア）へフォーカスを移す
+     * Show a file in the Editor View
+     * @param filePath Path of the file to show
+     * @param options focusEditor: move focus to the editor (textarea) after showing the file
      */
     public async showFile(filePath: string, options?: { focusEditor?: boolean }) {
         // Save current file if it has unsaved changes before switching
@@ -855,7 +855,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
         this._currentFilePath = filePath;
 
-        // すべてのタブでファイルが開かれているかチェック
+        // Check whether the file is open in any tab
         const isOpenInEditor = this._isFileOpenInTab(filePath);
 
         if (isOpenInEditor) {
@@ -868,7 +868,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             this._pendingContent = undefined;
             this._isDirty = false;
 
-            // ファイル名のみを表示
+            // Show only the file name
             const displayPath = path.basename(filePath);
 
             if (this._view) {
@@ -882,7 +882,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                 this._view.show?.(true);
             }
 
-            // Markdown Listをリフレッシュして「editing」表記を更新
+            // Refresh the Markdown List to update the "editing" label
             if (this._detailsProvider) {
                 this._detailsProvider.refresh();
             }
@@ -892,18 +892,18 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * 起動中のClaude Codeへ出力指示（output md / output memory）を送る
-     * 新しいセッションは起動せず、Run / Plan / Spec で開始したセッションへの追加指示として送る
+     * Send an output instruction (output md / output memory) to the running Claude Code
+     * Does not start a new session; sends it as an additional instruction to the session started by Run / Plan / Spec
      */
     public async sendSessionPrompt(type: SessionPromptType): Promise<void> {
-        // 未起動のシェルへ送ると指示文がコマンドとして実行されるため送らない
-        // isClaudeCodeRunningが未実装のプロバイダーも「起動していない」とみなす（Run系とは逆の判定）
+        // Do not send when Claude Code is not running, because the instruction would be executed as a command in the shell
+        // Providers that do not implement isClaudeCodeRunning are also treated as "not running" (the opposite of the Run commands)
         if (!this._terminalProvider?.isClaudeCodeRunning?.()) {
             vscode.window.showWarningMessage('Claude Code is not running in the Terminal view. Start a session with Run / Plan / Spec first.');
             return;
         }
 
-        // 出力先は開いているファイルのディレクトリのため、ファイル未オープン時は送らない
+        // The output goes to the directory of the open file, so do not send when no file is open
         if (!this._currentFilePath) {
             vscode.window.showWarningMessage('No file is open. Open a prompt file to decide where to output.');
             return;
@@ -914,18 +914,18 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             ? path.relative(workspaceRoot, this._currentFilePath)
             : this._currentFilePath;
 
-        // シェルを経由せず入力欄へ書き込むため、_escapeShellArgument() は使わない
-        // （クォートで囲むとクォートがそのままプロンプトに残る）
+        // The text is written to the input field without going through the shell, so _escapeShellArgument() is not used
+        // (wrapping it in quotes would leave the quotes in the prompt as is)
         const prompt = this._buildSessionPrompt(type, relativeFilePath);
 
-        // filePath / commandType は渡さない（タブとファイルの関連付けやアイコンを上書きしないため）
+        // Do not pass filePath / commandType (to avoid overwriting the tab-file association and the tab icon)
         this._terminalProvider.focus();
         await this._terminalProvider.sendCommand(prompt, true);
     }
 
     /**
-     * 出力指示（output md / output memory）の文言を設定から取得し、プレースホルダーを展開する
-     * @param relativeFilePath 開いているファイルのワークスペースルートからの相対パス
+     * Get the output instruction (output md / output memory) text from the settings and expand its placeholders
+     * @param relativeFilePath Path of the open file relative to the workspace root
      */
     private _buildSessionPrompt(type: SessionPromptType, relativeFilePath: string): string {
         const { settingKey, defaultPrompt } = SESSION_PROMPTS[type];
@@ -938,15 +938,15 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * 記録済みのClaude Codeセッションを再開する（Plans ViewのResume Session）
+     * Resume a recorded Claude Code session (Resume Session in the Plans View)
      *
-     * 記録された文字列はそのまま送らず、セッションIDから再開コマンドを組み立て直す。
-     * アクティブタブでClaude Codeが起動中の場合は、入力テキストとして扱われないよう新しいタブで再開する
+     * The recorded string is not sent as is; the resume command is rebuilt from the session ID.
+     * If Claude Code is running in the active tab, resume in a new tab so the command is not treated as input text
      *
-     * @param sessionId 再開するセッションのID（UUID形式）
-     * @param filePath セッションを開始したファイル（タブとの関連付けに使う）
-     * @param commandType セッションを開始したコマンドの種別（タブのアイコンに使う）
-     * @returns 再開コマンドを送信した場合はtrue
+     * @param sessionId ID of the session to resume (UUID format)
+     * @param filePath File that started the session (used for the tab association)
+     * @param commandType Type of the command that started the session (used for the tab icon)
+     * @returns true if the resume command was sent
      */
     public async resumeSession(sessionId: string, filePath?: string, commandType?: SendCommandType): Promise<boolean> {
         if (!isValidSessionId(sessionId) || !this._terminalProvider) {
@@ -956,7 +956,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
         const command = this._buildResumeCommand(sessionId);
 
         if (this._terminalProvider.isClaudeCodeRunning?.()) {
-            // 新しいタブを作れないプロバイダーでは、起動中のセッションへ流さないよう送らない
+            // Providers that cannot create a new tab do not send, so the command is not fed into the running session
             if (!this._terminalProvider.sendCommandInNewTab) {
                 vscode.window.showWarningMessage('Claude Code is running in the Terminal view. Exit it before resuming another session.');
                 return false;
@@ -971,10 +971,10 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * セッションを再開するコマンドを組み立てる
+     * Build the command to resume a session
      *
-     * 権限モード等の設定を再開時にも反映するため、現在のコマンドプレフィックスを使う。
-     * プレフィックスがclaudeを起動しない、もしくはセッション指定と競合する場合はclaudeを使う
+     * Uses the current command prefix so that settings such as the permission mode also apply when resuming.
+     * Uses claude if the prefix does not launch claude or conflicts with specifying a session
      */
     private _buildResumeCommand(sessionId: string): string {
         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
@@ -1027,17 +1027,17 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * プロンプトテンプレートサービスを設定
+     * Set the prompt template service
      */
     public setPromptTemplateService(service: PromptTemplateService): void {
         this.promptTemplateService = service;
     }
 
     /**
-     * Webviewへ送るテンプレート一覧を作成する
+     * Build the template list sent to the Webview
      *
-     * ボタン押下時にEditor View内のメニューへ表示する。
-     * 本文は拡張側で保持し、選択結果はIDで受け取る
+     * Shown in the menu inside the Editor View when the button is pressed.
+     * The body is kept on the extension side, and the selection is received by ID
      */
     private async _sendPromptTemplates(): Promise<void> {
         if (!this.promptTemplateService) {
@@ -1045,7 +1045,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             return;
         }
 
-        // VS Codeのタブで編集中はEditor Viewが読み取り専用のため、挿入しても保存されない
+        // While the file is being edited in a VS Code tab the Editor View is read-only, so inserted text would not be saved
         if (this._isCurrentFileReadOnly()) {
             vscode.window.showWarningMessage(
                 'This file is being edited in VS Code. Close the tab to insert a template here.'
@@ -1059,7 +1059,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             return;
         }
 
-        // 本文はメッセージに含めない（挿入時に拡張側で読み直す）
+        // Do not include the body in the message (it is re-read on the extension side when inserting)
         this._view?.webview.postMessage({
             type: 'showPromptTemplates',
             templates: templates.map(template => ({
@@ -1071,15 +1071,15 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * Editor View内のメニューで選択されたテンプレートを挿入する
-     * @param templateId テンプレートのID（拡張子を除いたファイル名）
+     * Insert the template selected in the menu inside the Editor View
+     * @param templateId ID of the template (file name without extension)
      */
     private async _insertPromptTemplateById(templateId?: string): Promise<void> {
         if (!this.promptTemplateService || !templateId) {
             return;
         }
 
-        // メニュー表示後にファイルが変化している場合があるため読み直す
+        // Re-read because the file may have changed after the menu was shown
         const templates = await this.promptTemplateService.listTemplates();
         const template = templates.find(entry => entry.id === templateId);
         if (!template) {
@@ -1093,10 +1093,10 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * プロンプトテンプレートをQuickPickで選択してカーソル位置へ挿入する
+     * Select a prompt template with QuickPick and insert it at the cursor position
      *
-     * Editor Viewのボタンからはメニュー表示を使うため、
-     * こちらはコマンドパレットなどビュー外からの実行で使う
+     * The Editor View button uses the menu instead,
+     * so this is used when run from outside the view, such as the Command Palette
      */
     public async insertPromptTemplate(): Promise<void> {
         if (!this.promptTemplateService) {
@@ -1104,7 +1104,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             return;
         }
 
-        // VS Codeのタブで編集中はEditor Viewが読み取り専用のため、挿入しても保存されない
+        // While the file is being edited in a VS Code tab the Editor View is read-only, so inserted text would not be saved
         if (this._isCurrentFileReadOnly()) {
             vscode.window.showWarningMessage(
                 'This file is being edited in VS Code. Close the tab to insert a template here.'
@@ -1140,9 +1140,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * プロンプトテンプレートを新規作成してVS Codeのエディタで開く
+     * Create a new prompt template and open it in the VS Code editor
      *
-     * メニュー最下部の「Add template」から呼ばれる
+     * Called from "Add template" at the bottom of the menu
      */
     private async _createPromptTemplate(): Promise<void> {
         if (!this.promptTemplateService) {
@@ -1150,7 +1150,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             return;
         }
 
-        // 既存ファイルとの衝突判定は作成先ごとに行うため、名前入力より先に作成先を決める
+        // Collisions with existing files are checked per destination, so decide the destination before asking for the name
         const target = await this._pickPromptTemplateTarget();
         if (!target) {
             return;
@@ -1171,7 +1171,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             const filePath = target === 'global'
                 ? await this.promptTemplateService.createGlobalTemplate(name)
                 : await this.promptTemplateService.createWorkspaceTemplate(name);
-            // 本文はVS Codeの標準エディタで編集してもらう
+            // Let the user edit the body in the standard VS Code editor
             const document = await vscode.workspace.openTextDocument(filePath);
             await vscode.window.showTextDocument(document);
         } catch (error) {
@@ -1180,9 +1180,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * プロンプトテンプレートの作成先を決める
+     * Decide where to create the prompt template
      *
-     * 選択肢が1つしかない場合は確認を挟まずそれを使う
+     * If there is only one option, use it without asking
      */
     private async _pickPromptTemplateTarget(): Promise<PromptTemplateTarget | undefined> {
         const service = this.promptTemplateService;
@@ -1226,14 +1226,14 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * 現在のファイルが読み取り専用（VS Codeのタブで編集中）かどうか
+     * Whether the current file is read-only (being edited in a VS Code tab)
      */
     private _isCurrentFileReadOnly(): boolean {
         return !!this._currentFilePath && this._isFileOpenInTab(this._currentFilePath);
     }
 
     /**
-     * テンプレートが1件も無い場合の案内を表示する
+     * Show guidance when there are no templates
      */
     private async _showNoPromptTemplateGuidance(): Promise<void> {
         const createAction = 'Create Templates';
@@ -1247,8 +1247,8 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * 変数置換済みのテンプレートをエディタへ挿入する
-     * 挿入自体はinsertPaths()と同じ`insertText`メッセージ経由で行う
+     * Insert a template with its variables replaced into the editor
+     * The insertion itself goes through the same `insertText` message as insertPaths()
      */
     private _insertPromptTemplateText(text: string): void {
         if (!this._view) {
@@ -1261,13 +1261,13 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             text: text
         });
 
-        // Editorビューをフォーカス
+        // Focus the Editor view
         this._view.show?.(true);
     }
 
     /**
-     * 複数のパスをエディタに挿入
-     * @param paths 挿入するパスの配列
+     * Insert multiple paths into the editor
+     * @param paths Array of paths to insert
      */
     public insertPaths(paths: string[]): void {
         if (!this._view) {
@@ -1281,7 +1281,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             text: pathText
         });
 
-        // Editorビューをフォーカス
+        // Focus the Editor view
         this._view.show?.(true);
     }
 
@@ -1301,19 +1301,19 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     /**
-     * ファイル保存の共通処理
-     * @param content 保存する内容
-     * @returns 保存成功時はファイルパス、失敗時はnull
+     * Common file save logic
+     * @param content Content to save
+     * @returns The file path on success, null on failure
      */
     private async _saveCurrentContent(content: string): Promise<string | null> {
         if (this._currentFilePath) {
-            // 優先度1: 既存ファイルへの上書き保存
+            // Priority 1: overwrite the existing file
             try {
                 await fs.promises.writeFile(this._currentFilePath, content, 'utf8');
                 this._currentContent = content;
                 this._pendingContent = undefined;
                 this._isDirty = false;
-                // 保存後に未保存状態をクリア
+                // Clear the unsaved state after saving
                 this._view?.webview.postMessage({
                     type: 'updateDirtyState',
                     isDirty: false
@@ -1324,7 +1324,7 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                 return null;
             }
         } else if (content && content.trim()) {
-            // ファイル未開時 - 新規ファイルとして保存
+            // No file open - save as a new file
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
             if (!workspaceRoot) {
                 vscode.window.showErrorMessage('No workspace folder is open');
@@ -1333,9 +1333,9 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
 
             let savePath: string;
 
-            // 優先度2: Docs viewで開いているディレクトリ
+            // Priority 2: directory open in the Docs view
             const docsCurrentPath = this._detailsProvider?.getCurrentPath();
-            // 優先度3: Tasks viewで選択しているディレクトリ
+            // Priority 3: directory selected in the Tasks view
             const tasksRootPath = this._plansProvider?.getRootPath();
 
             if (docsCurrentPath) {
@@ -1343,38 +1343,38 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
             } else if (tasksRootPath) {
                 savePath = tasksRootPath;
             } else {
-                // 優先度4: デフォルトパス
+                // Priority 4: default path
                 const config = vscode.workspace.getConfiguration('aiCodingSidebar');
                 const defaultRelativePath = config.get<string>('plans.defaultRelativePath', '.claude/plans');
                 savePath = path.join(workspaceRoot, defaultRelativePath);
             }
 
-            // ディレクトリが存在しない場合は作成
+            // Create the directory if it does not exist
             await fs.promises.mkdir(savePath, { recursive: true });
 
-            // タイムスタンプ付きファイル名を生成 (YYYY_MMDD_HHMM_SS形式)
+            // Generate a timestamped file name (YYYY_MMDD_HHMM_SS format)
             const timestamp = this.templateService.generateTimestamp();
             const fileName = `${timestamp}_PROMPT.md`;
             const filePath = path.join(savePath, fileName);
 
             try {
-                // メタ情報フッターを作成
+                // Create the metadata footer
                 const relativeDirPath = workspaceRoot ? path.relative(workspaceRoot, savePath) : savePath;
                 const datetime = this.templateService.formatDateTime();
                 const footer = `\n\n---\n\nworking dir: ${relativeDirPath}\nprompt file: ${fileName}\ndatetime   : ${datetime}\n`;
 
-                // コンテンツの末尾にフッターを追加
+                // Append the footer to the end of the content
                 const contentWithFooter = content + footer;
 
                 await fs.promises.writeFile(filePath, contentWithFooter, 'utf8');
 
-                // 保存したファイルをエディタで開く
+                // Open the saved file in the editor
                 this._currentFilePath = filePath;
                 this._currentContent = contentWithFooter;
                 this._pendingContent = undefined;
                 this._isDirty = false;
 
-                // ファイルパスをWebviewに反映（ファイル名のみ表示）
+                // Reflect the file path in the Webview (show only the file name)
                 const displayPath = path.basename(filePath);
                 this._view?.webview.postMessage({
                     type: 'showContent',
@@ -1383,22 +1383,22 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
                     isReadOnly: false
                 });
 
-                // ツリービューを更新
+                // Refresh the tree view
                 this._plansProvider?.refresh();
                 this._detailsProvider?.refresh();
 
-                // 保存したディレクトリに移動してファイルを選択
-                // Note: refresh()後にツリービューのDOM更新が完了するまで待機するため、100msの遅延を設定
+                // Move to the saved directory and select the file
+                // Note: a 100ms delay is set to wait until the tree view DOM update finishes after refresh()
                 setTimeout(async () => {
-                    // Tasks viewでディレクトリを表示
+                    // Show the directory in the Tasks view
                     await this._plansProvider?.revealDirectory(savePath);
-                    // Tasks viewでファイルを選択
-                    // アクティブフォルダが異なる場合は更新が必要
+                    // Select the file in the Tasks view
+                    // An update is needed if the active folder is different
                     const currentActivePath = this._detailsProvider?.getCurrentPath();
                     if (currentActivePath !== savePath) {
-                        // アクティブフォルダを変更
+                        // Change the active folder
                         this._detailsProvider?.setActiveFolder(savePath);
-                        // ファイルを再度開く
+                        // Open the file again
                         await this.showFile(filePath);
                     }
                     await this._detailsProvider?.revealFile(filePath);
@@ -1430,16 +1430,16 @@ export class EditorProvider implements vscode.WebviewViewProvider, vscode.Dispos
     }
 
     private async _getHtmlForWebview(webview: vscode.Webview): Promise<string> {
-        // 外部リソースのURIを取得
+        // Get the URIs of external resources
         const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'resources', 'webview', 'editor', 'style.css'));
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'resources', 'webview', 'editor', 'main.js'));
         const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'codicons', 'codicon.css'));
         const templatePath = vscode.Uri.joinPath(this._extensionUri, 'resources', 'webview', 'editor', 'index.html');
 
-        // HTMLテンプレートを読み込み（非同期化）
+        // Load the HTML template (async)
         const htmlTemplate = await fsPromises.readFile(templatePath.fsPath, 'utf8');
 
-        // テンプレート変数を置換
+        // Replace template variables
         return htmlTemplate
             .replace(/\{\{cspSource\}\}/g, webview.cspSource)
             .replace(/\{\{styleUri\}\}/g, styleUri.toString())

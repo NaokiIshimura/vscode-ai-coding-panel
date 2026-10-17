@@ -10,7 +10,7 @@ import {
 } from '../../../utils/globalTemplatePaths';
 
 suite('globalTemplatePaths Test Suite', () => {
-	// globalStorageUriを持つcontext / 持たないcontext を作り分ける
+	// Create contexts with and without globalStorageUri
 	const createContext = (globalStoragePath?: string): vscode.ExtensionContext => {
 		return {
 			extensionPath: '/tmp/extension',
@@ -46,7 +46,7 @@ suite('globalTemplatePaths Test Suite', () => {
 		});
 
 		test('Should resolve a relative path from the home directory', () => {
-			// ワークスペースに依存させないため、ワークスペースルート基準にはしない
+			// Not relative to the workspace root, so that it does not depend on the workspace
 			assert.strictEqual(
 				resolveConfiguredGlobalPath('ai-coding-guide/templates'),
 				path.join(os.homedir(), 'ai-coding-guide', 'templates')
@@ -56,7 +56,7 @@ suite('globalTemplatePaths Test Suite', () => {
 
 	suite('getGlobalRootDir', () => {
 		test('Should fall back to the global storage directory', function () {
-			// 設定が指定されている環境では設定値が優先されるため対象外
+			// Skipped when the setting is specified, because the configured value takes precedence
 			const configured = vscode.workspace
 				.getConfiguration('aiCodingSidebar')
 				.get<string>('globalTemplatesPath', '');

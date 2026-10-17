@@ -158,17 +158,17 @@ suite('End-to-End Test Suite', () => {
 		const ext = vscode.extensions.getExtension('nacn.ai-coding-sidebar');
 		await ext!.activate();
 
-		// プロバイダーが登録されていることを確認
-		// WebViewプロバイダーの確認は難しいため、コマンドの存在で代用
+		// Verify that the providers are registered
+		// WebView providers are hard to check directly, so check that their commands exist instead
 		const commands = await vscode.commands.getCommands(true);
 
-		// Plans View関連のコマンドが登録されている
+		// Plans View commands are registered
 		assert.ok(commands.includes('aiCodingSidebar.refresh'));
 
-		// Editor View関連のコマンドが登録されている（暗黙的にプロバイダーも登録されている）
+		// Editor View commands are registered (which implies the provider is registered too)
 		assert.ok(commands.includes('aiCodingSidebar.createMarkdownFile'));
 
-		// Terminal View関連のコマンドが登録されている
+		// Terminal View commands are registered
 		assert.ok(commands.includes('aiCodingSidebar.openTerminal'));
 	});
 
@@ -176,10 +176,10 @@ suite('End-to-End Test Suite', () => {
 		const ext = vscode.extensions.getExtension('nacn.ai-coding-sidebar');
 		await ext!.activate();
 
-		// 設定値を取得
+		// Get the configuration values
 		const config = vscode.workspace.getConfiguration('aiCodingSidebar');
 
-		// デフォルト値が存在することを確認
+		// Verify that default values exist
 		const defaultPath = config.get('plans.defaultRelativePath');
 		assert.ok(defaultPath !== undefined, 'Default path configuration should exist');
 	});
@@ -188,10 +188,10 @@ suite('End-to-End Test Suite', () => {
 		const ext = vscode.extensions.getExtension('nacn.ai-coding-sidebar');
 		await ext!.activate();
 
-		// 一部のコマンドを実行してエラーが発生しないことを確認
-		// 注: WebViewが初期化されていないため、一部のコマンドは効果がない場合がある
+		// Run some commands and verify that no error occurs
+		// Note: some commands may have no effect because the WebView is not initialized
 
-		// refreshコマンドを実行
+		// Run the refresh command
 		await assert.doesNotReject(async () => {
 			await vscode.commands.executeCommand('aiCodingSidebar.refresh');
 		}, 'Refresh command should not throw error');

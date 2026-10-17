@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { IFileWatcherService, FileChangeListener } from '../interfaces/IFileWatcherService';
 
 /**
- * リスナー情報
+ * Listener information
  */
 interface ListenerInfo {
     listener: FileChangeListener;
@@ -10,9 +10,9 @@ interface ListenerInfo {
 }
 
 /**
- * ファイルウォッチャーサービスの実装
- * 複数のプロバイダーで共有される単一のファイルウォッチャーを管理
- * 監視範囲はPlans View管理対象ディレクトリ（defaultRelativePath）に限定
+ * File watcher service implementation
+ * Manages a single file watcher shared by multiple providers
+ * The watch scope is limited to the directory managed by Plans View (defaultRelativePath)
  */
 export class FileWatcherService implements IFileWatcherService {
     private fileWatcher: vscode.FileSystemWatcher | undefined;
@@ -27,7 +27,7 @@ export class FileWatcherService implements IFileWatcherService {
     }
 
     /**
-     * 設定値から監視対象の相対パスを取得
+     * Get the relative path to watch from the settings
      */
     private getDefaultRelativePath(): string {
         const config = vscode.workspace.getConfiguration('aiCodingSidebar');
@@ -36,7 +36,7 @@ export class FileWatcherService implements IFileWatcherService {
     }
 
     /**
-     * ウォッチャーを初期化
+     * Initialize the watchers
      */
     private initializeWatcher(): void {
         if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -47,19 +47,19 @@ export class FileWatcherService implements IFileWatcherService {
         const defaultRelativePath = this.getDefaultRelativePath();
         this.currentWatchPattern = defaultRelativePath;
 
-        // 監視対象ディレクトリのURIをベースに指定し、イベント検知の精度を高める
+        // Use the watched directory's URI as the base to improve event detection accuracy
         const plansUri = vscode.Uri.joinPath(workspaceFolder.uri, defaultRelativePath);
         const watchPattern = new vscode.RelativePattern(plansUri, '**/*');
         this.fileWatcher = vscode.workspace.createFileSystemWatcher(watchPattern);
 
-        // FileSystemWatcher: OSネイティブのファイルシステムイベント
+        // FileSystemWatcher: OS-native file system events
         this.disposables.push(
             this.fileWatcher.onDidChange((uri) => this.notifyListeners(uri)),
             this.fileWatcher.onDidCreate((uri) => this.notifyListeners(uri)),
             this.fileWatcher.onDidDelete((uri) => this.notifyListeners(uri))
         );
 
-        // workspace API: VS Code のファイルイベント（FileSystemWatcherの補完）
+        // workspace API: VS Code file events (supplements FileSystemWatcher)
         const plansPath = plansUri.fsPath;
         this.disposables.push(
             vscode.workspace.onDidCreateFiles((e) => {
@@ -87,7 +87,7 @@ export class FileWatcherService implements IFileWatcherService {
     }
 
     /**
-     * 設定変更を監視し、監視パスが変わった場合にウォッチャーを再作成
+     * Watch for configuration changes and recreate the watchers when the watched path changes
      */
     private setupConfigurationWatcher(): void {
         this.configChangeDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
@@ -101,10 +101,10 @@ export class FileWatcherService implements IFileWatcherService {
     }
 
     /**
-     * ウォッチャーを破棄して再作成
+     * Dispose and recreate the watchers
      */
     private recreateWatcher(): void {
-        // 既存のウォッチャーとDisposableを破棄
+        // Dispose the existing watchers and Disposables
         if (this.fileWatcher) {
             this.fileWatcher.dispose();
             this.fileWatcher = undefined;
@@ -112,15 +112,15 @@ export class FileWatcherService implements IFileWatcherService {
         this.disposables.forEach(d => d.dispose());
         this.disposables = [];
 
-        // 新しいウォッチャーを作成
+        // Create new watchers
         this.initializeWatcher();
     }
 
     /**
-     * 登録されたリスナーに変更を通知
+     * Notify registered listeners of a change
      */
     private notifyListeners(uri: vscode.Uri): void {
-        // 有効なリスナーのみに通知
+        // Notify only enabled listeners
         this.listeners.forEach((info) => {
             if (info.enabled) {
                 info.listener(uri);
@@ -129,24 +129,24 @@ export class FileWatcherService implements IFileWatcherService {
     }
 
     /**
-     * ファイル変更リスナーを登録
+     * Register a file change listener
      */
     registerListener(id: string, listener: FileChangeListener): void {
         this.listeners.set(id, {
             listener,
-            enabled: false // デフォルトは無効
+            enabled: false // Disabled by default
         });
     }
 
     /**
-     * リスナーの登録を解除
+     * Unregister a listener
      */
     unregisterListener(id: string): void {
         this.listeners.delete(id);
     }
 
     /**
-     * 特定のリスナーを有効化
+     * Enable a specific listener
      */
     enableListener(id: string): void {
         const listenerInfo = this.listeners.get(id);
@@ -156,7 +156,7 @@ export class FileWatcherService implements IFileWatcherService {
     }
 
     /**
-     * 特定のリスナーを無効化
+     * Disable a specific listener
      */
     disableListener(id: string): void {
         const listenerInfo = this.listeners.get(id);
@@ -166,7 +166,7 @@ export class FileWatcherService implements IFileWatcherService {
     }
 
     /**
-     * すべてのリスナーを有効化
+     * Enable all listeners
      */
     enableAllListeners(): void {
         this.listeners.forEach((info) => {
@@ -175,7 +175,7 @@ export class FileWatcherService implements IFileWatcherService {
     }
 
     /**
-     * すべてのリスナーを無効化
+     * Disable all listeners
      */
     disableAllListeners(): void {
         this.listeners.forEach((info) => {
@@ -184,14 +184,14 @@ export class FileWatcherService implements IFileWatcherService {
     }
 
     /**
-     * ウォッチャーが有効かどうかを確認
+     * Check whether the watcher is active
      */
     isWatcherActive(): boolean {
         return Array.from(this.listeners.values()).some(info => info.enabled);
     }
 
     /**
-     * リソースを破棄
+     * Dispose resources
      */
     dispose(): void {
         if (this.fileWatcher) {

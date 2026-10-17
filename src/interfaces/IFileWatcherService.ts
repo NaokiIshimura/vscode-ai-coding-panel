@@ -1,51 +1,51 @@
 import * as vscode from 'vscode';
 
 /**
- * ファイル変更イベントのリスナー型
+ * Listener type for file change events
  */
 export type FileChangeListener = (uri: vscode.Uri) => void;
 
 /**
- * ファイルウォッチャーサービスのインターフェース
+ * Interface for the file watcher service
  */
 export interface IFileWatcherService extends vscode.Disposable {
     /**
-     * ファイル変更リスナーを登録
-     * @param id リスナーの識別子
-     * @param listener ファイル変更時のコールバック
+     * Register a file change listener
+     * @param id Listener identifier
+     * @param listener Callback invoked when a file changes
      */
     registerListener(id: string, listener: FileChangeListener): void;
 
     /**
-     * リスナーの登録を解除
-     * @param id リスナーの識別子
+     * Unregister a listener
+     * @param id Listener identifier
      */
     unregisterListener(id: string): void;
 
     /**
-     * 特定のリスナーを有効化
-     * @param id リスナーの識別子
+     * Enable a specific listener
+     * @param id Listener identifier
      */
     enableListener(id: string): void;
 
     /**
-     * 特定のリスナーを無効化
-     * @param id リスナーの識別子
+     * Disable a specific listener
+     * @param id Listener identifier
      */
     disableListener(id: string): void;
 
     /**
-     * すべてのリスナーを有効化
+     * Enable all listeners
      */
     enableAllListeners(): void;
 
     /**
-     * すべてのリスナーを無効化
+     * Disable all listeners
      */
     disableAllListeners(): void;
 
     /**
-     * ウォッチャーが有効かどうかを確認
+     * Check whether the watcher is active
      */
     isWatcherActive(): boolean;
 }

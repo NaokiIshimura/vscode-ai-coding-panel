@@ -1,10 +1,10 @@
 import { FileOperationResult, FileStats, OperationProgress } from '../types';
 
 /**
- * ファイル操作サービスのインターフェース
+ * Interface for the file operation service
  */
 export interface IFileOperationService {
-    // 基本的なCRUD操作
+    // Basic CRUD operations
     createFile(path: string, content?: string): Promise<FileOperationResult>;
     createDirectory(path: string): Promise<FileOperationResult>;
     readFile(path: string): Promise<string>;
@@ -15,19 +15,19 @@ export interface IFileOperationService {
     copyFile(sourcePath: string, destPath: string): Promise<FileOperationResult>;
     moveFile(sourcePath: string, destPath: string): Promise<FileOperationResult>;
 
-    // バッチ操作
+    // Batch operations
     deleteFiles(paths: string[]): Promise<FileOperationResult[]>;
     copyFiles(sources: string[], destDir: string): Promise<FileOperationResult[]>;
     moveFiles(sources: string[], destDir: string): Promise<FileOperationResult[]>;
 
-    // ファイル情報
+    // File information
     getStats(path: string): Promise<FileStats>;
     exists(path: string): Promise<boolean>;
 
-    // バリデーション
+    // Validation
     validatePath(path: string): boolean;
     validateFileName(name: string): boolean;
 
-    // 進捗レポート用のイベントエミッター
+    // Event emitter for progress reporting
     onProgress?: (progress: OperationProgress) => void;
 }

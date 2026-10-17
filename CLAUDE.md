@@ -386,6 +386,37 @@ Terminal ViewでClaude Code起動中にEditor ViewからRun/Plan/Specコマン�
 - `ConfigurationProvider.ts`: フォールバック値
 - `EditorProvider.ts`: フォールバック値（4箇所）
 
+### v1.2.19変更: コード内の日本語を英語へ統一
+
+`src/` と `resources/webview/` に残っていた日本語（約1,950行・51ファイル）を英語にした。以後のコード・テストは英語で書く（「注意事項」参照）：
+
+| 対象 | 変更 |
+|---|---|
+| コメント（行コメント・行末・JSDoc・CSS） | 全ファイルで英語化。位置・行数は維持 |
+| `src/types/index.ts` の `FileOperationError` のメッセージ5件 | `File or folder not found: ...` 等。**ユーザーに表示される文字列が変わる** |
+| テスト名・assertメッセージ | `Should ...` 形式へ |
+| テストデータ | 下表 |
+
+**テストデータは「検証の意図を保つ値」へ置き換えた（単純な英訳ではない）**
+
+| 箇所 | 変更前 → 変更後 | 理由 |
+|---|---|---|
+| `EditorProvider.test.ts` のエスケープ | `'重要!注意'` → `'Important!Note'` | 検証対象は `!` のヒストリ展開のみ |
+| `TerminalService.test.ts` のチャンク分割 | `'あ'.repeat(500)` → `'é'.repeat(600)` | v1.2.9の「PTY入力バッファ約1KB超過」の回帰テスト。ASCIIだと500バイトで1KBに届かないため、マルチバイトかつ1200バイトの値にした |
+| `FileOperationService.test.ts` | `/not found\|見つかりません/i` → `/not found/i` | エラーメッセージの英語化に合わせた。メッセージを変える場合はこのテストも合わせること |
+
+**コメント以外を変えていないことの確認方法**
+- TypeScript: 変更前後を `tsc --removeComments` でビルドして比較し、差分が上表の5ファイルだけであることを確認した。`TerminalProvider.test.ts` は文字列リテラルを伏せると一致する
+- Webview: `ts.transpileModule(..., { removeComments: true })`（JS）とコメント除去（CSS）で変更前後を比較し、6ファイルとも一致した
+- テスト: `vscode` スタブ上のmochaで、全テストファイルの passing / failing / pending が変更前と同数であることを確認した
+
+**翻訳はしたが内容は直していない（古いコメント）**
+- `src/extension.ts:34` の「Create the TreeDataProvider」（v1.0.22でWebview化済み）
+- `src/utils/workspaceSetup.ts:93-94` の `openFirstTemplate` のJSDoc（グローバル側は「OSのファイルマネージャーで表示」とあるが、実際は新しいVS Codeウィンドウで開く）
+- `EditorProvider.ts:1336` 付近の「Docs view」「Tasks view」（旧ビュー名）
+- `TerminalService.ts` に、対応するメソッドの無いJSDoc（「プロセス監視の初期化チェック」）が残っている
+- `TerminalProvider.test.ts` のBracketed Paste Mode / 20ms のテスト（v1.0.12で廃止済み・既知の失敗）
+
 ### v1.2.18新機能: Plans ViewのResume Sessionボタンと metadata.md
 
 v1.2.1で記録するようにした再開コマンドを、Plans View最下段（`#footer`）右側の `Resume Session` ボタンから実行できるようにした。再開の情報源はプロンプトファイルの送信履歴ではなく、タスクディレクトリの `metadata.md`：
@@ -2678,3 +2709,8 @@ mainブランチへのプッシュで自動的に以下が実行される：
 - Git操作は明示的な指示がない限りコミットしない
 - ブランチを作成する場合は、必ずmainブランチから切ること
 - ファイル末尾は必ず空行を含める
+- コード（`src/`・`resources/webview/`）とテストは英語で書く（v1.2.19で統一）
+  - 対象: コメント（行コメント・JSDoc・CSSコメント）、テスト名（`suite` / `test`）、assertメッセージ、エラーメッセージ等の文字列、テストデータ
+  - テスト名は既存に合わせて `Should ...` で始める
+  - マルチバイト文字の扱いを検証するテストデータは、日本語ではなく `é` や絵文字など言語に依存しない文字を使う
+  - CLAUDE.md・`docs/`・README-JA.md・CHANGELOG-JA.md などのドキュメントは対象外

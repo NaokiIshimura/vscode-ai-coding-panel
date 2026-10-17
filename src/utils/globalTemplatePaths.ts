@@ -3,25 +3,25 @@ import * as os from 'os';
 import * as path from 'path';
 
 /**
- * グローバル配置先の配下に置くサブディレクトリ
- * ワークスペース側（.vscode/ai-coding-panel/{templates,prompts}）と同じ構成にしている
+ * Subdirectories placed under the global location
+ * Same layout as the workspace side (.vscode/ai-coding-panel/{templates,prompts})
  */
 const TEMPLATES_SUBDIR = 'templates';
 const PROMPT_TEMPLATES_SUBDIR = 'prompts';
 
-/** 設定キー */
+/** Setting key */
 const GLOBAL_TEMPLATES_PATH_SETTING = 'globalTemplatesPath';
 
 /**
- * グローバルテンプレートのルートディレクトリを取得
+ * Get the root directory for global templates
  *
- * 設定`aiCodingSidebar.globalTemplatesPath`が空の場合は、
- * 拡張機能のグローバルストレージ（`context.globalStorageUri`）を使う。
+ * If the setting `aiCodingSidebar.globalTemplatesPath` is empty,
+ * the extension's global storage (`context.globalStorageUri`) is used.
  *
- * `globalStorageUri`のディレクトリはVS Codeが自動作成しないため、
- * 書き込む側で必ず`mkdir(recursive: true)`すること。
+ * VS Code does not create the `globalStorageUri` directory automatically,
+ * so writers must always call `mkdir(recursive: true)`.
  *
- * @returns 解決できない場合はundefined（`globalStorageUri`を持たないcontextを想定）
+ * @returns undefined if it cannot be resolved (for a context without `globalStorageUri`)
  */
 export function getGlobalRootDir(context: vscode.ExtensionContext): string | undefined {
     const configured = readConfiguredPath();
@@ -29,12 +29,12 @@ export function getGlobalRootDir(context: vscode.ExtensionContext): string | und
         return configured;
     }
 
-    // テスト等で globalStorageUri を持たないcontextが渡された場合はグローバル配置先を無効にする
+    // Disable the global location when given a context without globalStorageUri (e.g. in tests)
     return context.globalStorageUri?.fsPath;
 }
 
 /**
- * グローバルのテンプレート（ファイル雛形）ディレクトリを取得
+ * Get the global template (file template) directory
  */
 export function getGlobalTemplatesDir(context: vscode.ExtensionContext): string | undefined {
     const root = getGlobalRootDir(context);
@@ -42,7 +42,7 @@ export function getGlobalTemplatesDir(context: vscode.ExtensionContext): string 
 }
 
 /**
- * グローバルのプロンプトテンプレート（スニペット）ディレクトリを取得
+ * Get the global prompt template (snippet) directory
  */
 export function getGlobalPromptTemplatesDir(context: vscode.ExtensionContext): string | undefined {
     const root = getGlobalRootDir(context);
@@ -50,14 +50,14 @@ export function getGlobalPromptTemplatesDir(context: vscode.ExtensionContext): s
 }
 
 /**
- * グローバル配置先のルートをVS Codeの新しいウィンドウで開く
+ * Open the root of the global location in a new VS Code window
  *
- * `templates/`と`prompts/`の双方を1つのウィンドウで扱えるよう、
- * サブディレクトリではなくルートを開く。
+ * Opens the root rather than a subdirectory so that both `templates/`
+ * and `prompts/` can be handled in one window.
  *
- * ワークスペース外のパスはVS Codeのエクスプローラーに表示できないため、
- * 現在のウィンドウで見せる手段が無い。`forceNewWindow`で別ウィンドウとして開く
- * （省略すると現在のウィンドウが閉じて開き直しになる）
+ * Paths outside the workspace cannot be shown in VS Code's Explorer,
+ * so there is no way to show them in the current window. Open them in a separate window with `forceNewWindow`
+ * (if omitted, the current window is closed and reopened)
  */
 export async function openGlobalTemplatesRoot(context: vscode.ExtensionContext): Promise<void> {
     const root = getGlobalRootDir(context);
@@ -73,13 +73,13 @@ export async function openGlobalTemplatesRoot(context: vscode.ExtensionContext):
 }
 
 /**
- * 設定値のパスを解決する
+ * Resolve the configured path
  *
- * グローバル配置先はワークスペースに依存させないため、
- * 相対パスはワークスペースルートではなくホームディレクトリ基準で解決し、
- * `~`も展開する
+ * The global location must not depend on the workspace, so
+ * relative paths are resolved against the home directory, not the workspace root,
+ * and `~` is expanded
  *
- * @param configured 設定値（未設定・空文字の場合はundefinedを返す）
+ * @param configured Configured value (returns undefined if unset or empty)
  */
 export function resolveConfiguredGlobalPath(configured: string | undefined): string | undefined {
     const trimmed = configured?.trim();
@@ -102,7 +102,7 @@ export function resolveConfiguredGlobalPath(configured: string | undefined): str
 }
 
 /**
- * 設定値を読み取ってパスを解決する
+ * Read the setting and resolve the path
  */
 function readConfiguredPath(): string | undefined {
     const configured = vscode.workspace

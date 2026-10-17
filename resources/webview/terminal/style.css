@@ -1,5 +1,5 @@
 html, body {
-    /* ボタン設置領域の高さ（Plans / Editor / Terminal の各Viewで共通） */
+    /* Height of the button bar (shared by the Plans / Editor / Terminal views) */
     --button-bar-height: 36px;
     margin: 0;
     padding: 0;
@@ -92,14 +92,14 @@ body.focused {
     opacity: 1;
     background-color: var(--vscode-terminal-background, #1e1e1e);
 }
-/* タブタイトル: アイコンを横並びに配置 */
+/* Tab title: lay out icons horizontally */
 .tab-title {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-/* ローダー（スピナー）: Claude Code実行中を示す */
+/* Loader (spinner): indicates that Claude Code is running */
 .loader {
     display: inline-block;
     width: 14px;
@@ -115,7 +115,7 @@ body.focused {
     100% { transform: rotate(360deg); }
 }
 
-/* ローダー非表示状態 */
+/* Loader hidden state */
 .loader.hidden {
     display: none;
 }
@@ -177,7 +177,7 @@ body.focused {
     background-color: var(--vscode-inputValidation-errorBackground, #5a1d1d);
 }
 #terminals-container {
-    /* ヘッダー2行 + #header の border-bottom を差し引く */
+    /* Subtract the two header rows and the border-bottom of #header */
     height: calc(100% - var(--button-bar-height) * 2 - 1px);
     width: 100%;
     position: relative;
@@ -249,7 +249,7 @@ body.focused {
     pointer-events: none;
 }
 
-/* URL右クリック時のコンテキストメニュー */
+/* Context menu shown when right-clicking a URL */
 .context-menu {
     position: fixed;
     z-index: 10000;

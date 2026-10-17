@@ -4,7 +4,7 @@ import { TemplateService } from '../services/TemplateService';
 import { PromptTemplateService } from '../services/PromptTemplateService';
 
 /**
- * コマンド登録時に必要な依存関係
+ * Dependencies required when registering commands
  */
 export interface CommandDependencies {
     plansProvider: PlansProvider;

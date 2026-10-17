@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-// ワークスペース設定アイテムクラス
+// Workspace settings item class
 export class MenuItem extends vscode.TreeItem {
     public readonly children?: MenuItem[];
 

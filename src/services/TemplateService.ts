@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
 
 /**
- * テンプレート変数
+ * Template variables
  */
 export interface TemplateVariables {
     datetime: string;
@@ -15,17 +15,17 @@ export interface TemplateVariables {
 }
 
 /**
- * Editor Viewから送信するコマンドの種別
+ * Type of command sent from the Editor View
  */
 export type SendCommandType = 'run' | 'plan' | 'spec';
 
 /**
- * 送信履歴セクションの見出し
+ * Heading of the sent history section
  */
 export const SENT_HISTORY_HEADING = '## sent history';
 
 /**
- * 送信履歴行のラベル（幅を揃えて日時の開始位置を合わせる）
+ * Labels for sent history lines (padded to the same width so the date/time starts at the same column)
  */
 const SEND_HISTORY_LABELS: Record<SendCommandType, string> = {
     run: 'run ',
@@ -34,60 +34,60 @@ const SEND_HISTORY_LABELS: Record<SendCommandType, string> = {
 };
 
 /**
- * 送信履歴行で日時とresumeコマンドを区切る文字列
+ * Separator between the date/time and the resume command in a sent history line
  */
 const SEND_HISTORY_SEPARATOR = '|';
 
 /**
- * セッション情報を記録するファイル名（タスクディレクトリ直下に置く）
+ * File name for session information (placed directly under the task directory)
  */
 export const SESSION_METADATA_FILE_NAME = 'metadata.md';
 
 /**
- * セッション情報ファイルの見出し
+ * Heading of the session information file
  */
 const SESSION_METADATA_TITLE = '# metadata';
 
 /**
- * セッション情報ファイルのセッション一覧セクションの見出し
+ * Heading of the session list section in the session information file
  */
 export const SESSION_METADATA_HEADING = '## sessions';
 
 /**
- * セッション情報の1行
- * 例: - 2026/10/17 18:54:39 | run  | 2026_1017_1854_39_PROMPT.md | claude --resume <uuid>
+ * A single line of session information
+ * Example: - 2026/10/17 18:54:39 | run  | 2026_1017_1854_39_PROMPT.md | claude --resume <uuid>
  */
 const SESSION_METADATA_LINE_PATTERN = /^-\s+[^|]+\|\s*(run|plan|spec)\s*\|\s*([^|]+?)\s*\|\s*\S+\s+--resume\s+(\S+)\s*$/;
 
 /**
- * セッションID（Claude CodeのUUID）
+ * Session ID (Claude Code UUID)
  */
 const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * セッションIDとして受け付ける形式（UUID）かどうかを判定する
+ * Determine whether the value is in the format accepted as a session ID (UUID)
  */
 export function isValidSessionId(sessionId: string): boolean {
     return SESSION_ID_PATTERN.test(sessionId);
 }
 
 /**
- * セッション情報ファイルから読み取った再開対象のセッション
+ * Session to resume, read from the session information file
  */
 export interface SessionMetadataEntry {
-    /** 送信したコマンドの種別 */
+    /** Type of the command that was sent */
     commandType: SendCommandType;
-    /** 送信したファイル名（セッション情報ファイルと同じディレクトリ） */
+    /** Name of the file that was sent (in the same directory as the session information file) */
     fileName: string;
-    /** 再開するセッションのID */
+    /** ID of the session to resume */
     sessionId: string;
 }
 
 /**
- * 見出しで始まるセクションの範囲を探す
+ * Find the range of the section that starts with the given heading
  *
- * 見出しは行全体の完全一致で判定し、次の見出しまたは水平線（---）の手前までをセクションとみなす
- * @returns 見出しの行番号と、セクション終端（含まない）の行番号
+ * The heading must match the whole line; the section runs up to (but not including) the next heading or horizontal rule (---)
+ * @returns The line index of the heading and the line index where the section ends (exclusive)
  */
 function findSectionRange(lines: string[], heading: string): { headingIndex: number; endIndex: number } | undefined {
     const headingIndex = lines.findIndex(line => line.trim() === heading);
@@ -108,10 +108,10 @@ function findSectionRange(lines: string[], heading: string): { headingIndex: num
 }
 
 /**
- * セクション内の最後の内容行の直後へ1行挿入する
+ * Insert one line right after the last content line in the section
  */
 function insertLineIntoSection(lines: string[], range: { headingIndex: number; endIndex: number }, line: string): string {
-    // 末尾の空行を飛ばし、セクション内の最後の内容行の直後へ挿入する
+    // Skip trailing blank lines and insert right after the last content line in the section
     let insertIndex = range.endIndex;
     while (insertIndex > range.headingIndex + 1 && lines[insertIndex - 1].trim() === '') {
         insertIndex--;
@@ -122,13 +122,13 @@ function insertLineIntoSection(lines: string[], range: { headingIndex: number; e
 }
 
 /**
- * テンプレート生成サービス
+ * Template generation service
  */
 export class TemplateService {
     constructor(private context?: vscode.ExtensionContext) {}
 
     /**
-     * 日本時間のタイムスタンプを生成（YYYY_MMDD_HHMM_SS形式）
+     * Generate a JST timestamp (YYYY_MMDD_HHMM_SS format)
      */
     generateTimestamp(): string {
         const now = new Date();
@@ -143,8 +143,8 @@ export class TemplateService {
     }
 
     /**
-     * 日付時刻を文字列として生成（YYYY/MM/DD HH:MM:SS形式）
-     * ファイル名用のタイムスタンプと同一時刻を使いたい場合は日時を渡す
+     * Generate the date and time as a string (YYYY/MM/DD HH:MM:SS format)
+     * Pass a date to use the same moment as the timestamp used for the file name
      */
     formatDateTime(date?: Date): string {
         const now = date ?? new Date();
@@ -159,7 +159,7 @@ export class TemplateService {
     }
 
     /**
-     * テンプレート変数を生成
+     * Generate template variables
      */
     generateTemplateVariables(
         targetPath: string,
@@ -181,7 +181,7 @@ export class TemplateService {
     }
 
     /**
-     * テンプレートをロードして変数を置換
+     * Load a template and replace its variables
      */
     async loadTemplate(variables: TemplateVariables, templateType: 'prompt' | 'task' | 'spec'): Promise<string> {
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -190,20 +190,20 @@ export class TemplateService {
             return this.getDefaultTemplate(variables, templateType);
         }
 
-        // ワークスペース内のテンプレートファイルパス
+        // Template file path in the workspace
         const templateFileName = `${templateType}.md`;
         const workspaceTemplatePath = path.join(workspaceRoot, '.vscode', 'templates', templateFileName);
 
-        // ワークスペース内にテンプレートが存在する場合はそれを使用
+        // Use the template in the workspace if it exists
         try {
             await fsPromises.access(workspaceTemplatePath);
             const templateContent = await fsPromises.readFile(workspaceTemplatePath, 'utf8');
             return this.replaceVariables(templateContent, variables);
         } catch (error) {
-            // ファイルが存在しない場合は次のステップへ
+            // The file does not exist; go to the next step
         }
 
-        // 拡張機能のテンプレートフォルダ内のテンプレートを使用
+        // Use the template in the extension's templates folder
         if (this.context) {
             const extensionTemplatePath = path.join(this.context.extensionPath, 'templates', templateFileName);
 
@@ -212,16 +212,16 @@ export class TemplateService {
                 const templateContent = await fsPromises.readFile(extensionTemplatePath, 'utf8');
                 return this.replaceVariables(templateContent, variables);
             } catch (error) {
-                // ファイルが存在しない場合は次のステップへ
+                // The file does not exist; go to the next step
             }
         }
 
-        // テンプレートが見つからない場合はデフォルトテンプレートを使用
+        // Use the default template if no template is found
         return this.getDefaultTemplate(variables, templateType);
     }
 
     /**
-     * デフォルトテンプレートを取得
+     * Get the default template
      */
     private getDefaultTemplate(variables: TemplateVariables, templateType: string): string {
         const header = `---
@@ -236,15 +236,15 @@ datetime   : ${variables.datetime}
     }
 
     /**
-     * 任意の文字列に対してテンプレート変数を置換する
-     * プロンプトテンプレートの挿入など、テンプレートファイル以外の内容にも使う
+     * Replace template variables in an arbitrary string
+     * Also used for content other than template files, such as inserting prompt templates
      */
     renderVariables(content: string, variables: TemplateVariables): string {
         return this.replaceVariables(content, variables);
     }
 
     /**
-     * テンプレート内の変数を置換
+     * Replace variables in a template
      */
     private replaceVariables(template: string, variables: TemplateVariables): string {
         return template
@@ -256,7 +256,7 @@ datetime   : ${variables.datetime}
     }
 
     /**
-     * PROMPTファイル用のファイル名を生成
+     * Generate the file name for a PROMPT file
      */
     generatePromptFileName(): string {
         const timestamp = this.generateTimestamp();
@@ -264,7 +264,7 @@ datetime   : ${variables.datetime}
     }
 
     /**
-     * TASKファイル用のファイル名を生成
+     * Generate the file name for a TASK file
      */
     generateTaskFileName(): string {
         const timestamp = this.generateTimestamp();
@@ -272,7 +272,7 @@ datetime   : ${variables.datetime}
     }
 
     /**
-     * SPECファイル用のファイル名を生成
+     * Generate the file name for a SPEC file
      */
     generateSpecFileName(): string {
         const timestamp = this.generateTimestamp();
@@ -280,7 +280,7 @@ datetime   : ${variables.datetime}
     }
 
     /**
-     * QUICK_STARTファイル用のファイル名を生成
+     * Generate the file name for a QUICK_START file
      */
     generateQuickStartFileName(): string {
         const timestamp = this.generateTimestamp();
@@ -288,9 +288,9 @@ datetime   : ${variables.datetime}
     }
 
     /**
-     * 指定ディレクトリ配下にタイムスタンプ名のディレクトリを作成する際、
-     * 同名ディレクトリが既に存在する場合は連番サフィックス（_2, _3, ...）を付与して
-     * 衝突しないディレクトリパスを生成する
+     * When creating a timestamp-named directory under the given directory,
+     * append a sequential suffix (_2, _3, ...) if a directory with the same name already exists
+     * to generate a directory path that does not collide
      */
     async generateUniqueDirectoryPath(parentPath: string): Promise<{ path: string; name: string }> {
         const baseName = this.generateTimestamp();
@@ -308,16 +308,16 @@ datetime   : ${variables.datetime}
     }
 
     /**
-     * Spec / Plan / Run の送信履歴行を内容へ追記する
+     * Append a Spec / Plan / Run sent history line to the content
      *
-     * 末尾の「## sent history」セクションへ1行追加する。
-     * セクションが無い場合は末尾に新規作成する。
+     * Adds one line to the "## sent history" section at the end.
+     * Creates the section at the end if it does not exist.
      *
-     * @param content 追記対象の内容
-     * @param commandType 送信したコマンドの種別
-     * @param dateTime 記録する日時（formatDateTime()の戻り値）
-     * @param resumeCommand 送信したセッションを再開するコマンド（例: claude --resume <uuid>）
-     * @returns 追記後の内容
+     * @param content Content to append to
+     * @param commandType Type of the command that was sent
+     * @param dateTime Date and time to record (return value of formatDateTime())
+     * @param resumeCommand Command to resume the sent session (e.g. claude --resume <uuid>)
+     * @returns Content after appending
      */
     appendSendHistoryLine(
         content: string,
@@ -328,11 +328,11 @@ datetime   : ${variables.datetime}
         const suffix = resumeCommand ? ` ${SEND_HISTORY_SEPARATOR} ${resumeCommand}` : '';
         const historyLine = `- ${SEND_HISTORY_LABELS[commandType]}: ${dateTime}${suffix}`;
         const lines = content.split('\n');
-        // 見出しは行全体の完全一致で判定する（本文中の類似表記へ追記しないため）
+        // The heading must match the whole line (to avoid appending to similar text in the body)
         const range = findSectionRange(lines, SENT_HISTORY_HEADING);
 
         if (!range) {
-            // セクションが無い場合は末尾に新規作成する
+            // Create the section at the end if it does not exist
             const body = content.replace(/\s+$/, '');
             const prefix = body ? `${body}\n\n` : '';
             return `${prefix}${SENT_HISTORY_HEADING}\n${historyLine}\n`;
@@ -342,17 +342,17 @@ datetime   : ${variables.datetime}
     }
 
     /**
-     * セッション情報ファイル（metadata.md）の内容へセッションを1行追記する
+     * Append one session line to the content of the session information file (metadata.md)
      *
-     * 「## sessions」セクションの末尾へ追加する。内容が空の場合は見出しごと作成し、
-     * セクションが無い場合は末尾に新規作成する。
+     * Adds it to the end of the "## sessions" section. If the content is empty, creates it along with the heading;
+     * if the section does not exist, creates it at the end.
      *
-     * @param content 追記対象の内容（ファイルが無い場合は空文字）
-     * @param commandType 送信したコマンドの種別
-     * @param dateTime 記録する日時（formatDateTime()の戻り値）
-     * @param fileName 送信したファイル名
-     * @param resumeCommand 送信したセッションを再開するコマンド（例: claude --resume <uuid>）
-     * @returns 追記後の内容
+     * @param content Content to append to (empty string if the file does not exist)
+     * @param commandType Type of the command that was sent
+     * @param dateTime Date and time to record (return value of formatDateTime())
+     * @param fileName Name of the file that was sent
+     * @param resumeCommand Command to resume the sent session (e.g. claude --resume <uuid>)
+     * @returns Content after appending
      */
     appendSessionMetadataLine(
         content: string,
@@ -379,14 +379,14 @@ datetime   : ${variables.datetime}
     }
 
     /**
-     * セッション情報ファイル（metadata.md）の内容から最新のセッションを取得する
+     * Get the latest session from the content of the session information file (metadata.md)
      *
-     * 「## sessions」セクションの最後の有効な行を返す。
-     * ファイルは手で編集できるため、セッションIDはUUID形式のもののみ受け付ける
-     * （記録された文字列をそのままシェルへ送らないため）
+     * Returns the last valid line in the "## sessions" section.
+     * The file can be edited by hand, so only session IDs in UUID format are accepted
+     * (so that the recorded string is never sent to the shell as is)
      *
-     * @param content セッション情報ファイルの内容
-     * @returns 最新のセッション。有効な行が無い場合はundefined
+     * @param content Content of the session information file
+     * @returns The latest session, or undefined if there is no valid line
      */
     findLatestSessionMetadata(content: string): SessionMetadataEntry | undefined {
         const lines = content.split('\n');
@@ -410,7 +410,7 @@ datetime   : ${variables.datetime}
     }
 
     /**
-     * パスが存在するかどうかを確認
+     * Check whether a path exists
      */
     private async pathExists(targetPath: string): Promise<boolean> {
         try {

@@ -3,41 +3,41 @@ import { setupSettingsJson, setupTemplate, setupGlobalTemplate, setupClaudeFolde
 import { CommandDependencies } from './types';
 
 /**
- * 設定関連のコマンドを登録
+ * Register settings-related commands
  */
 export function registerSettingsCommands(
     context: vscode.ExtensionContext,
     _deps: CommandDependencies
 ): void {
-    // 設定を開くコマンド
+    // Command to open settings
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openSettings', async () => {
             await vscode.commands.executeCommand('workbench.action.openSettings', 'aiCodingSidebar');
         })
     );
 
-    // Plans設定を開くコマンド
+    // Command to open Plans settings
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openPlansSettings', async () => {
             await vscode.commands.executeCommand('workbench.action.openSettings', 'aiCodingSidebar.plans');
         })
     );
 
-    // Editor設定を開くコマンド
+    // Command to open Editor settings
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openEditorSettings', async () => {
             await vscode.commands.executeCommand('workbench.action.openSettings', 'aiCodingSidebar.editor');
         })
     );
 
-    // Terminal設定を開くコマンド
+    // Command to open Terminal settings
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openTerminalSettings', async () => {
             await vscode.commands.executeCommand('workbench.action.openSettings', 'aiCodingSidebar.terminal');
         })
     );
 
-    // ユーザー設定を開くコマンド
+    // Command to open user settings
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openUserSettings', async () => {
             try {
@@ -51,7 +51,7 @@ export function registerSettingsCommands(
         })
     );
 
-    // ワークスペース設定を開くコマンド
+    // Command to open workspace settings
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openWorkspaceSettings', async () => {
             try {
@@ -65,7 +65,7 @@ export function registerSettingsCommands(
         })
     );
 
-    // ワークスペース設定コマンド
+    // Workspace setup command
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.setupWorkspace', async () => {
             if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -75,7 +75,7 @@ export function registerSettingsCommands(
 
             const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
-            // 設定オプションを表示
+            // Show setup options
             const options = [
                 {
                     label: '$(gear) Create/Edit settings.json',
@@ -116,7 +116,7 @@ export function registerSettingsCommands(
         })
     );
 
-    // テンプレート設定コマンド
+    // Template setup command
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.setupTemplate', async () => {
             if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -128,8 +128,8 @@ export function registerSettingsCommands(
         })
     );
 
-    // グローバルテンプレート設定コマンド
-    // ワークスペース未オープンでも実行できる
+    // Global template setup command
+    // Works even when no workspace is open
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.setupGlobalTemplate', async () => {
             await setupGlobalTemplate(context);

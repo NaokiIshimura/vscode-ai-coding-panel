@@ -15,7 +15,7 @@ export interface IEditorProvider {
 }
 
 /**
- * Webviewへ送信する1行分のデータ
+ * Data for one row sent to the Webview
  */
 export interface PlansViewItem {
     kind: 'path' | 'parent' | 'directory' | 'file' | 'createDirectory' | 'searchHeader';
@@ -26,28 +26,28 @@ export interface PlansViewItem {
     tooltip?: string;
     isEditing?: boolean;
     contextValue: string;
-    /** 検索結果で本文にマッチした行の抜粋 */
+    /** Excerpt of the line in the body that matched the search */
     matchPreview?: string;
 }
 
-/** 検索結果の最大件数 */
+/** Maximum number of search results */
 export const MAX_SEARCH_RESULTS = 200;
 
-/** 本文を検索するファイルの最大サイズ（1MB） */
+/** Maximum size of a file whose body is searched (1MB) */
 export const MAX_SEARCH_FILE_SIZE = 1024 * 1024;
 
-/** 本文抜粋の最大文字数 */
+/** Maximum number of characters in a body excerpt */
 const MATCH_PREVIEW_LENGTH = 120;
 
 /**
- * タイムスタンプ形式のEditor View対象ファイル（YYYY_MMDD_HHMM_SS_<TYPE>.md）
- * キャプチャ: 年 / 月 / 日 / 時 / 分 / 秒 / タイムスタンプを除いた名前
+ * Timestamped Editor View target file (YYYY_MMDD_HHMM_SS_<TYPE>.md)
+ * Captures: year / month / day / hour / minute / second / name without the timestamp
  */
 const TIMESTAMPED_TARGET_FILE_PATTERN = /^(\d{4})_(\d{2})(\d{2})_(\d{2})(\d{2})_(\d{2})_((?:PROMPT|TASK|SPEC|QUICK_START)\.md)$/;
 
 /**
- * タイムスタンプ形式のファイル名を、作成日時とタイムスタンプを除いた名前に分解する
- * 形式に一致しない、または日時として不正な場合はundefinedを返す
+ * Split a timestamped file name into its creation date/time and the name without the timestamp
+ * Returns undefined if it does not match the format or is not a valid date/time
  */
 export function parseTimestampedFileName(fileName: string): { date: Date; shortName: string } | undefined {
     const match = TIMESTAMPED_TARGET_FILE_PATTERN.exec(fileName);
@@ -57,7 +57,7 @@ export function parseTimestampedFileName(fileName: string): { date: Date; shortN
 
     const [year, month, day, hour, minute, second] = match.slice(1, 7).map(Number);
     const date = new Date(year, month - 1, day, hour, minute, second);
-    // 2026_1340_... のような値はDateが繰り上げてしまうため、元の値と一致するかを確認する
+    // Date rolls over values like 2026_1340_..., so check that the result matches the original values
     if (date.getMonth() !== month - 1 || date.getDate() !== day
         || date.getHours() !== hour || date.getMinutes() !== minute || date.getSeconds() !== second) {
         return undefined;
@@ -89,26 +89,26 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     private _lastDirFileCount: number = -1;
     private _lastDirModTime: number = 0;
     private _searchQuery: string | undefined;
-    // 最新の描画要求の番号。await中に新しい描画が始まった場合、古い結果を送らない
+    // Number of the latest render request. If a new render starts during an await, the stale result is not sent
     private _renderToken: number = 0;
 
     constructor(fileWatcherService?: FileWatcherService, extensionUri?: vscode.Uri) {
         this.fileWatcherService = fileWatcherService;
         this._extensionUri = extensionUri;
-        // プロジェクトルートパスを取得
+        // Get the project root path
         if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
             this.projectRootPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
         }
-        // リスナーを事前に登録し、即座に有効化
+        // Register the listener up front and enable it immediately
         if (this.fileWatcherService) {
             this.fileWatcherService.registerListener(this.listenerId, () => {
-                // FileWatcherからの通知時はキャッシュを全クリアして確実に反映
+                // On notification from FileWatcher, clear the whole cache so the change is reliably reflected
                 this.debouncedRefresh();
             });
-            // リスナーを常に有効にする（ビューの可視性に関わらず）
+            // Keep the listener always enabled (regardless of view visibility)
             this.fileWatcherService.enableListener(this.listenerId);
         }
-        // 設定変更を監視して表示を更新
+        // Watch for configuration changes and update the display
         this.configChangeDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
             if (e.affectsConfiguration('aiCodingSidebar.plans.sortBy') ||
                 e.affectsConfiguration('aiCodingSidebar.plans.sortOrder')) {
@@ -151,7 +151,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * Webviewからのメッセージを処理する
+     * Handle messages from the Webview
      */
     private async _handleMessage(message: any): Promise<void> {
         switch (message?.type) {
@@ -200,7 +200,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 行がクリックされたときの処理
+     * Handle a row click
      */
     private async _handleItemClick(kind: string, filePath: string): Promise<void> {
         switch (kind) {
@@ -216,8 +216,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
                 await this.navigateToDirectory(filePath);
                 break;
             case 'file':
-                // 検索結果から開く場合は、ファイルのあるディレクトリへ移動してから開く
-                // （移動時の自動表示で別ファイルが開かれるため、その後に対象を開き直す）
+                // When opening from search results, navigate to the file's directory before opening it
+                // (navigation auto-displays a different file, so reopen the target afterwards)
                 if (this.isSearching()) {
                     await this.navigateToDirectory(path.dirname(filePath));
                     await this.revealFile(filePath);
@@ -232,8 +232,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * ファイルを適切なビューで開く
-     * タイムスタンプ形式のPROMPT/TASK/SPEC/QUICK_STARTはMarkdown Editorで開く
+     * Open the file in the appropriate view
+     * Timestamped PROMPT/TASK/SPEC/QUICK_START files are opened in the Markdown Editor
      */
     private async _openFile(filePath: string): Promise<void> {
         const fileName = path.basename(filePath);
@@ -247,8 +247,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * コンテキストメニューから選択されたコマンドを実行する
-     * 既存コマンドはFileItemを引数に取るため、パスから復元して渡す
+     * Execute the command selected from the context menu
+     * Existing commands take a FileItem argument, so restore one from the path and pass it
      */
     private async _executeItemCommand(
         commandId: string,
@@ -270,8 +270,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * パスからFileItemを復元する（コマンド呼び出し・選択状態の保持に使用）
-     * contextValueは archiveDirectory が 'pathDisplayNonRoot' を判定するため引き継ぐ
+     * Restore a FileItem from a path (used for command calls and keeping the selection)
+     * contextValue is carried over because archiveDirectory checks for 'pathDisplayNonRoot'
      */
     private async _createFileItem(
         filePath: string,
@@ -290,7 +290,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             modified = stat.mtime;
             created = stat.birthtime;
         } catch {
-            // 取得できない場合は既定値のまま扱う
+            // If it cannot be retrieved, keep the default value
         }
 
         const item = new FileItem(
@@ -311,7 +311,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * Webviewへ最新の一覧を送信する
+     * Send the latest list to the Webview
      */
     private async _render(): Promise<void> {
         if (!this._view) {
@@ -364,18 +364,18 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     // ---------------------------------------------------------------------
-    // 一覧の構築
+    // Building the list
     // ---------------------------------------------------------------------
 
     /**
-     * 現在のディレクトリに対応する表示アイテム一覧を構築する
+     * Build the list of display items for the current directory
      */
     async buildItems(): Promise<PlansViewItem[]> {
         if (!this.rootPath) {
             return [];
         }
 
-        // パスが存在しない場合は、作成ボタンを表示
+        // If the path does not exist, show the create button
         if (this.pathNotFound) {
             return [{
                 kind: 'createDirectory',
@@ -387,12 +387,12 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             }];
         }
 
-        // 現在表示するディレクトリパス
+        // Directory path to display
         let currentPath = this.activeFolderPath || this.rootPath;
 
-        // 表示中のディレクトリが外部要因（AIエージェントによるリネーム等）で
-        // 削除・移動されている場合、リネーム後のディレクトリを追跡して表示する
-        // （リネーム先が特定できない場合は、存在する祖先ディレクトリまで遡って表示する）
+        // If the displayed directory was deleted or moved by an external cause
+        // (such as a rename by an AI agent), follow and display the renamed directory
+        // (if the rename target cannot be identified, go up to the nearest existing ancestor directory)
         if (currentPath !== this.rootPath && !(await this.pathExists(currentPath))) {
             this.itemCache.delete(currentPath);
             const renamedPath = await this.resolveRenamedDirectory(currentPath);
@@ -403,8 +403,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
 
         const items: PlansViewItem[] = [];
 
-        // パス表示アイテム（最上部に表示）
-        // ルートディレクトリの場合のみプロジェクトルートからのパスを表示
+        // Path display item (shown at the top)
+        // Show the path from the project root only for the root directory
         let displayPath: string;
         if (currentPath === this.rootPath && this.projectRootPath) {
             displayPath = path.relative(this.projectRootPath, this.rootPath);
@@ -417,11 +417,11 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             filePath: currentPath,
             icon: 'folder-opened',
             tooltip: currentPath,
-            // ルートディレクトリ以外の場合はarchive等を出すためcontextValueを変更
+            // Outside the root directory, change contextValue so that archive and other actions are shown
             contextValue: currentPath === this.rootPath ? 'pathDisplay' : 'pathDisplayNonRoot'
         });
 
-        // 親ディレクトリへ戻るアイテム（ルートより上には戻れない）
+        // Item to go back to the parent directory (cannot go above the root)
         if (currentPath !== this.rootPath) {
             items.push({
                 kind: 'parent',
@@ -433,7 +433,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             });
         }
 
-        // キャッシュに存在する場合は返す
+        // Return from the cache if present
         const cachedItems = this.itemCache.get(currentPath);
         if (cachedItems) {
             return [...items, ...cachedItems];
@@ -446,7 +446,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
 
         const fileItems: PlansViewItem[] = files.map(file => {
             if (file.isDirectory) {
-                // ディレクトリは常に日付/時間をディレクトリ名の前に表示
+                // Directories always show the date/time before the directory name
                 return {
                     kind: 'directory',
                     label: `${this.formatDateTimePrefix(file.created)} ${file.name}`,
@@ -461,7 +461,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
 
             return {
                 kind: 'file',
-                // ファイルはルートディレクトリ以外の場合のみ日付/時間を表示（タイムスタンプ形式は常に短縮表示）
+                // Files show the date/time only outside the root directory (timestamped files are always shortened)
                 label: this.formatFileLabel(file, !isRoot),
                 description: isEditing ? 'editing' : undefined,
                 filePath: file.path,
@@ -472,17 +472,17 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             } as PlansViewItem;
         });
 
-        // キャッシュに保存
+        // Save to the cache
         this.itemCache.set(currentPath, fileItems);
         return [...items, ...fileItems];
     }
 
     // ---------------------------------------------------------------------
-    // 検索
+    // Search
     // ---------------------------------------------------------------------
 
     /**
-     * 検索中かどうか（rootディレクトリが無い間は検索しない）
+     * Whether a search is active (no search while the root directory does not exist)
      */
     isSearching(): boolean {
         return !!this._searchQuery && !this.pathNotFound;
@@ -493,7 +493,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 検索語を設定して一覧を再描画する。空文字・undefinedで検索を終了する
+     * Set the search query and re-render the list. An empty string or undefined ends the search
      */
     setSearchQuery(query: string | undefined): void {
         const normalized = typeof query === 'string' ? query.trim() : '';
@@ -506,7 +506,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 検索を終了し、Webviewの入力欄も空にする（ディレクトリ移動時など）
+     * End the search and also clear the Webview input (e.g. on directory navigation)
      */
     private _clearSearch(): void {
         if (!this._searchQuery) {
@@ -517,10 +517,10 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * rootディレクトリ配下を再帰的に検索し、表示アイテム一覧を返す
-     * - 空白区切りの各語を、名前または本文（.mdのみ）のいずれかに含むものを対象とする（大文字小文字は区別しない）
-     * - 隠しディレクトリ・ファイル（.始まり）とシンボリックリンクは辿らない
-     * - 先頭には件数を表示する searchHeader 行を置く
+     * Recursively search under the root directory and return the list of display items
+     * - Matches entries whose name or body (.md only) contains each whitespace-separated term (case-insensitive)
+     * - Hidden directories/files (starting with .) and symbolic links are not followed
+     * - A searchHeader row showing the result count is placed first
      */
     async search(query: string): Promise<PlansViewItem[]> {
         const terms = query.trim().toLowerCase().split(/\s+/).filter(term => term.length > 0);
@@ -567,7 +567,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
                 const remaining = terms.filter(term => !name.includes(term));
                 let matched = remaining.length === 0;
 
-                // 名前だけで一致しない語は本文から探す
+                // Look for terms not matched by the name in the body
                 if (!matched && !isDirectory && name.endsWith('.md') && stat.size <= MAX_SEARCH_FILE_SIZE) {
                     const preview = await this.findContentMatch(fullPath, remaining);
                     if (preview !== undefined) {
@@ -651,7 +651,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * ファイル本文が全ての語を含むか確認し、含む場合は最初に一致した行の抜粋を返す
+     * Check whether the file body contains all terms and, if so, return an excerpt of the first matching line
      */
     private async findContentMatch(filePath: string, terms: readonly string[]): Promise<string | undefined> {
         let content: string;
@@ -677,7 +677,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     // ---------------------------------------------------------------------
-    // 公開API（コマンド・他プロバイダーから利用）
+    // Public API (used by commands and other providers)
     // ---------------------------------------------------------------------
 
     setEditorProvider(provider: IEditorProvider): void {
@@ -690,7 +690,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
         this.configuredRelativePath = relativePath;
         this._clearSearch();
 
-        // パスの存在確認
+        // Check that the path exists
         try {
             const stat = await fsPromises.stat(rootPath);
             this.pathNotFound = !stat.isDirectory();
@@ -702,7 +702,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * rootディレクトリが存在せず「Create directory」行を表示している状態か
+     * Whether the root directory does not exist and the "Create directory" row is shown
      */
     isRootPathNotFound(): boolean {
         return this.pathNotFound;
@@ -725,8 +725,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 表示中のディレクトリのmetadata.mdから、最後に記録されたセッションを取得する
-     * @returns セッションと、metadata.mdのあるディレクトリ。見つからない場合はundefined
+     * Get the last recorded session from metadata.md of the displayed directory
+     * @returns The session and the directory containing metadata.md, or undefined if not found
      */
     async findLatestResumeSession(): Promise<(SessionMetadataEntry & { dirPath: string }) | undefined> {
         const dirPath = this.getCurrentPath();
@@ -755,14 +755,14 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
 
     refresh(targetPath?: string): void {
         if (targetPath) {
-            // 特定のパスとその親ディレクトリのキャッシュのみクリア
+            // Clear the cache only for the given path and its parent directory
             this.itemCache.delete(targetPath);
             const parentPath = path.dirname(targetPath);
             if (parentPath && parentPath !== targetPath) {
                 this.itemCache.delete(parentPath);
             }
         } else {
-            // 全体更新の場合のみ全キャッシュをクリア
+            // Clear the whole cache only on a full refresh
             this.itemCache.clear();
         }
         void this._render();
@@ -791,7 +791,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 指定されたディレクトリに移動する（フラットリスト表示用）
+     * Navigate to the given directory (for the flat list display)
      */
     async navigateToDirectory(targetPath: string): Promise<void> {
         if (!targetPath) {
@@ -804,26 +804,26 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             return;
         }
 
-        // rootPath の範囲内かチェック
+        // Check that it is within rootPath
         if (this.rootPath && !targetPath.startsWith(this.rootPath)) {
             return;
         }
 
-        // ディレクトリ移動時にEditorのファイル選択をクリア（自動保存含む）
+        // Clear the Editor file selection on directory navigation (including auto-save)
         await this.editorProvider?.clearFile();
 
-        // 移動先の一覧を表示するため検索を終了する
+        // End the search so the destination list is shown
         this._clearSearch();
 
         this.activeFolderPath = targetPath;
         this.selectedItem = undefined;
         this.refresh();
-        // 移動先ディレクトリのスナップショットをリセット（次のポーリングで正しく比較できるようにする）
+        // Reset the destination directory snapshot (so the next poll compares correctly)
         this._lastDirFileCount = -1;
         this._lastDirModTime = 0;
 
-        // 対象ファイル（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）を検索して自動選択
-        // rootディレクトリはタスク一覧の役割のため、自動選択・自動表示は行わない
+        // Find and auto-select a target file (TASK.md, PROMPT.md, SPEC.md, QUICK_START.md)
+        // The root directory serves as the task list, so no auto-select or auto-display there
         if (this.editorProvider && !this._isRootDirectory(targetPath)) {
             const oldestFile = await this.findOldestTargetFile(targetPath);
             if (oldestFile) {
@@ -834,7 +834,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 指定されたパスがrootディレクトリかどうかを判定する
+     * Determine whether the given path is the root directory
      */
     private _isRootDirectory(targetPath: string): boolean {
         if (!this.rootPath) {
@@ -845,7 +845,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * Plans Viewで指定されたファイルを選択状態にする
+     * Select the given file in the Plans View
      */
     async revealFile(filePath: string): Promise<void> {
         if (!this.rootPath) {
@@ -858,7 +858,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             return;
         }
 
-        // ファイルが現在のrootPath配下にあるか確認
+        // Check that the file is under the current rootPath
         if (!filePath.startsWith(this.rootPath)) {
             return;
         }
@@ -868,7 +868,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * Plans Viewで指定されたディレクトリを選択状態にする
+     * Select the given directory in the Plans View
      */
     async revealDirectory(directoryPath: string): Promise<void> {
         try {
@@ -886,17 +886,17 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * ビューの可視性に応じてポーリングを制御
+     * Control polling based on view visibility
      */
     handleVisibilityChange(visible: boolean): void {
         if (visible) {
-            // ビュー復帰時にリフレッシュして最新の状態を反映
+            // Refresh when the view becomes visible again to reflect the latest state
             this.refresh();
-            // ポーリングを開始してFileWatcherが見逃したイベントを補完
+            // Start polling to catch events missed by FileWatcher
             this._startPolling();
         } else {
-            // ビュー非表示時はポーリングを停止してリソースを解放
-            // FileWatcherのリスナーは有効のまま維持する
+            // Stop polling while the view is hidden to free resources
+            // Keep the FileWatcher listener enabled
             this._stopPolling();
         }
     }
@@ -925,8 +925,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     // ---------------------------------------------------------------------
 
     /**
-     * Webviewからのドロップを処理する
-     * targetPathが未指定の場合（空白領域やファイル行へのドロップ）は現在表示中のディレクトリを対象にする
+     * Handle a drop from the Webview
+     * If targetPath is not given (drop on empty space or a file row), target the currently displayed directory
      */
     private async _handleDrop(targetPath?: string, sources?: string[], uriList?: string): Promise<void> {
         const targetDir = await this._resolveDropTargetDir(targetPath);
@@ -940,7 +940,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
         }
 
         if (uriList) {
-            // text/uri-listは改行区切りで、'#'始まりの行はコメント
+            // text/uri-list is newline-separated; lines starting with '#' are comments
             const uris = uriList
                 .split(/\r?\n/)
                 .map(uri => uri.trim())
@@ -950,8 +950,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * Webviewから送られたファイルの内容を書き出す
-     * 外部アプリからのドロップではWebviewが絶対パスを取得できないため、内容を受け取って保存する
+     * Write out file contents sent from the Webview
+     * For drops from external apps the Webview cannot get absolute paths, so receive and save the contents
      */
     private async _handleDroppedFileContents(
         targetPath: string | undefined,
@@ -983,7 +983,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
         const copiedFiles: string[] = [];
 
         for (const file of files) {
-            // Webview由来の名前をそのまま結合しない（パス区切りを含む場合に備える）
+            // Do not join a Webview-supplied name as is (in case it contains path separators)
             const fileName = path.basename(file.name || '');
             if (!fileName || fileName === '.' || fileName === '..') {
                 continue;
@@ -1007,8 +1007,8 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * ドロップ先のディレクトリを決定する
-     * ドロップ先がファイルの場合はその親ディレクトリを対象にする
+     * Decide the drop target directory
+     * If the drop target is a file, use its parent directory
      */
     private async _resolveDropTargetDir(targetPath?: string): Promise<string | undefined> {
         const dropPath = targetPath || this.getCurrentPath();
@@ -1025,7 +1025,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 外部からドロップされたファイルをコピー
+     * Copy files dropped from outside
      */
     private async copyExternalFiles(uris: string[], targetDir: string): Promise<void> {
         const sourcePaths: string[] = [];
@@ -1038,7 +1038,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
                 }
                 sourcePaths.push(uri.fsPath);
             } catch {
-                // パースできないURIは無視
+                // Ignore URIs that cannot be parsed
             }
         }
 
@@ -1046,7 +1046,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 指定されたパスのファイルを対象ディレクトリへコピー
+     * Copy the files at the given paths to the target directory
      */
     private async copyFiles(sourcePaths: readonly string[], targetDir: string): Promise<void> {
         const copiedFiles: string[] = [];
@@ -1055,7 +1055,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             const fileName = path.basename(sourcePath);
             const targetPath = path.join(targetDir, fileName);
 
-            // 同じパスへのコピーは無視
+            // Ignore copies to the same path
             if (sourcePath === targetPath) {
                 continue;
             }
@@ -1076,7 +1076,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 上書き確認を行い、書き込んでよいかを返す
+     * Confirm overwriting and return whether writing is allowed
      */
     private async confirmOverwrite(targetPath: string, fileName: string): Promise<boolean> {
         let fileExists = false;
@@ -1100,7 +1100,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * コピー結果を表示してビューを更新する
+     * Show the copy result and update the view
      */
     private showCopyResult(copiedFiles: readonly string[]): void {
         if (copiedFiles.length > 0) {
@@ -1110,12 +1110,12 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
             vscode.window.showInformationMessage(message);
         }
 
-        // ビューを更新
+        // Update the view
         this.refresh();
     }
 
     // ---------------------------------------------------------------------
-    // 内部ユーティリティ
+    // Internal utilities
     // ---------------------------------------------------------------------
 
     private debouncedRefresh(targetPath?: string): void {
@@ -1129,12 +1129,12 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * ポーリングを開始する（Plans View表示中のみ動作）
-     * FileWatcherが見逃したイベントを補完するため、3秒ごとにディレクトリを確認する
+     * Start polling (runs only while the Plans View is visible)
+     * Check the directory every 3 seconds to catch events missed by FileWatcher
      */
     private _startPolling(): void {
         this._stopPolling();
-        // ポーリング開始時にスナップショットをリセット
+        // Reset the snapshot when polling starts
         this._lastDirFileCount = -1;
         this._lastDirModTime = 0;
         this._pollingTimer = setInterval(() => {
@@ -1143,7 +1143,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * ポーリングを停止する
+     * Stop polling
      */
     private _stopPolling(): void {
         if (this._pollingTimer) {
@@ -1153,7 +1153,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * ディレクトリの変化を軽量チェックし、変化があればリフレッシュする
+     * Lightweight check for directory changes; refresh if anything changed
      */
     private async _pollDirectory(): Promise<void> {
         const currentPath = this.activeFolderPath || this.rootPath;
@@ -1175,12 +1175,12 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
                 this.refresh();
             }
         } catch {
-            // ディレクトリが削除された場合などはスキップ
+            // Skip if, for example, the directory was deleted
         }
     }
 
     /**
-     * パスが存在するかどうかを確認
+     * Check whether the path exists
      */
     private async pathExists(targetPath: string): Promise<boolean> {
         try {
@@ -1192,7 +1192,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 指定されたパスが存在しない場合、存在する祖先ディレクトリ（rootPathを下限とする）を返す
+     * If the given path does not exist, return the nearest existing ancestor directory (bounded below by rootPath)
      */
     private async resolveExistingAncestor(targetPath: string): Promise<string> {
         if (!this.rootPath) {
@@ -1215,10 +1215,10 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 消失したディレクトリ（oldPath）が、同じ親ディレクトリ配下でリネームされたものかどうかを推定する。
-     * このプロジェクトのファイル命名規則（タイムスタンプをディレクトリ名・ファイル名の先頭に付与する）を利用し、
-     * 兄弟ディレクトリの中に「oldPathのディレクトリ名で始まるファイル」を含むものがあれば、
-     * リネーム後のディレクトリとみなして返す
+     * Infer whether a vanished directory (oldPath) was renamed under the same parent directory
+     * Using this project's naming convention (a timestamp prefixed to directory and file names),
+     * if a sibling directory contains a file whose name starts with oldPath's directory name,
+     * treat it as the renamed directory and return it
      */
     private async resolveRenamedDirectory(oldPath: string): Promise<string | undefined> {
         const parentPath = path.dirname(oldPath);
@@ -1243,7 +1243,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
                     return siblingPath;
                 }
             } catch {
-                // 読み取れないディレクトリは無視して次を確認
+                // Ignore unreadable directories and check the next one
             }
         }
 
@@ -1251,17 +1251,17 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 指定されたディレクトリ内から対象ファイル（TASK.md、PROMPT.md、SPEC.md、QUICK_START.md）を検索し、
-     * 最も古いファイルのパスを返す
+     * Search the given directory for target files (TASK.md, PROMPT.md, SPEC.md, QUICK_START.md)
+     * and return the path of the oldest one
      */
     private async findOldestTargetFile(dirPath: string): Promise<string | undefined> {
         try {
             const files = await this.getFilesInDirectory(dirPath);
 
-            // 対象ファイルのパターン（大文字小文字を区別しない）
+            // Target file pattern (case-insensitive)
             const targetPatterns = ['TASK.MD', 'PROMPT.MD', 'SPEC.MD', 'QUICK_START.MD'];
 
-            // 対象ファイルをフィルタリング
+            // Filter the target files
             const targetFiles = files.filter(file => {
                 if (file.isDirectory) {
                     return false;
@@ -1274,7 +1274,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
                 return undefined;
             }
 
-            // 作成日時でソート（昇順）して最も古いファイルを取得
+            // Sort by creation time (ascending) and take the oldest file
             targetFiles.sort((a, b) => a.created.getTime() - b.created.getTime());
 
             return targetFiles[0].path;
@@ -1285,10 +1285,10 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * ファイル行のラベルを生成する
-     * タイムスタンプ形式のファイルは、タイムスタンプを日付/時間プレフィックスに置き換えて短縮表示する
-     * （例: 2026_1011_0206_17_QUICK_START.md → [02:06] QUICK_START.md）。日時はファイル名から取る
-     * それ以外のファイルは withPrefix が真の場合のみ作成日時のプレフィックスを付ける
+     * Build the label for a file row
+     * Timestamped files are shortened by replacing the timestamp with a date/time prefix
+     * (e.g. 2026_1011_0206_17_QUICK_START.md -> [02:06] QUICK_START.md). The date/time is taken from the file name
+     * Other files get a creation date/time prefix only when withPrefix is true
      */
     private formatFileLabel(file: FileInfo, withPrefix: boolean): string {
         const parsed = parseTimestampedFileName(file.name);
@@ -1326,7 +1326,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
         try {
             const entries = await fsPromises.readdir(dirPath, { withFileTypes: true });
 
-            // stat呼び出しを並列化
+            // Run stat calls in parallel
             const fileInfoResults = await Promise.all(
                 entries.map(async (entry): Promise<FileInfo | null> => {
                     const fullPath = path.join(dirPath, entry.name);
@@ -1353,13 +1353,13 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
                             };
                         }
                     } catch {
-                        // stat失敗時はスキップ
+                        // Skip when stat fails
                         return null;
                     }
                 })
             );
 
-            // null（stat失敗）を除外し、ディレクトリとファイルに分類
+            // Exclude nulls (stat failures) and split into directories and files
             for (const info of fileInfoResults) {
                 if (info === null) {
                     continue;
@@ -1371,11 +1371,11 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
                 }
             }
 
-            // ディレクトリとファイルの両方をソート
+            // Sort both directories and files
             this.sortFileInfos(directories);
             this.sortFileInfos(files);
 
-            // ディレクトリを先に、その後ファイルを返す
+            // Return directories first, then files
             return [...directories, ...files];
 
         } catch (error) {
@@ -1390,7 +1390,7 @@ export class PlansProvider implements vscode.WebviewViewProvider, vscode.Disposa
     }
 
     /**
-     * 設定（plans.sortBy / plans.sortOrder）に従って並べ替える
+     * Sort according to the settings (plans.sortBy / plans.sortOrder)
      */
     private sortFileInfos(items: FileInfo[]): void {
         const config = vscode.workspace.getConfiguration('aiCodingSidebar.plans');

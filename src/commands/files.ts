@@ -6,7 +6,7 @@ import { FileItem } from '../providers';
 import { loadTemplate } from '../utils/templateUtils';
 
 /**
- * ファイル操作関連のコマンドを登録
+ * Register file operation commands
  */
 export function registerFilesCommands(
     context: vscode.ExtensionContext,
@@ -14,7 +14,7 @@ export function registerFilesCommands(
 ): void {
     const { plansProvider, editorProvider, terminalProvider, fileOperationService, templateService } = deps;
 
-    // 1. createMarkdownFile - PROMPTファイル作成
+    // 1. createMarkdownFile - create a PROMPT file
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.createMarkdownFile', async (item?: FileItem) => {
             let targetPath: string;
@@ -65,7 +65,7 @@ export function registerFilesCommands(
                 if (result.success) {
                     plansProvider.refresh();
                     await vscode.commands.executeCommand('markdownEditor.focus');
-                    // 作成直後は入力できるようエディタにフォーカスを当てる
+                    // Focus the editor right after creation so the user can start typing
                     await editorProvider.showFile(filePath, { focusEditor: true });
                     vscode.window.showInformationMessage(`Created markdown file ${fileName}`);
                 } else {
@@ -77,7 +77,7 @@ export function registerFilesCommands(
         })
     );
 
-    // 2. createTaskFile - TASKファイル作成
+    // 2. createTaskFile - create a TASK file
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.createTaskFile', async (item?: FileItem) => {
             let targetPath: string;
@@ -139,7 +139,7 @@ export function registerFilesCommands(
         })
     );
 
-    // 3. createSpecFile - SPECファイル作成
+    // 3. createSpecFile - create a SPEC file
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.createSpecFile', async (item?: FileItem) => {
             let targetPath: string;
@@ -201,7 +201,7 @@ export function registerFilesCommands(
         })
     );
 
-    // 4. createFile - 任意のファイル作成
+    // 4. createFile - create an arbitrary file
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.createFile', async (item?: FileItem) => {
             let targetDirectory: string | undefined;
@@ -253,7 +253,7 @@ export function registerFilesCommands(
                         await fsPromises.access(candidatePath);
                         return `File "${trimmed}" already exists`;
                     } catch {
-                        // ファイルが存在しない場合は正常
+                        // The file not existing is the expected case
                     }
 
                     return null;
@@ -286,7 +286,7 @@ export function registerFilesCommands(
         })
     );
 
-    // 5. rename - ファイル/ディレクトリ名変更
+    // 5. rename - rename a file/directory
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.rename', async (item: FileItem) => {
             if (!item) {
@@ -340,7 +340,7 @@ export function registerFilesCommands(
         })
     );
 
-    // 6. delete - ファイル/ディレクトリ削除
+    // 6. delete - delete a file/directory
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.delete', async (item: FileItem) => {
             if (!item) {
@@ -380,7 +380,7 @@ export function registerFilesCommands(
                                     await fsPromises.access(parentPath);
                                     parentExists = true;
                                 } catch {
-                                    // 親ディレクトリが存在しない
+                                    // The parent directory does not exist
                                 }
                                 if (parentPath && parentPath.startsWith(rootPath) && parentExists) {
                                     plansProvider.setActiveFolder(parentPath, true);
@@ -410,7 +410,7 @@ export function registerFilesCommands(
         })
     );
 
-    // 7. copyRelativePath - 相対パスをコピー
+    // 7. copyRelativePath - copy the relative path
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.copyRelativePath', async (item?: FileItem | vscode.Uri) => {
             if (!item) {
@@ -432,7 +432,7 @@ export function registerFilesCommands(
         })
     );
 
-    // 8. copyRelativePathFromEditor - Editorから相対パスをコピー
+    // 8. copyRelativePathFromEditor - copy the relative path from the Editor
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.copyRelativePathFromEditor', async () => {
             const currentFilePath = editorProvider.getCurrentFilePath();
@@ -455,7 +455,7 @@ export function registerFilesCommands(
         })
     );
 
-    // 9. openInEditor - VSCodeエディタで開く
+    // 9. openInEditor - open in the VS Code editor
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openInEditor', async (item?: FileItem) => {
             if (!item) {
@@ -470,7 +470,7 @@ export function registerFilesCommands(
         })
     );
 
-    // 10. insertPathToEditor - Editorにパスを挿入
+    // 10. insertPathToEditor - insert the path into the Editor
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.insertPathToEditor', async (item?: FileItem, selectedItems?: FileItem[]) => {
             const items = selectedItems && selectedItems.length > 0 ? selectedItems : (item ? [item] : []);
@@ -492,7 +492,7 @@ export function registerFilesCommands(
         })
     );
 
-    // 11. insertPathToTerminal - Terminalにパスを挿入
+    // 11. insertPathToTerminal - insert the path into the Terminal
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.insertPathToTerminal', async (item?: FileItem, selectedItems?: FileItem[]) => {
             const items = selectedItems && selectedItems.length > 0 ? selectedItems : (item ? [item] : []);
@@ -514,7 +514,7 @@ export function registerFilesCommands(
         })
     );
 
-    // 12. newSpec - 新規ディレクトリ＋SPECファイル作成
+    // 12. newSpec - create a new directory and SPEC file
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.newSpec', async (_item?: FileItem) => {
             const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -554,7 +554,7 @@ export function registerFilesCommands(
                         await fsPromises.access(folderPath);
                         return `Folder "${value.trim()}" already exists`;
                     } catch {
-                        // フォルダが存在しない場合は正常
+                        // The folder not existing is the expected case
                     }
                     return null;
                 }

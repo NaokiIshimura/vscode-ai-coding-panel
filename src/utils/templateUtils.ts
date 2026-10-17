@@ -5,23 +5,23 @@ import { getGlobalTemplatesDir } from './globalTemplatePaths';
 import { TemplateSourceSettings, readTemplateSourceSettings } from './templateSourceSettings';
 
 /**
- * テンプレート種別
+ * Template types
  *
- * コピー対象のファイル名（TEMPLATE_FILE_NAMES）はここから導出する。
- * 配列と型を別々に管理すると同期漏れが起きるため（v1.1.20のquick_start漏れ）。
+ * The file names to copy (TEMPLATE_FILE_NAMES) are derived from this.
+ * Managing the array and the type separately leads to missed updates (the quick_start omission in v1.1.20).
  */
 export const TEMPLATE_TYPES = ['task', 'spec', 'prompt', 'quick_start'] as const;
 
-// テンプレート種別
+// Template type
 export type TemplateType = typeof TEMPLATE_TYPES[number];
 
-/** 同梱テンプレートのファイル名一覧（TEMPLATE_TYPESと同順） */
+/** File names of the bundled templates (same order as TEMPLATE_TYPES) */
 export const TEMPLATE_FILE_NAMES: readonly string[] = TEMPLATE_TYPES.map(type => `${type}.md`);
 
-/** ワークスペース側のテンプレート配置先（ワークスペースルートからの相対） */
+/** Workspace template location (relative to the workspace root) */
 export const WORKSPACE_TEMPLATES_RELATIVE_PATH = path.join('.vscode', 'ai-coding-panel', 'templates');
 
-// ファイルが存在するかチェックするヘルパー関数
+// Helper that checks whether a file exists
 async function fileExists(filePath: string): Promise<boolean> {
     try {
         await fsPromises.access(filePath);
@@ -32,14 +32,14 @@ async function fileExists(filePath: string): Promise<boolean> {
 }
 
 /**
- * テンプレートの探索先を優先順に並べて返す
+ * Return the template search locations in priority order
  *
- * 1. ワークスペース
- * 2. グローバル
- * 3. 拡張機能の同梱分
+ * 1. Workspace
+ * 2. Global
+ * 3. Bundled with the extension
  *
- * 1と2は設定で個別に無効化できる。
- * 同梱分は常に候補へ加える（無効化するとファイル作成そのものが行えなくなるため）
+ * 1 and 2 can each be disabled in the settings.
+ * The bundled one is always added as a candidate (disabling it would make file creation itself impossible)
  */
 function buildCandidatePaths(
     context: vscode.ExtensionContext,
@@ -64,9 +64,9 @@ function buildCandidatePaths(
 }
 
 /**
- * テンプレートを読み込んで変数を置換する
+ * Load a template and substitute its variables
  *
- * @param settings 読み込み元の設定。省略時は現在の設定を読む（テストからの差し替え用）
+ * @param settings Template source settings. Reads the current settings if omitted (lets tests substitute them)
  */
 export async function loadTemplate(
     context: vscode.ExtensionContext,
@@ -86,13 +86,13 @@ export async function loadTemplate(
     }
 
     if (!templatePath) {
-        // 見つからなかった場合は最終候補（同梱分）のパスをエラーに含める
+        // If not found, include the path of the last candidate (the bundled one) in the error
         throw new Error(`Template file not found: ${candidates[candidates.length - 1]}`);
     }
 
     let content = await fsPromises.readFile(templatePath, 'utf8');
 
-    // 変数を置換
+    // Substitute variables
     for (const [key, value] of Object.entries(variables)) {
         const regex = new RegExp(`{{${key}}}`, 'g');
         content = content.replace(regex, value);

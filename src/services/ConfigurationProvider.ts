@@ -2,34 +2,34 @@ import * as vscode from 'vscode';
 import { DisplayOptions, SortField, SortOrder, ViewMode } from '../types';
 
 /**
- * 設定プロバイダー
+ * Configuration provider
  */
 export class ConfigurationProvider {
     private readonly configSection = 'aiCodingSidebar';
 
     /**
-     * 設定を取得
+     * Get the configuration
      */
     private getConfiguration(): vscode.WorkspaceConfiguration {
         return vscode.workspace.getConfiguration(this.configSection);
     }
 
     /**
-     * コマンドプレフィックスを取得
+     * Get the command prefix
      */
     getCommandPrefix(): string {
         return this.getConfiguration().get<string>('editor.commandPrefix', 'claude');
     }
 
     /**
-     * デフォルト相対パスを取得
+     * Get the default relative path
      */
     getDefaultRelativePath(): string {
         return this.getConfiguration().get<string>('plans.defaultRelativePath', '');
     }
 
     /**
-     * デフォルト相対パスを設定
+     * Set the default relative path
      */
     async setDefaultRelativePath(path: string): Promise<void> {
         await this.getConfiguration().update(
@@ -40,7 +40,7 @@ export class ConfigurationProvider {
     }
 
     /**
-     * 表示オプションを取得
+     * Get the display options
      */
     getDisplayOptions(): DisplayOptions {
         const config = this.getConfiguration();
@@ -54,14 +54,14 @@ export class ConfigurationProvider {
     }
 
     /**
-     * ソート順を取得
+     * Get the sort key
      */
     getSortBy(): SortField {
         return this.getConfiguration().get<SortField>('sortBy', SortField.Name);
     }
 
     /**
-     * ソート順を設定
+     * Set the sort key
      */
     async setSortBy(sortBy: SortField): Promise<void> {
         await this.getConfiguration().update(
@@ -72,14 +72,14 @@ export class ConfigurationProvider {
     }
 
     /**
-     * ソート方向を取得
+     * Get the sort direction
      */
     getSortOrder(): SortOrder {
         return this.getConfiguration().get<SortOrder>('sortOrder', SortOrder.Ascending);
     }
 
     /**
-     * ソート方向を設定
+     * Set the sort direction
      */
     async setSortOrder(sortOrder: SortOrder): Promise<void> {
         await this.getConfiguration().update(
@@ -90,14 +90,14 @@ export class ConfigurationProvider {
     }
 
     /**
-     * 隠しファイル表示設定を取得
+     * Get the show-hidden-files setting
      */
     getShowHidden(): boolean {
         return this.getConfiguration().get<boolean>('showHidden', false);
     }
 
     /**
-     * 隠しファイル表示設定を設定
+     * Set the show-hidden-files setting
      */
     async setShowHidden(showHidden: boolean): Promise<void> {
         await this.getConfiguration().update(
@@ -108,14 +108,14 @@ export class ConfigurationProvider {
     }
 
     /**
-     * 表示モードを取得
+     * Get the view mode
      */
     getViewMode(): ViewMode {
         return this.getConfiguration().get<ViewMode>('viewMode', ViewMode.Tree);
     }
 
     /**
-     * 表示モードを設定
+     * Set the view mode
      */
     async setViewMode(viewMode: ViewMode): Promise<void> {
         await this.getConfiguration().update(
@@ -126,14 +126,14 @@ export class ConfigurationProvider {
     }
 
     /**
-     * 自動更新設定を取得
+     * Get the auto-refresh setting
      */
     getAutoRefresh(): boolean {
         return this.getConfiguration().get<boolean>('autoRefresh', true);
     }
 
     /**
-     * 自動更新設定を設定
+     * Set the auto-refresh setting
      */
     async setAutoRefresh(autoRefresh: boolean): Promise<void> {
         await this.getConfiguration().update(
@@ -144,14 +144,14 @@ export class ConfigurationProvider {
     }
 
     /**
-     * ファイルアイコン表示設定を取得
+     * Get the show-file-icons setting
      */
     getShowFileIcons(): boolean {
         return this.getConfiguration().get<boolean>('showFileIcons', true);
     }
 
     /**
-     * ファイルアイコン表示設定を設定
+     * Set the show-file-icons setting
      */
     async setShowFileIcons(showFileIcons: boolean): Promise<void> {
         await this.getConfiguration().update(
@@ -162,7 +162,7 @@ export class ConfigurationProvider {
     }
 
     /**
-     * 設定変更を監視
+     * Watch for configuration changes
      */
     onConfigurationChanged(callback: (e: vscode.ConfigurationChangeEvent) => void): vscode.Disposable {
         return vscode.workspace.onDidChangeConfiguration(e => {
@@ -173,7 +173,7 @@ export class ConfigurationProvider {
     }
 
     /**
-     * すべての設定をリセット
+     * Reset all settings
      */
     async resetAllSettings(): Promise<void> {
         const config = this.getConfiguration();

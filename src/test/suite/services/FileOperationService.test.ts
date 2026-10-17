@@ -10,14 +10,14 @@ suite('FileOperationService Test Suite', () => {
 	setup(() => {
 		fileOpService = new FileOperationService();
 
-		// テストディレクトリを作成
+		// Create the test directory
 		if (!fs.existsSync(testDir)) {
 			fs.mkdirSync(testDir, { recursive: true });
 		}
 	});
 
 	teardown(() => {
-		// テストディレクトリをクリーンアップ
+		// Clean up the test directory
 		if (fs.existsSync(testDir)) {
 			fs.rmSync(testDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 		}
@@ -52,10 +52,10 @@ suite('FileOperationService Test Suite', () => {
 		test('Should fail if file already exists', async () => {
 			const filePath = path.join(testDir, 'existing.txt');
 
-			// ファイルを作成
+			// Create a file
 			await fileOpService.createFile(filePath, 'content');
 
-			// 同じファイルを再度作成しようとする
+			// Try to create the same file again
 			const result = await fileOpService.createFile(filePath, 'new content');
 
 			assert.strictEqual(result.success, false);
@@ -86,10 +86,10 @@ suite('FileOperationService Test Suite', () => {
 		test('Should fail if directory already exists', async () => {
 			const dirPath = path.join(testDir, 'existingDir');
 
-			// ディレクトリを作成
+			// Create a directory
 			await fileOpService.createDirectory(dirPath);
 
-			// 同じディレクトリを再度作成しようとする
+			// Try to create the same directory again
 			const result = await fileOpService.createDirectory(dirPath);
 
 			assert.strictEqual(result.success, false);
@@ -123,7 +123,7 @@ suite('FileOperationService Test Suite', () => {
 
 			await assert.rejects(
 				async () => await fileOpService.readFile(filePath),
-				/not found|見つかりません/i
+				/not found/i
 			);
 		});
 	});

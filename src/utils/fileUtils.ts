@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-// ファイル情報の型定義
+// File information type definition
 export interface FileInfo {
     name: string;
     path: string;
@@ -11,7 +11,7 @@ export interface FileInfo {
     created: Date;
 }
 
-// ファイルサイズをフォーマットする関数
+// Format a file size
 export function formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 B';
 
@@ -23,7 +23,7 @@ export function formatFileSize(bytes: number): string {
 }
 
 /**
- * ファイル一覧を取得する関数
+ * Get the file list
  * @deprecated Use FileOperationService.getFileList() instead
  */
 export async function getFileList(dirPath: string): Promise<FileInfo[]> {
@@ -46,7 +46,7 @@ export async function getFileList(dirPath: string): Promise<FileInfo[]> {
             });
         }
 
-        // ディレクトリを先に、その後ファイルを名前順でソート
+        // Sort directories first, then files, by name
         files.sort((a, b) => {
             if (a.isDirectory && !b.isDirectory) { return -1; }
             if (!a.isDirectory && b.isDirectory) { return 1; }

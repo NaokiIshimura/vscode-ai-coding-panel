@@ -36,10 +36,10 @@ suite('fileUtils Test Suite', () => {
 		});
 
 		test('Negative values should be handled', () => {
-			// formatFileSizeは負の値に対してNaNを返す可能性があるが、
-			// 実際のユースケースでは負の値は渡されないと仮定
+			// formatFileSize may return NaN for negative values,
+			// but assume negative values are never passed in real use
 			const result = formatFileSize(-100);
-			assert.ok(result); // 何らかの結果が返されることを確認
+			assert.ok(result); // Verify that some result is returned
 		});
 	});
 });

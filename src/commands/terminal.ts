@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { CommandDependencies } from './types';
 
 /**
- * ターミナル関連のコマンドを登録
+ * Register terminal-related commands
  */
 export function registerTerminalCommands(
     context: vscode.ExtensionContext,
@@ -10,36 +10,36 @@ export function registerTerminalCommands(
 ): void {
     const { terminalProvider } = deps;
 
-    // 新しいターミナルを作成
+    // Create a new terminal
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.terminalNew', () => {
             terminalProvider.newTerminal();
         })
     );
 
-    // ターミナルをクリア
+    // Clear the terminal
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.terminalClear', () => {
             terminalProvider.clearTerminal();
         })
     );
 
-    // ターミナルを終了
+    // Kill the terminal
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.terminalKill', () => {
             terminalProvider.killTerminal();
         })
     );
 
-    // ターミナルを開く
+    // Open the terminal
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.openTerminal', async () => {
-            // Terminal Viewにフォーカスを移動
+            // Move focus to the Terminal View
             await vscode.commands.executeCommand('aiCodingSidebarTerminal.focus');
         })
     );
 
-    // Git: ブランチをチェックアウト
+    // Git: check out a branch
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.checkoutBranch', async () => {
             if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -59,7 +59,7 @@ export function registerTerminalCommands(
         })
     );
 
-    // Git: デフォルトブランチをチェックアウト
+    // Git: check out the default branch
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.checkoutDefaultBranch', async () => {
             if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -67,12 +67,12 @@ export function registerTerminalCommands(
                 return;
             }
 
-            // デフォルトブランチを取得（main or master）
+            // Get the default branch (main or master)
             const terminal = vscode.window.createTerminal('Get Default Branch');
             terminal.sendText('git symbolic-ref refs/remotes/origin/HEAD | sed \'s@^refs/remotes/origin/@@\'');
             terminal.dispose();
 
-            // ユーザーに選択させる
+            // Let the user choose
             const selected = await vscode.window.showQuickPick(['main', 'master'], {
                 placeHolder: 'Select default branch'
             });
@@ -84,7 +84,7 @@ export function registerTerminalCommands(
         })
     );
 
-    // Git: プル
+    // Git: pull
     context.subscriptions.push(
         vscode.commands.registerCommand('aiCodingSidebar.gitPull', async () => {
             if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {

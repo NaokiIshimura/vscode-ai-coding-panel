@@ -9,30 +9,30 @@ import { registerFilesCommands } from './files';
 import { registerTemplatesCommands } from './templates';
 
 /**
- * 全てのコマンドを登録
+ * Register all commands
  */
 export function registerAllCommands(
     context: vscode.ExtensionContext,
     deps: CommandDependencies
 ): void {
-    // 設定関連のコマンドを登録
+    // Register settings-related commands
     registerSettingsCommands(context, deps);
 
-    // ドキュメント関連のコマンドを登録
+    // Register documentation-related commands
     registerDocumentationCommands(context, deps);
 
-    // ターミナル関連のコマンドを登録
+    // Register terminal-related commands
     registerTerminalCommands(context, deps);
 
-    // ブラウザ関連のコマンドを登録
+    // Register browser-related commands
     registerBrowserCommands(context, deps);
 
-    // Plans関連のコマンドを登録
+    // Register Plans-related commands
     registerPlansCommands(context, deps);
 
-    // ファイル操作関連のコマンドを登録
+    // Register file operation commands
     registerFilesCommands(context, deps);
 
-    // プロンプトテンプレート関連のコマンドを登録
+    // Register prompt template commands
     registerTemplatesCommands(context, deps);
 }
